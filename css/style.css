@@ -1,0 +1,241 @@
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f3f5f1;
+  color: #222;
+}
+
+/* HEADER */
+.header {
+  background: #7fa843;
+  padding: 18px 0 30px;
+}
+
+.nav-pill {
+  width: 1100px;
+  margin: auto;
+  background: white;
+  border-radius: 40px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #7fa843;
+  color: white;
+  display: grid;
+  place-items: center;
+}
+
+.nav-links a {
+  margin: 0 14px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+}
+
+.nav-links .active {
+  color: #7fa843;
+  font-weight: 600;
+}
+
+.nav-icons {
+  font-size: 18px;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(#ffffff, #eef2ea);
+  position: relative;
+  padding: 60px 0;
+}
+
+.hero-inner {
+  width: 1100px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-image {
+  width: 360px;
+  height: 360px;
+  background: #e1e6db;
+  border-radius: 16px;
+}
+
+.hero-text {
+  text-align: right;
+}
+
+.hero-text .script {
+  font-family: cursive;
+  font-size: 28px;
+}
+
+.hero-text h1 {
+  font-size: 44px;
+  line-height: 1.2;
+}
+
+.cta {
+  background: #7fa843;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.scroll-btn {
+  position: absolute;
+  right: 30px;
+  bottom: 20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #7fa843;
+  color: white;
+}
+
+/* TRENDING */
+.trending {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.pill-tabs {
+  margin: 20px 0 40px;
+}
+
+.pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: #dde5d2;
+  margin: 0 6px;
+  font-size: 13px;
+}
+
+.pill.active {
+  background: #7fa843;
+  color: white;
+}
+
+.product-row {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.product-card {
+  background: white;
+  width: 180px;
+  padding: 22px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.product-card.featured {
+  background: linear-gradient(#9fbe64, #edf4e3);
+}
+
+.plant {
+  height: 120px;
+  background: #e3e7dc;
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+
+.stars {
+  color: #f5b400;
+  font-size: 14px;
+}
+
+.action-icons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.action-icons span {
+  background: #7fa843;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+}
+
+/* PROMOS */
+.promos {
+  width: 1100px;
+  margin: 40px auto;
+  display: flex;
+  gap: 20px;
+}
+
+.promo {
+  flex: 1;
+  padding: 30px;
+  border-radius: 22px;
+  color: white;
+  position: relative;
+}
+
+.promo.left {
+  background: linear-gradient(#7fa843, #9fbe64);
+}
+
+.promo.right {
+  background: #e7efd9;
+  color: #222;
+}
+
+.promo button {
+  margin-top: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: none;
+}
+
+/* FEATURES */
+.features-wrap {
+  padding: 30px 0;
+}
+
+.features {
+  width: 1100px;
+  margin: auto;
+  background: white;
+  border-radius: 30px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.features span {
+  font-size: 13px;
+}
