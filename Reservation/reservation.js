@@ -1,63 +1,80 @@
+const DEFAULT_PLANT_IMAGE =
+"https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
+
 const plantsByCategory = {
-
 "Fruit Bearing":[
-{
-name:"Rambutan",
-price:250,
-image:"https://images.unsplash.com/photo-1609123079242-086695c6ff09"
-},
-{
-name:"Mangosteen",
-price:350,
-image:"https://images.unsplash.com/photo-1706698352015-a907c7f8a445"
-}
-]
+{id:1,name:"Rambutan RR Tuklapin",price:250,image:DEFAULT_PLANT_IMAGE},
+{id:2,name:"Mangosteen",price:350,image:DEFAULT_PLANT_IMAGE},
+{id:3,name:"Durian Puyat",price:300,image:DEFAULT_PLANT_IMAGE}
+],
 
+"Citrus Variety":[
+{id:4,name:"Calamansi",price:200,image:DEFAULT_PLANT_IMAGE},
+{id:5,name:"Lemon Meyer",price:250,image:DEFAULT_PLANT_IMAGE}
+],
+
+"Mangga Variety":[
+{id:6,name:"Carabao Mango",price:350,image:DEFAULT_PLANT_IMAGE},
+{id:7,name:"Indian Mango",price:250,image:DEFAULT_PLANT_IMAGE}
+],
+
+"Dwarf Coconut":[
+{id:8,name:"Golden Coconut",price:400,image:DEFAULT_PLANT_IMAGE}
+]
 };
 
-const categorySelect = document.getElementById("category");
-const plantDisplay = document.getElementById("plantDisplay");
+let selectedPlant=null;
 
-let selectedPlant = null;
+function updatePlantDisplay(){
 
-categorySelect.addEventListener("change",function(){
+const category=document.getElementById("category").value;
+const display=document.getElementById("plantDisplay");
 
-const category=this.value;
-
-plantDisplay.innerHTML="";
-
-if(!plantsByCategory[category]){
-plantDisplay.innerHTML="<p>No plants available</p>";
+if(!category){
+display.innerHTML=`<div class="empty-state">Select a category to view plants</div>`;
 return;
 }
 
-plantsByCategory[category].forEach(plant=>{
+const plants=plantsByCategory[category]||[];
 
-const card=document.createElement("div");
-card.className="plant-card";
+let html='<div class="plants-list">';
 
-card.innerHTML=`
-<img src="${plant.image}">
+plants.forEach(p=>{
+
+html+=`
+<div class="plant-card ${selectedPlant?.id===p.id?'selected':''}"
+onclick="selectPlant(${p.id},'${category}')">
+
+<img src="${p.image}" class="plant-image">
+
 <div>
-<h3>${plant.name}</h3>
-<p>₱${plant.price}</p>
+<div class="plant-name">${p.name}</div>
+<div class="plant-price">₱${p.price}</div>
+</div>
+
 </div>
 `;
 
-card.onclick=()=>{
-document.querySelectorAll(".plant-card").forEach(c=>c.classList.remove("selected"));
-card.classList.add("selected");
-selectedPlant=plant;
-};
-
-plantDisplay.appendChild(card);
-
 });
 
-});
+html+="</div>";
+
+display.innerHTML=html;
+
+}
+
+function selectPlant(id,category){
+
+selectedPlant=plantsByCategory[category].find(p=>p.id===id);
+
+updatePlantDisplay();
+
+}
 
 function handleReserve(){
 
+const category=document.getElementById("category").value;
+const size=document.getElementById("plantSize").value;
 const quantity=document.getElementById("quantity").value;
 const date=document.getElementById("deliveryDate").value;
 
@@ -68,9 +85,17 @@ return;
 
 alert(
 `Reservation Successful!
+
 Plant: ${selectedPlant.name}
+Category: ${category}
+Size: ${size}
 Quantity: ${quantity}
-Delivery Date: ${date}`
+Delivery: ${date}`
 );
 
 }
+
+document.getElementById("category")
+.addEventListener("change",updatePlantDisplay);
+
+updatePlantDisplay();

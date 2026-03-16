@@ -5,9 +5,11 @@ box-sizing:border-box;
 }
 
 body{
-font-family:Arial;
-background:#ffffff;
+font-family:'Poppins',sans-serif;
+background:white;
 }
+
+/* HEADER */
 
 .header{
 background:#78a240;
@@ -16,31 +18,70 @@ padding:15px;
 
 .header-inner{
 background:white;
-border-radius:50px;
 padding:20px;
+border-radius:40px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+max-width:1200px;
+margin:auto;
 }
 
 .logo{
 width:60px;
+height:60px;
 border-radius:20px;
+}
+
+.logo-section{
+display:flex;
+align-items:center;
+gap:10px;
+text-decoration:none;
+color:black;
+font-weight:bold;
 }
 
 .nav{
 display:flex;
-gap:20px;
+gap:30px;
 }
 
+.nav a{
+text-decoration:none;
+font-family:'Inria Serif';
+font-weight:bold;
+color:black;
+}
+
+/* CONTAINER */
+
 .container{
+max-width:1200px;
+margin:auto;
 padding:40px;
 }
 
-.page-title{
+.page-header{
+background:#3e5a18;
+color:white;
 text-align:center;
-margin-bottom:30px;
+padding:25px;
+border-radius:40px 40px 0 0;
 }
+
+.page-title{
+font-family:'Inria Serif';
+font-size:35px;
+}
+
+.content-box{
+background:#f6f4f9;
+padding:40px;
+border-radius:0 0 40px 40px;
+}
+
+/* GRID */
 
 .grid-container{
 display:grid;
@@ -48,16 +89,25 @@ grid-template-columns:1fr 1fr;
 gap:40px;
 }
 
+/* FORM */
+
 .form-section{
 display:flex;
 flex-direction:column;
-gap:15px;
+gap:20px;
+}
+
+.section-title{
+font-family:'Inria Serif';
+font-size:28px;
 }
 
 select,input{
-padding:12px;
+width:100%;
+padding:15px;
 border-radius:10px;
-border:1px solid #ccc;
+border:2px solid #ddd;
+font-size:18px;
 }
 
 .reserve-btn{
@@ -65,28 +115,54 @@ background:#3e5a18;
 color:white;
 border:none;
 padding:15px;
+font-size:22px;
 border-radius:40px;
-font-size:18px;
 cursor:pointer;
+}
+
+/* PLANTS */
+
+.plants-list{
+display:grid;
+gap:15px;
+max-height:500px;
+overflow-y:auto;
 }
 
 .plant-card{
-border:1px solid #ccc;
-padding:10px;
-margin-bottom:10px;
 display:flex;
-gap:10px;
+align-items:center;
+gap:15px;
+padding:10px;
+border:2px solid #ddd;
+border-radius:10px;
 cursor:pointer;
 }
 
-.plant-card img{
+.plant-card.selected{
+border-color:#3e5a18;
+background:#eaf3e2;
+}
+
+.plant-image{
 width:80px;
 height:80px;
 object-fit:cover;
 border-radius:10px;
 }
 
-.plant-card.selected{
-border:2px solid green;
-background:#f2f8ef;
+.plant-name{
+font-weight:bold;
+}
+
+.plant-price{
+color:#3e5a18;
+}
+
+/* EMPTY */
+
+.empty-state{
+text-align:center;
+padding:50px;
+color:#777;
 }
