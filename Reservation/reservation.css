@@ -10,48 +10,110 @@ background:white;
 }
 
 /* HEADER */
-
-.header{
-background:#78a240;
-padding:15px;
+.header {
+  background: #7fa843;
+  padding: 18px 0 30px;
 }
 
-.header-inner{
-background:white;
-padding:20px;
-border-radius:40px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-max-width:1200px;
-margin:auto;
+.nav-pill {
+  width: 1100px;
+  margin: auto;
+  background: white;
+  border-radius: 40px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.logo{
-width:60px;
-height:60px;
-border-radius:20px;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
 }
 
-.logo-section{
-display:flex;
-align-items:center;
-gap:10px;
-text-decoration:none;
-color:black;
-font-weight:bold;
+.logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #7fa843;
+  color: white;
+  display: grid;
+  place-items: center;
 }
 
-.nav{
-display:flex;
-gap:30px;
+.nav-links a {
+  margin: 0 14px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
 }
 
-.nav a{
-text-decoration:none;
-font-family:'Inria Serif';
-font-weight:bold;
-color:black;
+.nav-links .active {
+  color: #7fa843;
+  font-weight: 600;
+}
+
+.nav-icons {
+  font-size: 18px;
+}
+/* HERO */
+.hero {
+  background: linear-gradient(#ffffff, #eef2ea);
+  position: relative;
+  padding: 60px 0;
+}
+
+.hero-inner {
+  width: 1100px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-image {
+  width: 360px;
+  height: 360px;
+  background: #e1e6db;
+  border-radius: 16px;
+}
+
+.hero-text {
+  text-align: right;
+}
+
+.hero-text .script {
+  font-family: cursive;
+  font-size: 28px;
+}
+
+.hero-text h1 {
+  font-size: 44px;
+  line-height: 1.2;
+}
+
+.cta {
+  background: #7fa843;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.scroll-btn {
+  position: absolute;
+  right: 30px;
+  bottom: 20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #7fa843;
+  color: white;
 }
 
 /* CONTAINER */
