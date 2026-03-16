@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Plant Reservation - Gabay Halaman</title>
+
+<link rel="stylesheet" href="reservation.css">
+
+</head>
+
+<body>
+
+<header class="header">
+<div class="header-inner">
+
+<a href="/" class="logo-section">
+<img src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200" class="logo">
+<h2>Gabay Halaman</h2>
+</a>
+
+<nav class="nav">
+<a href="/">Home</a>
+<p>Shop</p>
+<p>More</p>
+</nav>
+
+</div>
+</header>
+
+<div class="container">
+
+<h1 class="page-title">PLANT RESERVATION</h1>
+
+<div class="grid-container">
+
+<!-- FORM -->
+<div class="form-section">
+
+<select id="category">
+<option value="">Category</option>
+<option value="Fruit Bearing">Fruit Bearing Trees</option>
+<option value="Citrus Variety">Citrus Variety</option>
+<option value="Mangga Variety">Mangga Variety</option>
+<option value="Flowering Trees">Flowering Trees</option>
+</select>
+
+<select id="plantSize">
+<option value="">Select Plant Size</option>
+<option value="Small">Small</option>
+<option value="Large">Large</option>
+<option value="Extra Large">Extra Large</option>
+</select>
+
+<input type="number" id="quantity" placeholder="Quantity">
+
+<input type="date" id="deliveryDate">
+
+<button class="reserve-btn" onclick="handleReserve()">Reserve Now</button>
+
+</div>
+
+<!-- PLANT DISPLAY -->
+<div class="plant-section">
+<div id="plantDisplay"></div>
+</div>
+
+</div>
+
+</div>
+
+<script src="reservation.js"></script>
+
+</body>
+</html>
