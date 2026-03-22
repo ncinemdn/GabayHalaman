@@ -4,21 +4,25 @@
     box-sizing: border-box;
 }
 
+
 body {
     font-family: 'Poppins', sans-serif;
     background-color: #ffffff;
     min-height: 100vh;
 }
 
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 10px;
 }
 
+
 ::-webkit-scrollbar-track {
     background: #f6f4f9;
     border-radius: 10px;
 }
+
 
 ::-webkit-scrollbar-thumb {
     background: #3e5a18;
@@ -26,20 +30,24 @@ body {
     border: 2px solid #f6f4f9;
 }
 
+
 ::-webkit-scrollbar-thumb:hover {
     background: #2d4312;
 }
+
 
 * {
     scrollbar-width: thin;
     scrollbar-color: #3e5a18 #f6f4f9;
 }
 
+
 /* Header */
 .header {
     background-color: #78a240;
     padding: 1rem;
 }
+
 
 .header-inner {
     background-color: white;
@@ -53,12 +61,14 @@ body {
     gap: 1rem;
 }
 
+
 .logo-section {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
 }
+
 
 .logo {
     width: 80px;
@@ -67,11 +77,13 @@ body {
     object-fit: cover;
 }
 
+
 .brand-text {
     height: 20px;
     width: auto;
     object-fit: contain;
 }
+
 
 .nav {
     display: flex;
@@ -80,6 +92,7 @@ body {
     flex: 1;
     justify-content: center;
 }
+
 
 .nav a, .nav p {
     font-family: 'Inria Serif', serif;
@@ -91,9 +104,11 @@ body {
     white-space: nowrap;
 }
 
+
 .nav a:hover, .nav p:hover {
     text-decoration: underline;
 }
+
 
 .header-icons {
     display: flex;
@@ -101,6 +116,7 @@ body {
     gap: 1.25rem;
     flex-shrink: 0;
 }
+
 
 .icon-btn {
     background: none;
@@ -110,9 +126,11 @@ body {
     transition: opacity 0.3s;
 }
 
+
 .icon-btn:hover {
     opacity: 0.7;
 }
+
 
 /* Main Container */
 .container {
@@ -121,12 +139,14 @@ body {
     margin: 0 auto;
 }
 
+
 .page-header {
     background-color: #3e5a18;
     border-radius: 50px 50px 0 0;
     padding: 2rem;
     text-align: center;
 }
+
 
 .page-title {
     font-family: 'Inria Serif', serif;
@@ -135,6 +155,7 @@ body {
     color: white;
 }
 
+
 .content-box {
     background-color: #f6f4f9;
     border-radius: 0 0 50px 50px;
@@ -142,10 +163,12 @@ body {
     padding: 4rem 3rem;
 }
 
+
 .empty-state {
     text-align: center;
     padding: 4rem 2rem;
 }
+
 
 .empty-state h2 {
     font-family: 'Inria Serif', serif;
@@ -155,12 +178,14 @@ body {
     margin-bottom: 1rem;
 }
 
+
 .empty-state p {
     font-family: 'Inria Serif', serif;
     font-size: 20px;
     color: #595959;
     margin-bottom: 2rem;
 }
+
 
 .btn-reserve {
     display: inline-block;
@@ -175,13 +200,16 @@ body {
     transition: opacity 0.3s;
 }
 
+
 .btn-reserve:hover {
     opacity: 0.9;
 }
 
+
 .date-group {
     margin-bottom: 3rem;
 }
+
 
 .date-header {
     font-family: 'Inria Serif', serif;
@@ -191,11 +219,13 @@ body {
     margin-bottom: 2rem;
 }
 
+
 .plants-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 2rem;
 }
+
 
 .plant-card {
     background-color: #f6f4f9;
@@ -205,9 +235,11 @@ body {
     transition: transform 0.3s;
 }
 
+
 .plant-card:hover {
     transform: translateY(-5px);
 }
+
 
 .plant-image-container {
     width: 100%;
@@ -216,15 +248,18 @@ body {
     border-radius: 20px 20px 0 0;
 }
 
+
 .plant-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
+
 .plant-info {
     padding: 1.5rem;
 }
+
 
 .plant-name {
     font-family: 'Inria Serif', serif;
@@ -234,6 +269,7 @@ body {
     margin-bottom: 0.5rem;
 }
 
+
 .plant-details {
     font-family: 'Inria Serif', serif;
     font-size: 25px;
@@ -241,14 +277,17 @@ body {
     margin-bottom: 1rem;
 }
 
+
 .plant-details span {
     font-weight: 400;
 }
+
 
 .plant-rating {
     font-size: 32px;
     margin-bottom: 0.5rem;
 }
+
 
 .plant-price {
     font-family: 'Karla', sans-serif;
@@ -257,10 +296,12 @@ body {
     color: black;
 }
 
+
 .view-all {
     text-align: center;
     margin-top: 3rem;
 }
+
 
 .view-all-link {
     font-family: 'Inria Serif', serif;
@@ -271,9 +312,11 @@ body {
     cursor: pointer;
 }
 
+
 .view-all-link:hover {
     color: #3e5a18;
 }
+
 
 /* Responsive */
 @media (max-width: 1024px) {
@@ -281,37 +324,45 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     }
 
+
     .logo {
         width: 56px;
         height: 56px;
     }
+
 
     .nav {
         display: none;
     }
 }
 
+
 @media (max-width: 768px) {
     .container {
         padding: 2rem 1rem;
     }
 
+
     .content-box {
         padding: 2.5rem 1.5rem;
     }
+
 
     .header-inner {
         padding: 1rem 1.5rem;
         border-radius: 30px;
     }
 
+
     .page-header {
         border-radius: 30px 30px 0 0;
     }
 
+
     .content-box {
         border-radius: 0 0 30px 30px;
     }
+
 
     .logo {
         width: 40px;
@@ -319,46 +370,57 @@ body {
         border-radius: 20px;
     }
 
+
     .page-title {
         font-size: 24px;
     }
+
 
     .date-header {
         font-size: 24px;
     }
 
+
     .plant-name {
         font-size: 20px;
     }
+
 
     .plant-details {
         font-size: 18px;
     }
 
+
     .plant-rating {
         font-size: 24px;
     }
 
+
     .plant-price {
         font-size: 24px;
     }
+
 
     .plants-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
 
+
     .view-all-link {
         font-size: 28px;
     }
+
 
     .empty-state h2 {
         font-size: 24px;
     }
 
+
     .empty-state p {
         font-size: 16px;
     }
+
 
     .btn-reserve {
         font-size: 18px;

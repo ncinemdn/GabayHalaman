@@ -4,42 +4,131 @@
     box-sizing: border-box;
 }
 
+
 body {
     font-family: 'Poppins', sans-serif;
     background-color: #ffffff;
     min-height: 100vh;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f6f4f9;
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #3e5a18;
-    border-radius: 10px;
-    border: 2px solid #f6f4f9;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #2d4312;
-}
-
-/* Firefox Scrollbar */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #3e5a18 #f6f4f9;
-}
-
-/* Header */
+/* HEADER */
 .header {
-    background-color: #78a240;
-    padding: 1rem;
+  background: #7fa843;
+  padding: 18px 0 30px;
+}
+
+
+.nav-pill {
+  width: 1100px;
+  margin: auto;
+  background: white;
+  border-radius: 40px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+
+.logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #7fa843;
+  color: white;
+  display: grid;
+  place-items: center;
+}
+
+
+.nav-links a {
+  margin: 0 14px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+}
+
+
+.nav-links .active {
+  color: #7fa843;
+  font-weight: 600;
+}
+
+
+.nav-icons {
+  font-size: 18px;
+}
+/* HERO */
+.hero {
+  background: linear-gradient(#ffffff, #eef2ea);
+  position: relative;
+  padding: 60px 0;
+}
+
+
+.hero-inner {
+  width: 1100px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.hero-image {
+  width: 360px;
+  height: 360px;
+  background: #e1e6db;
+  border-radius: 16px;
+}
+
+
+.hero-text {
+  text-align: right;
+}
+
+
+.hero-text .script {
+  font-family: cursive;
+  font-size: 28px;
+}
+
+
+.hero-text h1 {
+  font-size: 44px;
+  line-height: 1.2;
+}
+
+
+.cta {
+  background: #7fa843;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+
+.scroll-btn {
+  position: absolute;
+  right: 30px;
+  bottom: 20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #7fa843;
+  color: white;
 }
 
 .header-inner {
@@ -54,12 +143,14 @@ body {
     gap: 1rem;
 }
 
+
 .logo-section {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
 }
+
 
 .logo {
     width: 80px;
@@ -68,11 +159,13 @@ body {
     object-fit: cover;
 }
 
+
 .brand-text {
     height: 20px;
     width: auto;
     object-fit: contain;
 }
+
 
 .nav {
     display: flex;
@@ -81,6 +174,7 @@ body {
     flex: 1;
     justify-content: center;
 }
+
 
 .nav a, .nav p {
     font-family: 'Inria Serif', serif;
@@ -92,9 +186,11 @@ body {
     white-space: nowrap;
 }
 
+
 .nav a:hover, .nav p:hover {
     text-decoration: underline;
 }
+
 
 .header-icons {
     display: flex;
@@ -102,6 +198,7 @@ body {
     gap: 1.25rem;
     flex-shrink: 0;
 }
+
 
 .icon-btn {
     background: none;
@@ -111,9 +208,11 @@ body {
     transition: opacity 0.3s;
 }
 
+
 .icon-btn:hover {
     opacity: 0.7;
 }
+
 
 /* Main Container */
 .container {
@@ -122,12 +221,14 @@ body {
     margin: 0 auto;
 }
 
+
 .page-header {
     background-color: #3e5a18;
     border-radius: 50px 50px 0 0;
     padding: 2rem;
     text-align: center;
 }
+
 
 .page-title {
     font-family: 'Inria Serif', serif;
@@ -136,6 +237,7 @@ body {
     color: white;
 }
 
+
 .content-box {
     background-color: #f6f4f9;
     border-radius: 0 0 50px 50px;
@@ -143,11 +245,13 @@ body {
     padding: 4rem;
 }
 
+
 .grid-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
 }
+
 
 /* Form Section */
 .form-section {
@@ -155,6 +259,7 @@ body {
     flex-direction: column;
     gap: 1.5rem;
 }
+
 
 .section-title {
     font-family: 'Inria Serif', serif;
@@ -164,9 +269,11 @@ body {
     margin-bottom: 1.5rem;
 }
 
+
 .form-group {
     position: relative;
 }
+
 
 select, input {
     width: 100%;
@@ -184,13 +291,16 @@ select, input {
     transition: border-color 0.3s;
 }
 
+
 select:focus, input:focus {
     border-color: #3e5a18;
 }
 
+
 input::placeholder {
     color: black;
 }
+
 
 .dropdown-arrow {
     position: absolute;
@@ -200,6 +310,7 @@ input::placeholder {
     pointer-events: none;
 }
 
+
 .calendar-icon {
     position: absolute;
     right: 1.5rem;
@@ -207,6 +318,7 @@ input::placeholder {
     transform: translateY(-50%);
     pointer-events: none;
 }
+
 
 .reserve-btn {
     width: 100%;
@@ -224,9 +336,11 @@ input::placeholder {
     margin-top: 1rem;
 }
 
+
 .reserve-btn:hover {
     opacity: 0.9;
 }
+
 
 /* Plant Section */
 .plant-section {
@@ -235,9 +349,11 @@ input::placeholder {
     justify-content: center;
 }
 
+
 .plant-container {
     width: 100%;
 }
+
 
 .empty-state {
     display: flex;
@@ -249,6 +365,7 @@ input::placeholder {
     background-color: rgba(255, 255, 255, 0.5);
 }
 
+
 .empty-text {
     font-family: 'Inria Serif', serif;
     font-size: 18px;
@@ -256,6 +373,7 @@ input::placeholder {
     text-align: center;
     padding: 0 1.5rem;
 }
+
 
 .plants-list {
     display: grid;
@@ -266,6 +384,7 @@ input::placeholder {
     padding-right: 0.5rem;
 }
 
+
 .plant-card {
     cursor: pointer;
     border-radius: 15px;
@@ -274,15 +393,18 @@ input::placeholder {
     transition: all 0.3s;
 }
 
+
 .plant-card:hover {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     border-color: rgba(62, 90, 24, 0.5);
 }
 
+
 .plant-card.selected {
     border-color: #3e5a18;
     background-color: rgba(62, 90, 24, 0.05);
 }
+
 
 .plant-card-inner {
     display: flex;
@@ -290,6 +412,7 @@ input::placeholder {
     gap: 1rem;
     padding: 1rem;
 }
+
 
 .plant-image {
     width: 96px;
@@ -299,10 +422,12 @@ input::placeholder {
     flex-shrink: 0;
 }
 
+
 .plant-info {
     flex: 1;
     min-width: 0;
 }
+
 
 .plant-name {
     font-family: 'Inria Serif', serif;
@@ -314,12 +439,14 @@ input::placeholder {
     text-overflow: ellipsis;
 }
 
+
 .plant-price {
     font-family: 'Inria Serif', serif;
     font-size: 16px;
     color: #3e5a18;
     font-weight: 600;
 }
+
 
 .checkmark {
     background-color: #3e5a18;
@@ -333,64 +460,78 @@ input::placeholder {
     flex-shrink: 0;
 }
 
+
 /* Responsive */
 @media (max-width: 1024px) {
     .grid-container {
         grid-template-columns: 1fr;
     }
 
+
     .section-title.desktop-only {
         display: none;
     }
 
+
     .section-title.mobile-only {
         display: block;
     }
+
 
     .logo {
         width: 56px;
         height: 56px;
     }
 
+
     .nav {
         display: none;
     }
+
 
     select, input {
         font-size: 22px;
         padding: 1.25rem;
     }
 
+
     .page-title {
         font-size: 32px;
     }
+
 
     .reserve-btn {
         font-size: 24px;
     }
 }
 
+
 @media (max-width: 768px) {
     .container {
         padding: 2rem 1rem;
     }
 
+
     .content-box {
         padding: 2.5rem 1.5rem;
     }
+
 
     .header-inner {
         padding: 1rem 1.5rem;
         border-radius: 30px;
     }
 
+
     .page-header {
         border-radius: 30px 30px 0 0;
     }
 
+
     .content-box {
         border-radius: 0 0 30px 30px;
     }
+
 
     .logo {
         width: 40px;
@@ -398,50 +539,63 @@ input::placeholder {
         border-radius: 20px;
     }
 
+
     select, input {
         font-size: 18px;
         padding: 1rem 1.5rem;
     }
 
+
     .page-title {
         font-size: 24px;
     }
+
 
     .section-title {
         font-size: 24px;
     }
 
+
     .reserve-btn {
         font-size: 20px;
     }
+
 
     .empty-state {
         height: 256px;
     }
 
+
     .empty-text {
         font-size: 16px;
     }
 
+
     .plant-name {
         font-size: 16px;
     }
+
 
     .plant-price {
         font-size: 14px;
     }
 }
 
+
 .section-title.mobile-only {
     display: none;
 }
+
 
 @media (max-width: 1024px) {
     .section-title.desktop-only {
         display: none;
     }
 
+
     .section-title.mobile-only {
         display: block;
     }
 }
+
+

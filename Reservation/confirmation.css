@@ -4,21 +4,25 @@
     box-sizing: border-box;
 }
 
+
 body {
     font-family: 'Poppins', sans-serif;
     background-color: #ffffff;
     min-height: 100vh;
 }
 
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 10px;
 }
 
+
 ::-webkit-scrollbar-track {
     background: #f6f4f9;
     border-radius: 10px;
 }
+
 
 ::-webkit-scrollbar-thumb {
     background: #3e5a18;
@@ -26,20 +30,24 @@ body {
     border: 2px solid #f6f4f9;
 }
 
+
 ::-webkit-scrollbar-thumb:hover {
     background: #2d4312;
 }
+
 
 * {
     scrollbar-width: thin;
     scrollbar-color: #3e5a18 #f6f4f9;
 }
 
+
 /* Header */
 .header {
     background-color: #78a240;
     padding: 1rem;
 }
+
 
 .header-inner {
     background-color: white;
@@ -53,12 +61,14 @@ body {
     gap: 1rem;
 }
 
+
 .logo-section {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
 }
+
 
 .logo {
     width: 80px;
@@ -67,11 +77,13 @@ body {
     object-fit: cover;
 }
 
+
 .brand-text {
     height: 20px;
     width: auto;
     object-fit: contain;
 }
+
 
 .nav {
     display: flex;
@@ -80,6 +92,7 @@ body {
     flex: 1;
     justify-content: center;
 }
+
 
 .nav a, .nav p {
     font-family: 'Inria Serif', serif;
@@ -91,9 +104,11 @@ body {
     white-space: nowrap;
 }
 
+
 .nav a:hover, .nav p:hover {
     text-decoration: underline;
 }
+
 
 .header-icons {
     display: flex;
@@ -101,6 +116,7 @@ body {
     gap: 1.25rem;
     flex-shrink: 0;
 }
+
 
 .icon-btn {
     background: none;
@@ -110,9 +126,11 @@ body {
     transition: opacity 0.3s;
 }
 
+
 .icon-btn:hover {
     opacity: 0.7;
 }
+
 
 /* Main Container */
 .container {
@@ -120,6 +138,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
 }
+
 
 .confirmation-box {
     background-color: #f6f4f9;
@@ -129,6 +148,7 @@ body {
     margin-top: 2rem;
 }
 
+
 .confirmation-header {
     background-color: #3e5a18;
     border-radius: 50px 50px 0 0;
@@ -136,6 +156,7 @@ body {
     text-align: center;
     margin: -4rem -3rem 3rem -3rem;
 }
+
 
 .main-title {
     font-family: 'Inria Serif', serif;
@@ -145,6 +166,7 @@ body {
     text-align: center;
     margin-bottom: 2rem;
 }
+
 
 .subtitle {
     font-family: 'Inria Serif', serif;
@@ -156,11 +178,13 @@ body {
     line-height: 1.6;
 }
 
+
 .divider {
     height: 1px;
     background-color: #000;
     margin: 2.5rem 0;
 }
+
 
 .instruction-text {
     font-family: 'Inria Serif', serif;
@@ -171,6 +195,7 @@ body {
     margin-bottom: 0.5rem;
 }
 
+
 .platform-text {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
@@ -180,6 +205,7 @@ body {
     margin-bottom: 3rem;
 }
 
+
 .icons-container {
     display: flex;
     justify-content: center;
@@ -188,6 +214,7 @@ body {
     margin-top: 2rem;
 }
 
+
 .platform-icon {
     cursor: pointer;
     transition: transform 0.3s, box-shadow 0.3s;
@@ -195,10 +222,12 @@ body {
     overflow: hidden;
 }
 
+
 .platform-icon:hover {
     transform: scale(1.1);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
+
 
 .platform-icon img {
     width: 101px;
@@ -206,52 +235,63 @@ body {
     display: block;
 }
 
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {
         padding: 2rem 1rem;
     }
 
+
     .confirmation-box {
         padding: 3rem 2rem;
     }
+
 
     .confirmation-header {
         margin: -3rem -2rem 2rem -2rem;
         padding: 1.5rem;
     }
 
+
     .main-title {
         font-size: 28px;
     }
+
 
     .subtitle, .instruction-text, .platform-text {
         font-size: 18px;
     }
 
+
     .icons-container {
         gap: 1.5rem;
     }
+
 
     .platform-icon img {
         width: 80px;
         height: 80px;
     }
 
+
     .logo {
         width: 56px;
         height: 56px;
     }
 
+
     .nav {
         display: none;
     }
+
 
     .header-inner {
         padding: 1rem 1.5rem;
         border-radius: 30px;
     }
 }
+
 
 @media (max-width: 480px) {
     .icons-container {

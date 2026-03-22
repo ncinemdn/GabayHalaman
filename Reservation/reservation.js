@@ -1,6 +1,7 @@
 // Default image for plants without specific photos
 const DEFAULT_PLANT_IMAGE = "https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGZydWl0JTIwdHJlZXxlbnwxfHx8fDE3NzI5NTQxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
 
+
 // Plant data organized by category
 const plantsByCategory = {
     "Fruit Bearing": [
@@ -96,13 +97,15 @@ const plantsByCategory = {
     ],
 };
 
+
 // State management
 let selectedPlant = null;
+
 
 // Initialize the display
 function init() {
     updatePlantDisplay();
-    
+   
     // Add event listeners
     document.getElementById('category').addEventListener('change', function() {
         selectedPlant = null;
@@ -110,10 +113,12 @@ function init() {
     });
 }
 
+
 // Update plant display based on category selection
 function updatePlantDisplay() {
     const category = document.getElementById('category').value;
     const displayArea = document.getElementById('plantDisplay');
+
 
     if (!category) {
         displayArea.innerHTML = `
@@ -126,12 +131,13 @@ function updatePlantDisplay() {
         return;
     }
 
+
     const plants = plantsByCategory[category] || [];
     const plantsHTML = plants.map(plant => `
-        <div class="plant-card ${selectedPlant && selectedPlant.id === plant.id ? 'selected' : ''}" 
+        <div class="plant-card ${selectedPlant && selectedPlant.id === plant.id ? 'selected' : ''}"
              onclick="selectPlant(${plant.id}, '${category}')">
             <div class="plant-card-inner">
-                <img src="${plant.image}" alt="${plant.name}" class="plant-image" 
+                <img src="${plant.image}" alt="${plant.name}" class="plant-image"
                      onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
                 <div class="plant-info">
                     <div class="plant-name">${plant.name}</div>
@@ -148,23 +154,26 @@ function updatePlantDisplay() {
         </div>
     `).join('');
 
+
     displayArea.innerHTML = `<div class="plants-list">${plantsHTML}</div>`;
 }
+
 
 // Select a plant (toggle selection)
 function selectPlant(plantId, category) {
     const plants = plantsByCategory[category];
     const plant = plants.find(p => p.id === plantId);
-    
+   
     // Toggle selection
     if (selectedPlant && selectedPlant.id === plantId) {
         selectedPlant = null;
     } else {
         selectedPlant = plant;
     }
-    
+   
     updatePlantDisplay();
 }
+
 
 // Handle reservation
 function handleReserve() {
@@ -173,10 +182,12 @@ function handleReserve() {
     const quantity = document.getElementById('quantity').value;
     const deliveryDate = document.getElementById('deliveryDate').value;
 
+
     if (!category || !plantSize || !quantity || !deliveryDate || !selectedPlant) {
         alert('Please fill in all fields and select a plant');
         return;
     }
+
 
     // Create reservation object
     const reservation = {
@@ -188,14 +199,17 @@ function handleReserve() {
         name: selectedPlant.name,
     };
 
+
     // Store in localStorage
     const existingReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
     existingReservations.push(reservation);
     localStorage.setItem('reservations', JSON.stringify(existingReservations));
 
+
     // Navigate to confirmation page
     window.location.href = 'confirmation.html';
 }
+
 
 // Initialize when page loads
 window.addEventListener('DOMContentLoaded', init);

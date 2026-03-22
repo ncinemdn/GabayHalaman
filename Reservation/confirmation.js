@@ -1,7 +1,7 @@
 function selectPlatform(platform) {
     let contactInfo = '';
     let platformName = '';
-    
+   
     switch(platform) {
         case 'gmail':
             platformName = 'Gmail';
@@ -21,10 +21,10 @@ function selectPlatform(platform) {
             window.open('https://www.facebook.com/share/1Dbsh6mBu1/?mibextid=wwXIfr', '_blank');
             break;
     }
-    
+   
     // Store the selected platform
     localStorage.setItem('selectedPlatform', platform);
-    
+   
     // After user selects platform, navigate to reserved plants page after a short delay
     setTimeout(() => {
         if (confirm('Your reservation has been recorded! Click OK to view all your reserved plants.')) {

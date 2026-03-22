@@ -1,5 +1,5 @@
-// Default plant image
 const DEFAULT_PLANT_IMAGE = "https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGZydWl0JTIwdHJlZXxlbnwxfHx8fDE3NzI5NTQxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+
 
 // Plant images mapping (same as reservation page)
 const plantImages = {
@@ -40,9 +40,11 @@ const plantImages = {
     "Arabica Coffee": "https://images.unsplash.com/photo-1689960686579-16b860f7c502?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400"
 };
 
+
 function getPlantImage(plantName) {
     return plantImages[plantName] || DEFAULT_PLANT_IMAGE;
 }
+
 
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -50,9 +52,11 @@ function formatDate(dateString) {
     return date.toLocaleDateString('en-US', options);
 }
 
+
 function loadReservations() {
     const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
     const container = document.getElementById('reservationsContainer');
+
 
     if (reservations.length === 0) {
         container.innerHTML = `
@@ -65,6 +69,7 @@ function loadReservations() {
         return;
     }
 
+
     // Group reservations by delivery date
     const groupedByDate = {};
     reservations.forEach(reservation => {
@@ -74,28 +79,32 @@ function loadReservations() {
         groupedByDate[reservation.deliveryDate].push(reservation);
     });
 
+
     // Sort dates
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(a) - new Date(b));
 
+
     let html = '';
+
 
     sortedDates.forEach(date => {
         const plants = groupedByDate[date];
-        
+       
         html += `
             <div class="date-group">
                 <h2 class="date-header">${formatDate(date)}</h2>
                 <div class="plants-grid">
         `;
 
+
         plants.forEach(plant => {
             const stars = '⭐⭐⭐⭐⭐';
             const image = getPlantImage(plant.name);
-            
+           
             html += `
                 <div class="plant-card">
                     <div class="plant-image-container">
-                        <img src="${image}" alt="${plant.name}" class="plant-image" 
+                        <img src="${image}" alt="${plant.name}" class="plant-image"
                              onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
                     </div>
                     <div class="plant-info">
@@ -116,11 +125,13 @@ function loadReservations() {
             `;
         });
 
+
         html += `
                 </div>
             </div>
         `;
     });
+
 
     // Add view all link (optional)
     if (sortedDates.length > 1) {
@@ -131,12 +142,15 @@ function loadReservations() {
         `;
     }
 
+
     container.innerHTML = html;
 }
+
 
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 // Load reservations when page loads
 window.addEventListener('DOMContentLoaded', loadReservations);
