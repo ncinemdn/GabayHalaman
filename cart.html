@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gabay & Halaman | Cart</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.2px;
+}
+
+.serif {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.3px;
+}
+
+/* COLORS */
+:root{
+    --green:#7ea33d;
+}
+
+/* SHADOWS */
+.nav-shadow { box-shadow: 0 6px 25px rgba(0,0,0,0.08); }
+.card-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
+.soft-shadow { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+/* BUTTON */
+.btn-green { background: var(--green); }
+.btn-green:hover { filter: brightness(0.95); }
+</style>
+
+</head>
+
+<body class="bg-white min-h-screen">
+
+<!-- TOP GREEN -->
+<div class="bg-[#7ea33d] h-[170px] w-full absolute top-0"></div>
+
+<!-- NAVBAR -->
+<div class="relative z-10 pt-6 px-4">
+<nav class="max-w-[1120px] mx-auto bg-white rounded-full nav-shadow py-3 px-8 flex justify-between items-center">
+
+<div class="flex items-center gap-3">
+<img 
+  src="aa.png" 
+  class="w-[116px] h-[116px] rounded-[30px] object-contain"
+>
+<div class="font-bold text-[16px] flex items-center">
+GABAY <span class="mx-1 text-[#7ea33d]">●</span>
+<span class="text-[#7ea33d]">HALAMAN</span>
+</div>
+</div>
+
+<div class="hidden md:flex gap-8 font-semibold text-[14px]">
+<span>Home</span>
+<span>Shop ▼</span>
+<span>More ▼</span>
+</div>
+
+<div class="flex gap-5 text-xl">
+<span>🔍</span>
+<span>🛒</span>
+</div>
+
+</nav>
+</div>
+
+<!-- MAIN -->
+<div class="relative z-10 max-w-[1120px] mx-auto mt-20 px-8">
+
+<h1 class="serif text-[36px] font-bold mb-10">Your cart</h1>
+
+<div class="flex gap-8 flex-col lg:flex-row">
+
+<!-- LEFT -->
+<div id="cart" class="lg:w-[65%] space-y-6"></div>
+
+<!-- RIGHT -->
+<div class="lg:w-[35%]">
+<div class="bg-white rounded-[26px] p-9 card-shadow">
+
+<h2 class="serif text-[22px] mb-8">Order Summary</h2>
+
+<div class="space-y-4 text-[14px]">
+<div class="flex justify-between">
+<span id="count">Subtotal (3 items)</span>
+<span id="subtotal">₱ 1,497.00</span>
+</div>
+
+<div class="flex justify-between">
+<span>Shipping</span>
+<span class="font-bold">FREE</span>
+</div>
+</div>
+
+<div class="border-t my-6"></div>
+
+<div class="flex justify-between mb-10 font-bold">
+<span>Total</span>
+<span id="total" class="text-[#4a724d]">₱ 1,497.00</span>
+</div>
+
+<button class="w-full py-4 rounded-[22px] text-white btn-green mb-3 soft-shadow">
+Add Delivery Details
+</button>
+
+<button class="w-full py-4 rounded-[22px] text-white bg-gray-400 soft-shadow">
+Place Order
+</button>
+
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+let data = [
+{ id:1, name:"Dracaena Anita", price:499, qty:1, img:"drac.png" },
+{ id:2, name:"Dracaena Anita", price:499, qty:1, img:"drac.png" },
+{ id:3, name:"Dracaena Anita", price:499, qty:1, img:"drac.png" }
+];
+
+function render(){
+const container = document.getElementById("cart");
+
+container.innerHTML = data.map(item => `
+<div class="bg-[#f6f6f8] rounded-[22px] p-6 flex justify-between items-center soft-shadow">
+
+<div class="flex items-center gap-5">
+<img src="${item.img}" class="w-[100px] h-[100px] object-cover rounded-[18px]">
+<div>
+<h3 class="serif text-[19px] leading-tight">${item.name}</h3>
+<p class="font-bold mt-1">₱ ${item.price}</p>
+</div>
+</div>
+
+<div class="flex items-center gap-5">
+
+<div class="bg-[#e5e7eb] rounded-full flex items-center px-2 py-1 h-[38px] min-w-[110px] justify-between shadow-inner">
+<button onclick="qty(${item.id},-1)">-</button>
+<span>${item.qty}</span>
+<button onclick="qty(${item.id},1)">+</button>
+</div>
+
+<button onclick="del(${item.id})" class="text-red-500 text-xl">🗑</button>
+
+</div>
+
+</div>
+`).join("");
+
+update();
+}
+
+function qty(id,change){
+let item = data.find(i=>i.id===id);
+item.qty = Math.max(1, item.qty + change);
+render();
+}
+
+function del(id){
+data = data.filter(i=>i.id!==id);
+render();
+}
+
+function update(){
+let totalQty = data.reduce((a,b)=>a+b.qty,0);
+let totalPrice = data.reduce((a,b)=>a+(b.price*b.qty),0);
+
+document.getElementById("count").innerText = `Subtotal (${totalQty} items)`;
+
+let price = "₱ " + totalPrice.toLocaleString("en-PH",{minimumFractionDigits:2});
+
+document.getElementById("subtotal").innerText = price;
+document.getElementById("total").innerText = price;
+}
+
+render();
+</script>
+
+</body>
+</html>
