@@ -40,23 +40,29 @@ body {
   position: absolute;
   background: white;
   height: 122px;
-  left: 218px;
+  left: 50%;
+  transform: translateX(-50%);
   border-radius: 50px;
   top: 57.5px;
-  width: 1292px;
+  width: min(90vw, 1292px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .search-icon {
   position: absolute;
   height: 30px;
-  left: 1345px;
+  right: 20px;
   top: 100px;
   width: 27px;
 }
 
 .logo {
   position: absolute;
-  left: 264.14px;
+  left: 20px;
   border-radius: 30px;
   width: 116px;
   height: 116px;
@@ -73,7 +79,7 @@ body {
 .logo-text {
   position: absolute;
   height: 20px;
-  left: 380.06px;
+  left: 150px;
   border-radius: 50px;
   top: 106px;
   width: 198px;
@@ -86,52 +92,39 @@ body {
   border-radius: 50px;
 }
 
+.menu-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .menu-home,
 .menu-shop,
 .menu-more {
-  position: absolute;
   font-weight: bold;
   font-style: normal;
   font-size: 20px;
   color: black;
-  top: 104px;
   white-space: nowrap;
+  margin: 0;
 }
 
-.menu-home {
-  left: 743.14px;
+.menu-item {
+  display: flex;
+  align-items: center;
 }
 
-.menu-shop {
-  left: 859.14px;
-}
-
-.menu-more {
-  left: 979.14px;
-}
-
-.shop-chevron {
-  position: absolute;
-  left: 915.14px;
-  width: 24px;
-  height: 24px;
-  top: 107px;
-}
-
+.shop-chevron,
 .more-chevron {
-  position: absolute;
-  left: 1035.14px;
   width: 24px;
   height: 24px;
-  top: 107px;
+  margin-left: 5px;
 }
 
 .cart-icon {
-  position: absolute;
   height: 33px;
-  left: 1409.06px;
-  top: 100px;
   width: 31px;
+  margin-left: 20px;
 }
 
 /* Page Heading */
@@ -142,7 +135,10 @@ body {
   font-size: 30px;
   color: black;
   text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-  width: 206.298px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 213px;
+  text-align: center;
 }
 
 /* Order Cards */
@@ -150,30 +146,30 @@ body {
   position: absolute;
   background: #f6f4f9;
   height: 573px;
-  left: 175px;
+  left: 50%;
+  transform: translateX(-50%);
   border-radius: 20px;
   box-shadow: 4px 4px 4px 4px rgba(0, 0, 0, 0.25);
-  width: 1339px;
+  width: min(90vw, 1339px);
+  top: 279px;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .order-category {
-  position: absolute;
   font-weight: bold;
   font-style: normal;
   font-size: 27px;
   color: black;
-  left: 217px;
-  width: 953.283px;
+  margin-bottom: 20px;
 }
 
 .order-items {
-  position: absolute;
   font-weight: bold;
   font-style: normal;
   color: #373535;
   font-size: 27px;
-  left: 524px;
-  width: 953.283px;
+  margin-bottom: 20px;
 }
 
 .order-items p {
@@ -182,22 +178,21 @@ body {
 }
 
 .order-status {
-  position: absolute;
   font-weight: bold;
   font-style: normal;
   font-size: 27px;
-  left: 1356px;
-  width: 121px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
 }
 
 .order-status.delivered {
   color: red;
-  left: 1356px;
 }
 
 .order-status.pending {
   color: red;
-  left: 1375px;
+}
 }
 
 .delivery-banner {
@@ -207,34 +202,35 @@ body {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 10px;
-  width: 1186px;
+  width: min(80vw, 1186px);
+  top: 667px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .delivery-text {
-  position: absolute;
   font-weight: bold;
   font-style: normal;
   color: #359c4d;
   font-size: 27px;
-  left: 281px;
-  width: 242px;
+  margin: 0;
 }
 
 .delivery-chevron {
-  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  left: 1389px;
   width: 24px;
   height: 24px;
 }
 
 .product-image {
-  position: absolute;
   height: 335px;
-  left: 217px;
   width: 239px;
+  margin-bottom: 20px;
 }
 
 .product-image img {
@@ -245,7 +241,6 @@ body {
 
 /* Buttons */
 .order-btn {
-  position: absolute;
   height: 65.993px;
   border-radius: 20px;
   box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
@@ -273,29 +268,46 @@ body {
   background: #6a8f38;
 }
 
+.button-container {
+  position: absolute;
+  top: 754px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
 /* Order Details */
 .details-card {
   position: absolute;
   background: #f6f4f9;
   height: 322px;
-  left: 174px;
+  left: 50%;
+  transform: translateX(-50%);
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
   box-shadow: 4px 4px 4px 4px rgba(0, 0, 0, 0.25);
-  width: 1339px;
+  width: min(90vw, 1339px);
+  top: 332px;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .details-header {
   position: absolute;
   background: #78a240;
   height: 79px;
-  left: 174px;
+  left: 50%;
+  transform: translateX(-50%);
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
-  width: 1339px;
+  width: min(90vw, 1339px);
+  top: 284px;
   display: flex;
   align-items: center;
   padding-left: 17px;
+  box-sizing: border-box;
 }
 
 .details-header p {
@@ -309,7 +321,7 @@ body {
 .details-product-image {
   position: absolute;
   height: 364px;
-  left: 1183px;
+  right: 20px;
   top: 306px;
   width: 260px;
 }
@@ -321,31 +333,26 @@ body {
 }
 
 .details-text {
-  position: absolute;
   font-weight: bold;
   font-style: normal;
   font-size: 27px;
   color: black;
-  left: 204px;
-  width: 953.283px;
+  margin-bottom: 10px;
 }
 
 .details-line {
-  position: absolute;
   height: 0;
-  left: 204.95px;
-  width: 946.104px;
+  width: 100%;
   border-top: 1px solid #a2a2a2;
+  margin-bottom: 10px;
 }
 
 .details-items {
-  position: absolute;
   font-weight: bold;
   font-style: normal;
   color: #373535;
   font-size: 27px;
-  left: 205px;
-  width: 953.283px;
+  margin-bottom: 10px;
 }
 
 .details-items p {
@@ -358,11 +365,12 @@ body {
   position: absolute;
   background: #f6f4f9;
   height: 201.658px;
-  left: 174px;
+  left: 50%;
+  transform: translateX(-50%);
   border-radius: 20px;
   box-shadow: 4px 4px 4px 4px rgba(0, 0, 0, 0.25);
   top: 282.55px;
-  width: 1339.857px;
+  width: min(90vw, 1339.857px);
 }
 
 .progress-line {
@@ -372,14 +380,16 @@ body {
 }
 
 .progress-line.green {
-  left: 257.9px;
-  width: 1117.156px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(70vw, 1117.156px);
   background: #3e5a18;
 }
 
 .progress-line.gray {
-  left: 953.93px;
-  width: 420.135px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(30vw, 420.135px);
   background: #c0c0c0;
 }
 
@@ -388,14 +398,20 @@ body {
   top: 329.78px;
 }
 
-.step-circle {
-  width: 59.234px;
-  height: 57.789px;
-  background: #d9d9d9;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.progress-step:nth-child(1) {
+  left: calc(50% - 40vw);
+}
+
+.progress-step:nth-child(2) {
+  left: calc(50% - 10vw);
+}
+
+.progress-step:nth-child(3) {
+  left: calc(50% + 20vw);
+}
+
+.progress-step:nth-child(4) {
+  left: calc(50% + 50vw);
 }
 
 .step-circle svg {
@@ -424,9 +440,10 @@ body {
 .map-container {
   position: absolute;
   height: 826px;
-  left: 179px;
+  left: 50%;
+  transform: translateX(-50%);
   top: 536px;
-  width: 1331px;
+  width: min(90vw, 1331px);
   border-radius: 20px;
   overflow: hidden;
 }
