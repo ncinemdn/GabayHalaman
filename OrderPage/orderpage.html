@@ -46,53 +46,9 @@
       <!-- My Purchases heading -->
       <p class="page-heading">My Purchases</p>
       
-      <!-- First Card - Delivered -->
-      <div class="order-card">
-        <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
-          <div class="product-image">
-            <img alt="" src="https://raw.githubusercontent.com/figma/build-assets/main/b55bf6abd525c92f2efdb839eeafaca4e716d622.png" />
-          </div>
-          <div style="flex: 1;">
-            <p class="order-category">Category : Citrus Section</p>
-            <div class="order-items">
-              <p>Mangosteen  (5 pcs)</p>
-              <p>Calamansi   (5 pcs)</p>
-            </div>
-          </div>
-          <p class="order-status delivered">Delivered</p>
-        </div>
-        
-        <div class="delivery-banner">
-          <p class="delivery-text">Delivered on Feb 23</p>
-          <div class="delivery-chevron">
-            <svg fill="none" preserveAspectRatio="none" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
-              <path d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z" fill="#359C4D" />
-            </svg>
-          </div>
-        </div>
-        
-        <div class="button-container">
-          <button class="order-btn disabled">Order Received</button>
-          <button class="order-btn primary" onclick="navigateTo('order-details')">Order Details</button>
-        </div>
-      </div>
+      <!-- Current Order (Dynamic) -->
+      <div id="currentOrderContainer"></div>
       
-      <!-- Second Card - Pending -->
-      <div class="order-card">
-        <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
-          <div class="product-image">
-            <img alt="" src="https://raw.githubusercontent.com/figma/build-assets/main/b55bf6abd525c92f2efdb839eeafaca4e716d622.png" />
-          </div>
-          <div style="flex: 1;">
-            <p class="order-category">Category : Citrus Section</p>
-            <div class="order-items">
-              <p>Mangosteen  (5 pcs)</p>
-              <p>Calamansi   (5 pcs)</p>
-            </div>
-          </div>
-          <p class="order-status pending">Pending</p>
-        </div>
-      </div>
       </div>
     </div>
   </div>
@@ -107,24 +63,26 @@
       
       <!-- Main Card -->
       <div class="details-header">
-        <p>Delivered on 23 Feb</p>
+        <p>Order Confirmed Today</p>
       </div>
       <div class="details-card">
-        <div class="details-product-image">
-          <img alt="" src="https://raw.githubusercontent.com/figma/build-assets/main/b55bf6abd525c92f2efdb839eeafaca4e716d622.png" />
+        <div id="detailsContent">
+          <div class="product-image">
+            <img id="detailsImage" alt="" src="" />
+          </div>
+          
+          <p class="details-text">Full Name: <span id="detailsFullName">Loading...</span></p>
+          <div class="details-line"></div>
+          
+          <p class="details-text">Plants Ordered:</p>
+          <div class="details-items" id="detailsItems">
+            <!-- Loaded by JS -->
+          </div>
+          
+          <div class="details-line"></div>
+          <p class="details-text">Total Quantity: <span id="detailsTotalQty">0</span></p>
+          <p class="details-text">Total Price: <span id="detailsTotalPrice">₱0.00</span></p>
         </div>
-        
-        <p class="details-text">Full Name:  Jake  Clarence B. Leyson</p>
-        <div class="details-line"></div>
-        
-        <p class="details-text">Plants Ordered:</p>
-        <div class="details-items">
-          <p>Mangosteen  (5 pcs)</p>
-          <p>Calamansi   (5 pcs)</p>
-        </div>
-        
-        <div class="details-line"></div>
-        <p class="details-text">Total Quantity: 10</p>
       </div>
       
       <!-- Shipping Details Card -->
@@ -134,18 +92,18 @@
       <div class="details-card">
         <p class="details-text">
           <span>Contact Number: </span>
-          <span style="color: #373535;">0912-345-6789</span>
+          <span style="color: #373535;" id="detailsPhone">N/A</span>
         </p>
         
         <div class="details-line"></div>
         
         <p class="details-text">Delivery Address:</p>
-        <p class="details-text" style="color: #373535;">Blk 14. Camella Homes, Calamba City, Laguna</p>
+        <p class="details-text" style="color: #373535;" id="detailsAddress">N/A</p>
       </div>
       
       <!-- Buttons -->
       <div class="button-container" style="top: 1025px;">
-        <button class="order-btn disabled">Order Received</button>
+        <button class="order-btn disabled">Order Details</button>
         <button class="order-btn primary" onclick="navigateTo('track-order')">Track order</button>
       </div>
     </div>
