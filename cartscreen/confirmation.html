@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmation</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.serif {
+  font-family: 'Playfair Display', serif;
+}
+
+:root{
+  --green:#7ea33d;
+}
+
+.card-shadow {
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+</style>
+
+</head>
+
+<body class="bg-[#f6f9f3] min-h-screen flex items-center justify-center px-4">
+
+<!-- CARD -->
+<div class="bg-white max-w-[500px] w-full rounded-[30px] p-10 text-center card-shadow">
+
+  <!-- ICON -->
+  <div class="text-[60px] mb-4">✅</div>
+
+  <!-- TITLE -->
+  <h1 class="serif text-[30px] font-bold text-[#4a724d] mb-4">
+    Order Confirmed!
+  </h1>
+
+  <!-- MESSAGE -->
+  <p class="text-gray-600 mb-8">
+    Thank you for your purchase 🌿 <br>
+    Your plants will be delivered soon.
+  </p>
+
+  <!-- BUTTON -->
+  <button onclick="goBack()" class="w-full py-4 rounded-[20px] text-white bg-[#7ea33d] font-semibold hover:brightness-95">
+    Back to Cart
+  </button>
+
+</div>
+
+<script>
+function goBack(){
+  window.location.href = "cart.html";
+}
+</script>
+
+</body>
+</html>

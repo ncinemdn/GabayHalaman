@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delivery Details</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  font-family: 'Inter', sans-serif;
+}
+.serif {
+  font-family: 'Playfair Display', serif;
+}
+</style>
+
+</head>
+
+<body class="bg-white min-h-screen relative">
+
+<!-- TOP GREEN HEADER -->
+<div class="bg-[#7ea33d] h-[170px] w-full absolute top-0 left-0"></div>
+
+<!-- NAVBAR -->
+<div class="relative z-10 pt-6 px-4">
+  <nav class="max-w-[1120px] mx-auto bg-white rounded-full shadow-[0_6px_25px_rgba(0,0,0,0.08)] py-3 px-8 flex justify-between items-center">
+
+    <div class="flex items-center gap-3">
+      <img src="bb.png" class="w-[80px] h-[80px] object-contain">
+
+      <div class="font-bold text-[16px] tracking-tight">
+        GABAY <span class="text-[#7ea33d]">● HALAMAN</span>
+      </div>
+    </div>
+
+    <div class="hidden md:flex gap-8 font-semibold text-[14px] text-gray-700">
+      <span class="cursor-pointer hover:text-[#7ea33d]">Home</span>
+      <span class="cursor-pointer hover:text-[#7ea33d]">Shop ▼</span>
+      <span class="cursor-pointer hover:text-[#7ea33d]">More ▼</span>
+    </div>
+
+    <div class="flex gap-5 text-xl text-gray-700">
+      <span class="cursor-pointer">🔍</span>
+      <span class="cursor-pointer">🛒</span>
+    </div>
+
+  </nav>
+</div>
+
+<!-- MAIN FORM -->
+<main class="relative z-10 max-w-[700px] mx-auto mt-16 px-4 mb-20">
+  <div class="bg-white rounded-[35px] p-10 shadow-[0_12px_30px_rgba(0,0,0,0.06)] border border-gray-50">
+
+    <h1 class="serif text-[28px] font-bold text-center mb-10 text-gray-900">
+      Delivery Details of the Customer
+    </h1>
+
+    <!-- UPDATED FORM -->
+    <form onsubmit="saveDetails(event)" class="space-y-6">
+
+      <!-- Full Name -->
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-[16px] text-gray-800 ml-2">Full Name</label>
+        <input id="name" type="text" placeholder="Enter your name"
+          class="w-full h-[52px] bg-[#f5f5f5] border border-gray-300 rounded-[20px] px-6 focus:outline-none focus:border-[#7ea33d] text-[14px]" required>
+      </div>
+
+      <!-- Email -->
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-[16px] text-gray-800 ml-2">Email</label>
+        <input id="email" type="email" placeholder="Enter your email"
+          class="w-full h-[52px] bg-[#f5f5f5] border border-gray-300 rounded-[20px] px-6 focus:outline-none focus:border-[#7ea33d] text-[14px]" required>
+      </div>
+
+      <!-- Phone -->
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-[16px] text-gray-800 ml-2">Phone Number</label>
+        <input id="phone" type="text" placeholder="Enter your phone number"
+          class="w-full h-[52px] bg-[#f5f5f5] border border-gray-300 rounded-[20px] px-6 focus:outline-none focus:border-[#7ea33d] text-[14px]" required>
+      </div>
+
+      <!-- Address -->
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-[16px] text-gray-800 ml-2">Address</label>
+        <input id="address" type="text" placeholder="Insert address for delivery"
+          class="w-full h-[52px] bg-[#f5f5f5] border border-gray-300 rounded-[20px] px-6 focus:outline-none focus:border-[#7ea33d] text-[14px]" required>
+      </div>
+
+      <!-- Valid ID -->
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-[16px] text-gray-800 ml-2">Valid ID</label>
+        <a href="#" class="text-blue-600 underline text-[14px] ml-2 hover:text-blue-800">
+          Upload a file here
+        </a>
+      </div>
+
+      <!-- BUTTONS -->
+      <div class="flex gap-4 pt-6">
+        <button type="button"
+          onclick="goBack()"
+          class="flex-1 py-4 rounded-[22px] text-white bg-[#b94444] font-semibold shadow-md hover:brightness-95">
+          Cancel
+        </button>
+
+        <button type="submit"
+          class="flex-1 py-4 rounded-[22px] text-white bg-[#7ea33d] font-semibold shadow-md hover:brightness-95">
+          Save
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</main>
+
+<script>
+
+/* GO BACK */
+function goBack(){
+  window.location.href = "cart.html";
+}
+
+/* SAVE DELIVERY DETAILS */
+function saveDetails(e){
+  e.preventDefault();
+
+  const details = {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    phone: document.getElementById("phone").value,
+    address: document.getElementById("address").value
+  };
+
+  localStorage.setItem("delivery", JSON.stringify(details));
+
+  /* redirect to checkout */
+  window.location.href = "checkout.html";
+}
+
+</script>
+
+</body>
+</html>
