@@ -6,7 +6,7 @@ let plants = [
         category: 'Coconut Variety',
         price: 500,
         stock: 55,
-        image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400',
+        image: '../PlantCatalog/images/native_coconut.jpg',
         available: true
     },
     {
@@ -15,7 +15,7 @@ let plants = [
         category: 'Mango Variety',
         price: 500,
         stock: 50,
-        image: 'https://images.unsplash.com/photo-1605027990121-cbae9d3f6e01?w=400',
+        image: '../PlantCatalog/images/carabao_mango.jpg',
         available: true
     },
     {
@@ -24,7 +24,7 @@ let plants = [
         category: 'Citrus',
         price: 500,
         stock: 0,
-        image: 'https://images.unsplash.com/photo-1557800636-894a64c1696f?w=400',
+        image: '../PlantCatalog/images/suha_davao.jpg',
         available: false
     },
     {
@@ -33,7 +33,7 @@ let plants = [
         category: 'Forest Trees',
         price: 500,
         stock: 10,
-        image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400',
+        image: '../PlantCatalog/images/thai_bamboo.jpg',
         available: true
     },
     {
@@ -42,7 +42,7 @@ let plants = [
         category: 'Forest Trees',
         price: 500,
         stock: 20,
-        image: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=400',
+        image: '../PlantCatalog/images/african_talisay.jpg',
         available: true
     }
 ];
@@ -51,9 +51,7 @@ let editingPlantId = null;
 let currentImagePreview = null;
 
 // DOM Elements
-const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 const sidebar = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebarOverlay');
 const btnAddPlant = document.getElementById('btnAddPlant');
 const addPlantModal = document.getElementById('addPlantModal');
 const successModal = document.getElementById('successModal');
@@ -87,10 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Event Listeners
 function attachEventListeners() {
-    // Mobile menu
-    mobileMenuToggle.addEventListener('click', toggleMobileMenu);
-    sidebarOverlay.addEventListener('click', closeMobileMenu);
-
     // Add plant button
     btnAddPlant.addEventListener('click', openAddModal);
 
@@ -107,6 +101,21 @@ function attachEventListeners() {
     searchInput.addEventListener('input', filterPlants);
     categoryFilter.addEventListener('change', filterPlants);
 
+    // Navigation
+    document.querySelectorAll('[data-page]').forEach(item => {
+        item.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+            if (page === 'dashboard') {
+                window.location.href = '../Dashboard/dashboard.html';
+            } else if (page === 'catalog') {
+                // Stay on current page
+            } else {
+                // For other pages, show alert for now
+                alert(`Navigation to ${page} not implemented yet.`);
+            }
+        });
+    });
+
     // Close modals on outside click
     addPlantModal.addEventListener('click', (e) => {
         if (e.target === addPlantModal) closeAddModal();
@@ -114,27 +123,6 @@ function attachEventListeners() {
     successModal.addEventListener('click', (e) => {
         if (e.target === successModal) closeSuccessModal();
     });
-}
-
-// Mobile menu functions
-function toggleMobileMenu() {
-    const menuIcon = mobileMenuToggle.querySelector('.menu-icon');
-    const closeIcon = mobileMenuToggle.querySelector('.close-icon');
-    
-    sidebar.classList.toggle('open');
-    sidebarOverlay.classList.toggle('active');
-    menuIcon.classList.toggle('hidden');
-    closeIcon.classList.toggle('hidden');
-}
-
-function closeMobileMenu() {
-    const menuIcon = mobileMenuToggle.querySelector('.menu-icon');
-    const closeIcon = mobileMenuToggle.querySelector('.close-icon');
-    
-    sidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
-    menuIcon.classList.remove('hidden');
-    closeIcon.classList.add('hidden');
 }
 
 // Initialize categories
