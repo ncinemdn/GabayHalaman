@@ -14,7 +14,7 @@ body {
 /* HEADER */
 .header {
   background: #7fa843;
-  padding: 18px 0 30px;
+  padding: 10px 0 12px; /* keep green area as desired */
 }
 
 
@@ -133,14 +133,20 @@ body {
 
 .header-inner {
     background-color: white;
-    border-radius: 50px;
-    padding: 1.5rem 2rem;
+    border-radius: 30px;
+    padding: 0.2rem 0.5rem;
     max-width: 1400px;
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.3rem;
+    min-height: 36px;
+}
+
+.logo {
+    width: 38px;
+    height: 38px;
 }
 
 
@@ -195,8 +201,9 @@ body {
 .header-icons {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
+    gap: 0.75rem;
     flex-shrink: 0;
+    margin-left: -0.25rem;
 }
 
 
@@ -204,8 +211,15 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
+    padding: 2px;
     transition: opacity 0.3s;
+    width: 26px;
+    height: 26px;
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
 
@@ -301,6 +315,20 @@ input::placeholder {
     color: black;
 }
 
+input[type="date"] {
+    padding-right: 2.7rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* hide native date picker UI while keeping keyboard support */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+    display: none;
+}
+
 
 .dropdown-arrow {
     position: absolute;
@@ -313,10 +341,15 @@ input::placeholder {
 
 .calendar-icon {
     position: absolute;
-    right: 1.5rem;
+    right: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+input[type="date"] {
+    padding-right: 2.7rem;
 }
 
 
@@ -428,6 +461,48 @@ input::placeholder {
     min-width: 0;
 }
 
+.plant-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 1rem 0.75rem;
+    flex-wrap: wrap;
+}
+
+.plant-quantity-label,
+.plant-size-label {
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #3e5a18;
+}
+
+.plant-quantity,
+.plant-size {
+    min-height: 32px;
+    border: 1px solid #b8c1b1;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #254015;
+    background-color: #f6f4f9;
+}
+
+.plant-quantity {
+    width: 60px;
+}
+
+.plant-size {
+    width: 110px;
+}
+
+.plant-quantity:focus,
+.plant-size:focus {
+    outline: 2px solid #7fa843;
+    border-color: transparent;
+}
 
 .plant-name {
     font-family: 'Inria Serif', serif;
