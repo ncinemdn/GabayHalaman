@@ -214,38 +214,44 @@ body {
 .date-header {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 30px;
+    font-size: 24px;
     color: black;
     margin-bottom: 2rem;
+    text-align: center;
 }
 
 
 .plants-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 
 .plant-card {
-    background-color: #f6f4f9;
-    border-radius: 20px;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: transform 0.3s;
+    display: flex;
+    flex-direction: row;
 }
 
 
 .plant-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 
 .plant-image-container {
-    width: 100%;
-    height: 250px;
+    width: 150px;
+    height: 150px;
     overflow: hidden;
-    border-radius: 20px 20px 0 0;
+    flex-shrink: 0;
 }
 
 
@@ -258,23 +264,33 @@ body {
 
 .plant-info {
     padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
 }
 
 
 .plant-name {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 25px;
+    font-size: 18px;
     color: black;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 
 .plant-details {
-    font-family: 'Inria Serif', serif;
-    font-size: 25px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #595959;
+    margin-bottom: 0.5rem;
+}
+
+
+.plant-details strong {
     color: black;
-    margin-bottom: 1rem;
+    font-weight: 600;
 }
 
 
@@ -284,15 +300,16 @@ body {
 
 
 .plant-rating {
-    font-size: 32px;
-    margin-bottom: 0.5rem;
+    font-size: 18px;
+    margin-bottom: 0.75rem;
+    letter-spacing: 2px;
 }
 
 
 .plant-price {
     font-family: 'Karla', sans-serif;
     font-weight: 700;
-    font-size: 32px;
+    font-size: 20px;
     color: black;
 }
 
@@ -321,7 +338,8 @@ body {
 /* Responsive */
 @media (max-width: 1024px) {
     .plants-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 800px;
     }
 
 
@@ -377,27 +395,44 @@ body {
 
 
     .date-header {
-        font-size: 24px;
-    }
-
-
-    .plant-name {
         font-size: 20px;
     }
 
 
-    .plant-details {
+    .plants-grid {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
+
+
+    .plant-card {
+        flex-direction: column;
+    }
+
+
+    .plant-image-container {
+        width: 100%;
+        height: 200px;
+    }
+
+
+    .plant-name {
         font-size: 18px;
     }
 
 
+    .plant-details {
+        font-size: 14px;
+    }
+
+
     .plant-rating {
-        font-size: 24px;
+        font-size: 18px;
     }
 
 
     .plant-price {
-        font-size: 24px;
+        font-size: 18px;
     }
 
 

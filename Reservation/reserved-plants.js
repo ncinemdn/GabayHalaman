@@ -143,12 +143,19 @@ function loadReservations() {
     }
 
 
+    // Add view all link
+    html += `
+        <div class="view-all">
+            <span class="view-all-link" onclick="scrollToTop()">View All</span>
+        </div>
+    `;
+
     container.innerHTML = html;
 }
 
 
 function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.location.href = '../CartPage/cart.html';
 }
 
 

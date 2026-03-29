@@ -1,6 +1,133 @@
 let historyStack = [];
 let futureStack = [];
 
+// Plant image mapping
+const plantImages = {
+    "Rambutan RR Tuklapin": "https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Mangosteen": "https://images.unsplash.com/photo-1706698352015-a907c7f8a445?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Durian Puyat": "https://images.unsplash.com/photo-1630510526315-aba311212355?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Tamarind": "https://images.unsplash.com/photo-1597081779002-314055fe24ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Bangkok Santol": "https://images.unsplash.com/photo-1737992468893-9c109da39f9b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Balimbing": "https://images.unsplash.com/photo-1760509614441-e9ca05cba0df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Avocado Lagkitan": "https://images.unsplash.com/photo-1726177551991-270f9e79b65e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Cacao": "https://images.unsplash.com/photo-1625558904461-6cf9d0a18a18?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Japanese Orange": "https://images.unsplash.com/photo-1769968065899-832195e26d5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Davao Pomelo": "https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Calamansi": "https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Lemon Meyer": "https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Queen Manggo": "https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Golden": "https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Red Guaple": "https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Lychee": "https://images.unsplash.com/photo-1705335834319-92a152363ea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Hybrid Mulberry": "https://images.unsplash.com/photo-1711641011417-3162af1e834c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Red Cardinal Grapes": "https://images.unsplash.com/photo-1660805376081-c6b01b7b78f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Guyabano": "https://images.unsplash.com/photo-1651565919334-bf81165cd0a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Pomegranate": "https://images.unsplash.com/photo-1761135174741-5507a710bb49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Longan": "https://images.unsplash.com/photo-1752368198532-4e5d4c892b91?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+};
+
+const DEFAULT_PLANT_IMAGE = "https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGZydWl0JTIwdHJlZXxlbnwxfHx8fDE3NzI5NTQxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+
+function getPlantImage(plantName) {
+    return plantImages[plantName] || DEFAULT_PLANT_IMAGE;
+}
+
+function loadCurrentOrder() {
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+
+    if (reservations.length === 0) {
+        return;
+    }
+
+    let itemsHTML = '';
+    let totalQty = 0;
+
+    reservations.forEach(item => {
+        totalQty += item.quantity;
+        itemsHTML += `<p>${item.name} (${item.quantity} pcs)</p>`;
+    });
+
+    const firstItemImage = reservations.length > 0 ? getPlantImage(reservations[0].name) : DEFAULT_PLANT_IMAGE;
+    const totalPrice = reservations.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const currentOrderHTML = `
+        <div class="order-card">
+            <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
+                <div class="product-image">
+                    <img alt="" src="${firstItemImage}" />
+                </div>
+                <div style="flex: 1;">
+                    <p class="order-category">Category : ${reservations[0].category}</p>
+                    <div class="order-items">
+                        ${itemsHTML}
+                    </div>
+                </div>
+                <p class="order-status pending">Confirmed</p>
+            </div>
+            
+            <div class="delivery-banner">
+                <p class="delivery-text">Order Confirmed Today</p>
+                <div class="delivery-chevron">
+                    <svg fill="none" preserveAspectRatio="none" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
+                        <path d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z" fill="#359C4D" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button class="order-btn disabled">Order Received</button>
+                <button class="order-btn primary" onclick="navigateTo('order-details')">Order Details</button>
+            </div>
+        </div>
+    `;
+
+    const container = document.getElementById('currentOrderContainer');
+    if (container) {
+        container.innerHTML = currentOrderHTML;
+    }
+}
+
+function trackCurrentOrder() {
+    navigateTo('track-order');
+}
+
+function loadOrderDetails() {
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+
+    if (reservations.length === 0) {
+        document.getElementById('detailsFullName').textContent = 'No Data';
+        return;
+    }
+
+    // Set image from first item
+    const firstItemImage = getPlantImage(reservations[0].name);
+    document.getElementById('detailsImage').src = firstItemImage;
+
+    // Set full name
+    document.getElementById('detailsFullName').textContent = deliveryDetails.fullName || 'N/A';
+
+    // Set phone
+    document.getElementById('detailsPhone').textContent = deliveryDetails.phone || 'N/A';
+
+    // Set address
+    document.getElementById('detailsAddress').textContent = deliveryDetails.address || 'N/A';
+
+    // Set items
+    let itemsHTML = '';
+    let totalQty = 0;
+    let totalPrice = 0;
+    reservations.forEach(item => {
+        totalQty += item.quantity;
+        totalPrice += item.price * item.quantity;
+        itemsHTML += `<p>${item.name} (${item.quantity} pcs)</p>`;
+    });
+    document.getElementById('detailsItems').innerHTML = itemsHTML;
+    document.getElementById('detailsTotalQty').textContent = totalQty;
+    document.getElementById('detailsTotalPrice').textContent = '₱' + totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2});
+}
+
 function updateHistoryButtons() {
   const backBtn = document.getElementById('back-btn');
   const forwardBtn = document.getElementById('forward-btn');
@@ -25,7 +152,9 @@ function navigateTo(pageId, fromHistory = false) {
     target.classList.add('active');
     window.scrollTo(0, 0);
 
-    if (pageId === 'track-order') {
+    if (pageId === 'order-details') {
+      loadOrderDetails();
+    } else if (pageId === 'track-order') {
       loadTrackOrder('123456');
     }
   }
@@ -153,5 +282,6 @@ async function loadTrackOrder(orderId) {
 
 // Initialize - show order list by default
 document.addEventListener('DOMContentLoaded', () => {
+  loadCurrentOrder();
   navigateTo('order-list');
 });
