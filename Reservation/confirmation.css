@@ -44,21 +44,22 @@ body {
 
 /* Header */
 .header {
-    background-color: #78a240;
-    padding: 1rem;
+  background: #7fa843;
+  padding: 18px 0 20px; /* thicker green navbar */
 }
 
 
 .header-inner {
     background-color: white;
-    border-radius: 50px;
-    padding: 1.5rem 2rem;
+    border-radius: 30px;
+    padding: 0.7rem 0.5rem;
     max-width: 1400px;
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.3rem;
+    min-height: 60px;
 }
 
 
@@ -67,19 +68,20 @@ body {
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
+    margin-right: 2rem;
 }
 
 
 .logo {
-    width: 80px;
-    height: 80px;
+    width: 42px;
+    height: 42px;
     border-radius: 30px;
     object-fit: cover;
 }
 
 
 .brand-text {
-    height: 20px;
+    height: 28px;
     width: auto;
     object-fit: contain;
 }
@@ -113,8 +115,9 @@ body {
 .header-icons {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
+    gap: 0.5rem;
     flex-shrink: 0;
+    margin-left: -0.25rem;
 }
 
 
@@ -122,8 +125,15 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
+    padding: 2px;
     transition: opacity 0.3s;
+    width: 26px;
+    height: 26px;
+}
+
+.icon-btn svg {
+    width: 22px;
+    height: 22px;
 }
 
 
