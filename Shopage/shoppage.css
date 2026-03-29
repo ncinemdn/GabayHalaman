@@ -13,52 +13,89 @@ background:white;
 /* HEADER */
 .header {
   background: #7fa843;
-  padding: 20px 10px 10px;;
+  padding: 18px 0 30px;
 }
 
-.nav-pill {
-  width: 1100px;
-  margin: auto;
-  background: white;
-  border-radius: 40px;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.header-inner {
+    background-color: white;
+    border-radius: 50px;
+    padding: 1.5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
 }
 
 .logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #7fa843;
-  color: white;
-  display: grid;
-  place-items: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 30px;
+    object-fit: cover;
 }
 
-.nav-links a {
-  margin: 0 14px;
-  text-decoration: none;
-  color: #333;
-  font-size: 14px;
+.brand-text {
+    height: 20px;
+    width: auto;
+    object-fit: contain;
 }
 
-.nav-links .active {
-  color: #7fa843;
-  font-weight: 600;
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex: 1;
+    justify-content: center;
 }
 
-.nav-icons {
-  font-size: 18px;
+.nav a, .nav p {
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
 }
+
+.nav a:hover, .nav p:hover {
+    text-decoration: underline;
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-shrink: 0;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.icon-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
 /* Shop Title Section */
 .shop-title-section {
     background-color: rgba(120, 162, 64, 0.5);
@@ -755,5 +792,247 @@ background:white;
 @media (min-width: 1280px) {
     .footer-links {
         gap: 96px;
+    }
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .header {
+        margin: 8px 16px 0;
+        padding: 10px 0 20px;
+    }
+
+    .header-inner {
+        padding: 1rem 1.5rem;
+        border-radius: 30px;
+    }
+
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .nav {
+        display: none;
+    }
+
+    .header-icons {
+        gap: 1rem;
+    }
+
+    .icon-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .shop-title-section {
+        padding: 32px 0;
+        margin-top: 32px;
+    }
+
+    .shop-title {
+        font-size: 32px;
+    }
+
+    .product-section {
+        padding: 16px 16px 32px;
+    }
+
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .main-image-container {
+        aspect-ratio: 1;
+        padding: 24px;
+    }
+
+    .thumbnails {
+        gap: 12px;
+    }
+
+    .thumbnail {
+        width: 60px;
+        height: 60px;
+    }
+
+    .product-details {
+        gap: 16px;
+    }
+
+    .product-title {
+        font-size: 20px;
+    }
+
+    .price {
+        font-size: 20px;
+    }
+
+    .description {
+        font-size: 14px;
+    }
+
+    .size-section {
+        gap: 12px;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+
+    .size-buttons {
+        gap: 8px;
+    }
+
+    .size-btn {
+        padding: 6px 16px;
+        font-size: 14px;
+    }
+
+    .reserve-btn {
+        margin-left: 0;
+        width: 100%;
+        font-size: 14px;
+        padding: 6px 24px;
+    }
+
+    .cart-controls {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .quantity-control {
+        gap: 8px;
+    }
+
+    .quantity-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+
+    .quantity-value {
+        padding: 0 8px;
+        font-size: 16px;
+    }
+
+    .action-buttons {
+        gap: 8px;
+    }
+
+    .add-to-cart-btn,
+    .buy-now-btn {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+
+    .tabs-section {
+        margin-top: 48px;
+    }
+
+    .tabs-header {
+        gap: 24px;
+    }
+
+    .tab-btn {
+        font-size: 16px;
+        padding-bottom: 6px;
+    }
+
+    .tab-body {
+        padding: 24px 32px;
+    }
+
+    .tab-body p {
+        font-size: 16px;
+    }
+
+    .more-products-section {
+        padding: 12px 12px 48px;
+    }
+
+    .more-header {
+        margin: 0 -12px 48px;
+        padding: 16px 0;
+    }
+
+    .more-title {
+        font-size: 32px;
+    }
+
+    .carousel-container {
+        padding: 0 60px;
+        gap: 60px;
+    }
+
+    .carousel-item {
+        opacity: 0.5;
+        filter: grayscale(50%);
+        transform: scale(0.9);
+    }
+
+    .carousel-item.center {
+        opacity: 1;
+        filter: grayscale(0%);
+        transform: scale(1);
+    }
+
+    .product-info {
+        margin-top: 16px;
+    }
+
+    .product-name {
+        font-size: 16px;
+    }
+
+    .product-rating {
+        font-size: 16px;
+    }
+
+    .carousel-arrow {
+        width: 48px;
+        height: 48px;
+    }
+
+    .footer-container {
+        padding: 48px 16px;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .footer-left {
+        gap: 24px;
+    }
+
+    .footer-links {
+        gap: 32px;
+    }
+
+    .footer-column {
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .shop-title {
+        font-size: 24px;
+    }
+
+    .more-title {
+        font-size: 24px;
+    }
+
+    .carousel-container {
+        padding: 0 40px;
+        gap: 40px;
+    }
+
+    .footer-links {
+        flex-direction: column;
+        gap: 24px;
     }
 }

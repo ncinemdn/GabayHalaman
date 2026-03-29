@@ -7,7 +7,7 @@
 
 
 body {
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     background: white;
     overflow-x: hidden;
 }
@@ -21,152 +21,90 @@ body {
 }
 
 
-/* Header Styles */
+/* HEADER */
 .header {
-    position: relative;
-    height: 183px;
-    background: #78a240;
+  background: #7fa843;
+  padding: 18px 0 30px;
 }
 
-
-.header-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 122px;
-    background: #78a240;
-}
-
-
-.header-content {
-    position: absolute;
-    top: 61px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 1292px;
-    height: 122px;
-    background: white;
+.header-inner {
+    background-color: white;
     border-radius: 50px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 3rem;
-    z-index: 10;
+    gap: 1rem;
 }
-
 
 .logo-section {
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex-shrink: 0;
 }
 
-
-.logo-image {
-    width: 116px;
-    height: 116px;
+.logo {
+    width: 80px;
+    height: 80px;
     border-radius: 30px;
-    overflow: hidden;
-}
-
-
-.logo-image img {
-    width: 100%;
-    height: 100%;
     object-fit: cover;
 }
-
 
 .brand-text {
     height: 20px;
-    width: 198px;
+    width: auto;
+    object-fit: contain;
 }
 
-
-.brand-text img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50px;
-}
-
-
-.navigation {
+.nav {
     display: flex;
     align-items: center;
     gap: 2rem;
+    flex: 1;
+    justify-content: center;
 }
 
-
-.nav-link {
+.nav a, .nav p {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
     font-size: 20px;
-    color: #3b4e31;
+    color: black;
     text-decoration: none;
     cursor: pointer;
-    transition: color 0.3s;
+    white-space: nowrap;
 }
 
-
-.nav-link:hover {
-    color: #2d3a25;
+.nav a:hover, .nav p:hover {
+    text-decoration: underline;
 }
-
-
-.nav-dropdown {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-}
-
-
-.nav-icon {
-    width: 24px;
-    height: 24px;
-}
-
 
 .header-icons {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.25rem;
+    flex-shrink: 0;
 }
-
 
 .icon-btn {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
-    transition: transform 0.2s;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.2s;
 }
-
 
 .icon-btn:hover {
-    transform: scale(1.1);
+    background-color: rgba(0, 0, 0, 0.1);
 }
 
-
-.search-btn {
-    width: 27px;
-    height: 30px;
-}
-
-
-.cart-btn {
-    width: 31px;
-    height: 33px;
-}
-
-
-.icon-svg {
-    width: 100%;
-    height: 100%;
+.icon-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
 }
 
 
@@ -937,62 +875,67 @@ body {
 
 
 @media (max-width: 768px) {
-    .header-content {
-        flex-direction: column;
-        height: auto;
-        padding: 1.5rem;
+    .header {
+        padding: 10px 0 20px;
+    }
+
+    .header-inner {
+        padding: 1rem 1.5rem;
+        border-radius: 30px;
+    }
+
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .nav {
+        display: none;
+    }
+
+    .header-icons {
         gap: 1rem;
     }
 
-
-    .navigation {
-        flex-direction: column;
-        gap: 0.5rem;
+    .icon-btn svg {
+        width: 20px;
+        height: 20px;
     }
-
 
     .hero-title {
         font-size: 64px;
     }
-
 
     .hero-quote,
     .hero-author {
         font-size: 18px;
     }
 
-
     .hero-btn {
         font-size: 20px;
         padding: 0.75rem 2rem;
     }
 
-
     .section-title {
         font-size: 64px;
     }
-
 
     .trending-title {
         font-size: 48px;
     }
 
-
     .carousel-container {
         padding: 2rem 0;
     }
-
 
     .carousel-btn {
         width: 60px;
         height: 60px;
     }
 
-
     .product-card {
         flex: 0 0 300px;
     }
-
 
     .product-card-inner {
         width: 300px;
