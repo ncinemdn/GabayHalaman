@@ -293,7 +293,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-page]').forEach(item => {
         item.addEventListener('click', function() {
             const page = this.getAttribute('data-page');
-            loadPage(page);
+            if (page === 'catalog') {
+                window.location.href = '../PlantCatalog/plantcatalog.html';
+            } else {
+                loadPage(page);
+            }
         });
     });
 
