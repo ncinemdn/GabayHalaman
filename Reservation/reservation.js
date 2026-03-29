@@ -158,7 +158,9 @@ function updatePlantDisplay() {
     }
 
 
-    const plants = plantsByCategory[category] || [];
+    const allPlants = plantsByCategory[category] || [];
+    // Limit to maximum 8 plants per category to reduce scrolling
+    const plants = allPlants.slice(0, 8);
     const plantsHTML = plants.map(plant => {
         const selectedPlantData = getSelectedPlant(plant.id);
         const isSelected = Boolean(selectedPlantData);
