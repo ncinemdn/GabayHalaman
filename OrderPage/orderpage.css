@@ -269,8 +269,8 @@ body {
   font-weight: bold;
   font-style: normal;
   font-size: 27px;
-  display: block;
-  margin-top: 10px;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .order-status.delivered {
@@ -286,8 +286,7 @@ body {
   background: #cee9d5;
   height: 58px;
   border-radius: 10px;
-  width: min(80vw, 1186px);
-  margin: 2rem auto;
+  margin: 1.5rem 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -314,7 +313,7 @@ body {
 .product-image {
   height: 335px;
   width: 239px;
-  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .product-image img {
@@ -356,8 +355,8 @@ body {
   display: flex;
   gap: 20px;
   justify-content: center;
-  margin: 2rem auto;
-  width: min(90vw, 1100px);
+  margin: 1.5rem 0 0 0;
+  width: 100%;
 }
 
 .nav-controls {
