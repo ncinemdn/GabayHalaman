@@ -239,3 +239,151 @@ body {
 .features span {
   font-size: 13px;
 }
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .nav-pill {
+    width: 90vw;
+  }
+
+  .hero-inner {
+    width: 90vw;
+  }
+
+  .promos {
+    width: 90vw;
+  }
+
+  .features {
+    width: 90vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 10px 0 20px;
+  }
+
+  .nav-pill {
+    padding: 8px 16px;
+    border-radius: 30px;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nav-links a {
+    margin: 0 8px;
+    font-size: 12px;
+  }
+
+  .nav-icons {
+    font-size: 16px;
+  }
+
+  .hero {
+    padding: 40px 0;
+  }
+
+  .hero-inner {
+    flex-direction: column;
+    gap: 40px;
+    text-align: center;
+  }
+
+  .hero-text {
+    text-align: center;
+  }
+
+  .hero-text .script {
+    font-size: 24px;
+  }
+
+  .hero-text h1 {
+    font-size: 32px;
+  }
+
+  .cta {
+    font-size: 12px;
+    padding: 6px 16px;
+  }
+
+  .scroll-btn {
+    right: 20px;
+    bottom: 20px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .trending {
+    padding: 40px 0;
+  }
+
+  .pill-tabs {
+    margin: 16px 0 32px;
+  }
+
+  .pill {
+    padding: 4px 12px;
+    margin: 0 4px;
+    font-size: 12px;
+  }
+
+  .product-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .product-card {
+    width: 250px;
+  }
+
+  .promos {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .promo {
+    padding: 24px;
+  }
+
+  .features-wrap {
+    padding: 20px 0;
+  }
+
+  .features {
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-text h1 {
+    font-size: 24px;
+  }
+
+  .hero-text .script {
+    font-size: 20px;
+  }
+
+  .product-card {
+    width: 200px;
+    padding: 16px;
+  }
+
+  .plant {
+    height: 100px;
+  }
+
+  .promo {
+    padding: 20px;
+  }
+}
