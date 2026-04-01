@@ -25,8 +25,8 @@
 
         /* Header */
         .header {
-            background-color: #78a240;
-            padding: 1rem;
+            background: #7fa843;
+            padding: 18px 0 20px;
         }
 
         .header-inner {
@@ -39,6 +39,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
+            min-height: 80px;
             box-shadow: 0 6px 25px rgba(0,0,0,0.08);
         }
 
@@ -96,12 +97,13 @@
             background: none;
             border: none;
             cursor: pointer;
-            padding: 0;
-            transition: opacity 0.3s;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background-color 0.2s;
         }
 
         .icon-btn:hover {
-            opacity: 0.7;
+            background-color: rgba(0,0,0,0.1);
         }
 
         /* Main Container */
