@@ -13,39 +13,42 @@ background:white;
 /* HEADER */
 .header {
   background: #7fa843;
-  padding: 18px 0 30px;
+  padding: 18px 0 20px;
 }
 
 .header-inner {
-    background-color: white;
-    border-radius: 50px;
-    padding: 1.5rem 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+  background-color: white;
+  border-radius: 50px;
+  padding: 1.5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 80px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.08);
 }
 
 .logo-section {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .logo {
-    width: 80px;
-    height: 80px;
-    border-radius: 30px;
-    object-fit: cover;
+  width: 80px;
+  height: 80px;
+  border-radius: 30px;
+  object-fit: cover;
 }
 
 .brand-text {
-    height: 20px;
-    width: auto;
-    object-fit: contain;
+  height: 20px;
+  width: auto;
+  object-fit: contain;
 }
 
 .nav {

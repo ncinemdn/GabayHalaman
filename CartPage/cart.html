@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gabay & Halaman | Cart</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.2px;
+}
+
+.serif {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.3px;
+}
+
+/* COLORS */
+:root{
+    --green:#7ea33d;
+}
+
+/* SHADOWS */
+.nav-shadow { box-shadow: 0 6px 25px rgba(0,0,0,0.08); }
+.card-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
+.soft-shadow { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+/* BUTTON */
+.btn-green { background: var(--green); }
+.btn-green:hover { filter: brightness(0.95); }
+
+/* Header Styles */
+.header {
+    background: #7fa843;
+    padding: 18px 0 20px;
+}
+
+.header-inner {
+    background-color: white;
+    border-radius: 50px;
+    padding: 1.5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 80px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 30px;
+    object-fit: cover;
+}
+
+.brand-text {
+    height: 20px;
+    width: auto;
+    object-fit: contain;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.nav a, .nav p {
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.nav a:hover, .nav p:hover {
+    text-decoration: underline;
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-shrink: 0;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background-color: rgba(0,0,0,0.1);
+}
+
+@media (max-width: 1024px) {
+    .nav {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-inner {
+        padding: 1rem 1.5rem;
+        border-radius: 30px;
+    }
+
+    .logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 20px;
+    }
+}
+</style>
+
+</head>
+
+<body class="bg-white min-h-screen">
+
+<!-- Header -->
+<header class="header">
+    <div class="header-inner">
+        <a href="../LandingPage/landingpage.html" class="logo-section">
+            <img src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200" alt="Logo" class="logo">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30'%3E%3Ctext x='0' y='20' font-family='Inria Serif' font-weight='700' font-size='18' fill='%23000000'%3EGabay Halaman%3C/text%3E%3C/svg%3E" alt="Gabay Halaman" class="brand-text">
+        </a>
+       
+        <nav class="nav">
+            <a href="../LandingPage/landingpage.html">Home</a>
+            <a href="../Shopage/Shoppage.html">Shop</a>
+            <a href="../Reservation/reservation.html">More</a>
+        </nav>
+
+        <div class="header-icons">
+            <button class="icon-btn" aria-label="Search">
+                <svg width="27" height="30" fill="none" viewBox="0 0 27 30">
+                    <path d="M22.05 26.25L14.9625 18.375C14.4 18.875 13.7531 19.2708 13.0219 19.5625C12.2906 19.8542 11.5125 20 10.6875 20C8.64375 20 6.91406 19.2135 5.49844 17.6406C4.08281 16.0677 3.375 14.1458 3.375 11.875C3.375 9.60417 4.08281 7.68229 5.49844 6.10937C6.91406 4.53646 8.64375 3.75 10.6875 3.75C12.7312 3.75 14.4609 4.53646 15.8766 6.10937C17.2922 7.68229 18 9.60417 18 11.875C18 12.7917 17.8687 13.6562 17.6062 14.4687C17.3437 15.2812 16.9875 16 16.5375 16.625L23.625 24.5L22.05 26.25ZM10.6875 17.5C12.0937 17.5 13.2891 16.9531 14.2734 15.8594C15.2578 14.7656 15.75 13.4375 15.75 11.875C15.75 10.3125 15.2578 8.98437 14.2734 7.89062C13.2891 6.79687 12.0937 6.25 10.6875 6.25C9.28125 6.25 8.08594 6.79687 7.10156 7.89062C6.11719 8.98437 5.625 10.3125 5.625 11.875C5.625 13.4375 6.11719 14.7656 7.10156 15.8594C8.08594 16.9531 9.28125 17.5 10.6875 17.5Z" fill="black"/>
+                </svg>
+            </button>
+           
+            <a href="../Reservation/reserved-plants.html" class="icon-btn" aria-label="View reservations">
+                <svg width="31" height="33" fill="none" viewBox="0 0 31 33">
+                    <path d="M9.42917 28.875C8.61111 28.875 7.91146 28.5599 7.33021 27.9297C6.74896 27.2995 6.45833 26.549 6.45833 25.6781V12.925L4.10104 6.875H1.29167V4.125H5.84479L7.97604 9.625H27.0604C27.5556 9.625 27.9323 9.84271 28.1906 10.2781C28.449 10.7135 28.4597 11.1604 28.2229 11.6187L24.5417 19.2844C25.6396 19.4677 26.5599 20.0062 27.3026 20.9C28.0453 21.7937 28.4167 22.8479 28.4167 24.0625C28.4167 25.3917 27.9807 26.526 27.1089 27.4656C26.237 28.4052 25.1767 28.875 23.9281 28.875C22.658 28.875 21.587 28.4052 20.7151 27.4656C19.8432 26.526 19.4073 25.3917 19.4073 24.0625C19.4073 23.6042 19.4611 23.1802 19.5687 22.7906C19.6764 22.401 19.8271 22.0229 20.0208 21.6562L15.7906 21.2437L11.9156 27.4313C11.6358 27.8896 11.2752 28.2448 10.8339 28.4969C10.3925 28.749 9.92431 28.875 9.42917 28.875ZM21.7646 19.0781L24.9615 12.375H9.04167L10.6562 16.5C10.8285 16.9583 11.103 17.3422 11.4797 17.6516C11.8564 17.9609 12.2924 18.1385 12.7875 18.1844L21.7646 19.0781ZM9.46146 26.0906C9.50451 26.0906 9.60139 26.0333 9.75208 25.9187L12.8844 20.9687C11.8295 20.8542 11.0007 20.5849 10.3979 20.1609C9.79514 19.737 9.34306 19.2958 9.04167 18.8375V25.7125C9.04167 25.8271 9.08472 25.9187 9.17083 25.9875C9.25694 26.0562 9.35382 26.0906 9.46146 26.0906ZM23.8958 26.125C24.4556 26.125 24.9184 25.9245 25.2844 25.5234C25.6503 25.1224 25.8333 24.6354 25.8333 24.0625C25.8333 23.4667 25.6503 22.974 25.2844 22.5844C24.9184 22.1948 24.4556 22 23.8958 22C23.3576 22 22.9002 22.1948 22.5234 22.5844C22.1467 22.974 21.9583 23.4667 21.9583 24.0625C21.9583 24.6354 22.1467 25.1224 22.5234 25.5234C22.9002 25.9245 23.3576 26.125 23.8958 26.125Z" fill="black"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- MAIN -->
+<div class="max-w-[1120px] mx-auto px-8 py-8">
+
+<h1 class="serif text-[40px] font-bold mb-12">Your cart</h1>
+
+<div class="flex gap-10 flex-col lg:flex-row">
+
+<!-- LEFT -->
+<div id="cart" class="lg:w-[60%] space-y-5"></div>
+
+<!-- RIGHT -->
+<div class="lg:w-[40%]">
+<div class="bg-white rounded-[20px] p-8 card-shadow sticky top-20">
+
+<h2 class="serif text-[24px] font-bold mb-8">Order Summary</h2>
+
+<div class="space-y-5 text-[15px] mb-8">
+<div class="flex justify-between">
+<span id="count">Subtotal (3 items)</span>
+<span id="subtotal" class="font-semibold">₱1,999.00</span>
+</div>
+
+<div class="flex justify-between">
+<span>Shipping</span>
+<span class="font-bold">FREE</span>
+</div>
+</div>
+
+<div class="border-t border-gray-300 my-6"></div>
+
+<div class="flex justify-between mb-8 text-[16px]">
+<span class="font-bold">Total</span>
+<span id="total" class="font-bold text-[18px]">₱1,999.00</span>
+</div>
+
+<button id="deliveryBtn" class="w-full py-4 rounded-[18px] text-white text-[16px] font-semibold btn-green mb-3 soft-shadow transition hover:opacity-90">
+Add Delivery Details
+</button>
+
+<button id="placeOrderBtn" class="w-full py-4 rounded-[18px] text-white text-[16px] font-semibold soft-shadow transition" style="background-color: #d1d5db; cursor: not-allowed;" disabled>
+Place Order
+</button>
+
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const DEFAULT_PLANT_IMAGE = "https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGZydWl0JTIwdHJlZXxlbnwxfHx8fDE3NzI5NTQxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
+
+const plantImages = {
+    "Rambutan RR Tuklapin": "https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Mangosteen": "https://images.unsplash.com/photo-1706698352015-a907c7f8a445?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Durian Puyat": "https://images.unsplash.com/photo-1630510526315-aba311212355?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Tamarind": "https://images.unsplash.com/photo-1597081779002-314055fe24ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Bangkok Santol": "https://images.unsplash.com/photo-1737992468893-9c109da39f9b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Balimbing": "https://images.unsplash.com/photo-1760509614441-e9ca05cba0df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Avocado Lagkitan": "https://images.unsplash.com/photo-1726177551991-270f9e79b65e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Cacao": "https://images.unsplash.com/photo-1625558904461-6cf9d0a18a18?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Japanese Orange": "https://images.unsplash.com/photo-1769968065899-832195e26d5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Davao Pomelo": "https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Calamansi": "https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Lemon Meyer": "https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Queen Manggo": "https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Golden": "https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Red Guaple": "https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Lychee": "https://images.unsplash.com/photo-1705335834319-92a152363ea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Hybrid Mulberry": "https://images.unsplash.com/photo-1711641011417-3162af1e834c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Red Cardinal Grapes": "https://images.unsplash.com/photo-1660805376081-c6b01b7b78f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Guyabano": "https://images.unsplash.com/photo-1651565919334-bf81165cd0a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Pomegranate": "https://images.unsplash.com/photo-1761135174741-5507a710bb49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Longan": "https://images.unsplash.com/photo-1752368198532-4e5d4c892b91?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Golden Trumpet": "https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Pink Trumpet": "https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Golden Shower": "https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Fire Tree": "https://images.unsplash.com/photo-1683356478048-ea3261e194b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Ilang Ilang": "https://images.unsplash.com/photo-1552017650-c117c3535f68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Jacaranda": "https://images.unsplash.com/photo-1695389591261-ee471f900c62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Pine Tree": "https://images.unsplash.com/photo-1643550265302-a91ec947eb43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Palm Tree": "https://images.unsplash.com/photo-1761001826491-91409e63205a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Dates Palm": "https://images.unsplash.com/photo-1679219904448-30361b35773a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Palawan Cherry Blossom 3ft": "https://images.unsplash.com/photo-1712725256207-e15286c6ede3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Mahogany": "https://images.unsplash.com/photo-1544840281-274ae2755620?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Narra": "https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Pole Bamboo": "https://images.unsplash.com/photo-1696677049444-f695a0935b49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Arabica Coffee": "https://images.unsplash.com/photo-1689960686579-16b860f7c502?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400"
+};
+
+function getPlantImage(plantName) {
+    return plantImages[plantName] || DEFAULT_PLANT_IMAGE;
+}
+
+let data = [];
+
+function loadReservationsToCart() {
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    data = reservations.map((res, index) => ({
+        id: index + 1,
+        name: res.name,
+        price: res.price,
+        qty: res.quantity,
+        img: getPlantImage(res.name)
+    }));
+    render();
+}
+
+function render(){
+    const container = document.getElementById("cart");
+
+    if (data.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <p class="text-gray-500 mb-4">Your cart is empty</p>
+                <a href="../Shopage/Shoppage.html" class="text-[#7ea33d] font-semibold">Continue Shopping</a>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = data.map(item => `
+        <div class="bg-[#f3f1f7] rounded-[20px] p-6 flex justify-between items-center card-shadow transition hover:shadow-lg">
+
+            <div class="flex items-center gap-4 flex-1">
+                <img src="${item.img}" class="w-[120px] h-[120px] object-cover rounded-[15px] flex-shrink-0" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
+                <div>
+                    <h3 class="serif text-[18px] font-semibold leading-tight">${item.name}</h3>
+                    <p class="font-bold text-[16px] mt-2">₱ ${item.price}</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 flex-shrink-0">
+
+                <div class="bg-gray-300 rounded-full flex items-center px-3 py-1 h-[38px] min-w-[110px] justify-between">
+                    <button class="font-bold text-[16px]" onclick="qty(${item.id},-1)">−</button>
+                    <span class="font-semibold text-[14px]">${item.qty}</span>
+                    <button class="font-bold text-[16px]" onclick="qty(${item.id},1)">+</button>
+                </div>
+
+                <button onclick="del(${item.id})" class="text-red-500 text-xl">🗑</button>
+
+            </div>
+
+        </div>
+    `).join("");
+
+    update();
+}
+
+function qty(id,change){
+    let item = data.find(i=>i.id===id);
+    item.qty = Math.max(1, item.qty + change);
+    render();
+}
+
+function del(id){
+    data = data.filter(i=>i.id!==id);
+    render();
+}
+
+function update(){
+    let totalQty = data.reduce((a,b)=>a+b.qty,0);
+    let totalPrice = data.reduce((a,b)=>a+(b.price*b.qty),0);
+
+    document.getElementById("count").innerText = `Subtotal (${totalQty} items)`;
+
+    let price = "₱ " + totalPrice.toLocaleString("en-PH",{minimumFractionDigits:2});
+
+    document.getElementById("subtotal").innerText = price;
+    document.getElementById("total").innerText = price;
+}
+
+function placeOrder(){
+    window.location.href = '../OrderPage/orderpage.html';
+}
+
+function updateButtonStates() {
+    const deliveryDetails = localStorage.getItem('deliveryDetails');
+    const deliveryBtn = document.getElementById('deliveryBtn');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+    if (deliveryDetails) {
+        // Delivery details exist
+        deliveryBtn.textContent = 'Edit Delivery Details';
+        deliveryBtn.onclick = () => window.location.href = 'details.html';
+        
+        placeOrderBtn.textContent = 'Place Order';
+        placeOrderBtn.style.backgroundColor = '#ffc107';
+        placeOrderBtn.style.color = '#000';
+        placeOrderBtn.style.cursor = 'pointer';
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.onclick = placeOrder;
+    } else {
+        // No delivery details
+        deliveryBtn.textContent = 'Add Delivery Details';
+        deliveryBtn.onclick = () => window.location.href = 'details.html';
+        
+        placeOrderBtn.textContent = 'Place Order';
+        placeOrderBtn.style.backgroundColor = '#d1d5db';
+        placeOrderBtn.style.color = '#fff';
+        placeOrderBtn.style.cursor = 'not-allowed';
+        placeOrderBtn.disabled = true;
+        placeOrderBtn.onclick = null;
+    }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    loadReservationsToCart();
+    updateButtonStates();
+});
+</script>
+
+</body>
+</html>

@@ -287,8 +287,8 @@ function handleReserve() {
         id: plant.id,
     }));
 
-    const existingReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-    localStorage.setItem('reservations', JSON.stringify([...existingReservations, ...reservations]));
+    localStorage.setItem('reservations', JSON.stringify(reservations));
+    localStorage.removeItem('deliveryDetails');
 
     window.location.href = 'confirmation.html';
 }
