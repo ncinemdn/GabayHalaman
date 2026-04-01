@@ -14,19 +14,89 @@ body {
 /* HEADER */
 .header {
   background: #7fa843;
-  padding: 18px 0 20px; /* thicker green navbar */
+  padding: 18px 0 20px;
 }
 
-
-.nav-pill {
-  width: 1100px;
-  margin: auto;
-  background: white;
+.header-inner {
+  background-color: white;
   border-radius: 50px;
-  padding: 20px 20px;
+  padding: 1.5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+  min-height: 80px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 30px;
+  object-fit: cover;
+}
+
+.brand-text {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav a, .nav p {
+  font-family: 'Inria Serif', serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav a:hover, .nav p:hover {
+  text-decoration: underline;
+}
+
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.icon-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-btn:hover {
+  background-color: rgba(0,0,0,0.1);
 }
 
 
