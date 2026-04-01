@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gabay Halaman | Profile Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="profilestyle.css">
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <img src="bb.png" alt="Gabay Halaman Logo" class="logo-img">
+                <div class="logo-text">
+                    <span class="brand-name">GABAY<span class="brand-sub">HALAMAN</span></span>
+                    <span class="admin-panel-label">Admin Panel</span>
+                </div>
+            </div>
+            <button class="close-sidebar" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="#"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
+                <li><a href="#"><i class="fa-solid fa-leaf"></i> Plant Catalog Management</a></li>
+                <li><a href="#"><i class="fa-solid fa-bag-shopping"></i> Purchase / Reservation</a></li>
+                <li><a href="#"><i class="fa-solid fa-truck"></i> Delivery Scheduling</a></li>
+                <li class="active"><a href="#"><i class="fa-solid fa-user-gear"></i> Profile Management</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <ul>
+                    <li><a href="#"><i class="fa-solid fa-circle-question"></i> Help</a></li>
+                    <li><a href="#"><i class="fa-solid fa-right-from-bracket"></i> Log - Out</a></li>
+                </ul>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main-wrapper">
+        <header class="top-navbar">
+            <div class="navbar-left">
+                <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search plants, orders ...">
+                </div>
+            </div>
+            <div class="navbar-right">
+                <div class="user-profile-nav">
+                    <div class="user-info-mini">
+                        <span class="user-name-mini">Bae Suzy</span>
+                        <span class="user-role-mini">Admin</span>
+                    </div>
+                    <div class="avatar-mini">
+                        <img src="cc.jpg" alt="Admin Avatar">
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="content-container">
+            <header class="page-title-section">
+                <h1>Profile Management</h1>
+                <p>Admin profile and activity transaction log</p>
+            </header>
+
+            <div class="card profile-card">
+                <h2 class="section-label">Admin Profile</h2>
+                <div class="profile-content">
+                    <div class="profile-image">
+                        <img src="cc.jpg" alt="Admin Profile Picture">
+                    </div>
+                    <div class="profile-details">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <label>Full Name</label>
+                                <p>Bae Suzy</p>
+                            </div>
+                            <div class="detail-item">
+                                <label>Role</label>
+                                <p>Administrator</p>
+                            </div>
+                            <div class="detail-item">
+                                <label>Email Address</label>
+                                <p>baesuzy22@gmail.com</p>
+                            </div>
+                            <div class="detail-item">
+                                <label>Phone</label>
+                                <p>0912-987-6543</p>
+                            </div>
+                        </div>
+                        <div class="profile-actions">
+                            <button class="btn btn-primary">Edit Profile</button>
+                            <button class="btn btn-outline"><i class="fa-solid fa-lock"></i> Change Password</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card log-card">
+                <div class="log-header">
+                    <h2>Transaction Log</h2>
+                </div>
+                <div class="log-body">
+                    <div class="log-search">
+                        <div class="search-box inner-search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" placeholder="Search Log">
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="transaction-table">
+                            <thead>
+                                <tr>
+                                    <th>LOG ID</th>
+                                    <th>DATE & TIME</th>
+                                    <th>ACTION PERFORMED</th>
+                                    <th>MODULE USED</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>#LOG-1001</strong></td>
+                                    <td>2026-02-10 11:39 AM</td>
+                                    <td>Add new plant: African Talisay</td>
+                                    <td>Plant Catalog</td>
+                                    <td><span class="status-badge success">Success</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>#LOG-1002</strong></td>
+                                    <td>2026-02-10 11:45 AM</td>
+                                    <td>Update quantity of plant: Mangosteen</td>
+                                    <td>Plant Catalog</td>
+                                    <td><span class="status-badge success">Success</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>#LOG-1003</strong></td>
+                                    <td>2026-02-10 11:39 AM</td>
+                                    <td>Add new plant: African Talisay</td>
+                                    <td>Plant Catalog</td>
+                                    <td><span class="status-badge success">Success</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>#LOG-1004</strong></td>
+                                    <td>2026-02-10 11:39 AM</td>
+                                    <td>Add new plant: African Talisay</td>
+                                    <td>Plant Catalog</td>
+                                    <td><span class="status-badge success">Success</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="profilestyle.js"></script>
+</body>
+</html>
