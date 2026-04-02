@@ -2,9 +2,10 @@
 
 
 // State management
-let currentProductIndex = 0;
+let currentProductIndex = 1;
 let selectedTab = 'new';
 const products = ['Calamansi', 'Pine Tree', 'Thai Bamboo'];
+let updateCarouselPosition = null;
 
 
 // Initialize on DOM load
@@ -48,10 +49,11 @@ function initializeTabs() {
 function initializeCarousel() {
     const prevBtn = document.querySelector('.carousel-btn-prev');
     const nextBtn = document.querySelector('.carousel-btn-next');
-    const productCards = document.querySelectorAll('.product-card');
+    const productCards = Array.from(document.querySelectorAll('.product-card'));
     const productTrack = document.querySelector('.product-track');
+    const productsWrapper = document.querySelector('.products-wrapper');
    
-    if (!prevBtn || !nextBtn || !productTrack) {
+    if (!prevBtn || !nextBtn || !productTrack || !productsWrapper || productCards.length === 0) {
         console.error('Carousel elements not found');
         return;
     }
@@ -81,29 +83,24 @@ function initializeCarousel() {
 
     // Update carousel position and styling
     function updateCarousel() {
-        const cardWidth = 398; // Width of each card
-        const gap = 32; // Gap between cards (2rem)
-        const totalWidth = cardWidth + gap;
-       
-        // Calculate the offset to center the current product
-        const offset = -currentProductIndex * totalWidth;
-       
-        // Apply transform to slide the carousel
-        productTrack.style.transform = `translateX(${offset}px)`;
-       
-        // Update card opacity and scale
+        const cardWidth = productCards[0].offsetWidth;
+        const trackStyle = window.getComputedStyle(productTrack);
+        const gap = parseFloat(trackStyle.columnGap || trackStyle.gap || '0') || 0;
+        const step = cardWidth + gap;
+        const wrapperWidth = productsWrapper.clientWidth;
+
+        // Keep selected card centered in wrapper.
+        const centeredOffset = (wrapperWidth / 2) - ((currentProductIndex * step) + (cardWidth / 2));
+        productTrack.style.transform = `translateX(${centeredOffset}px)`;
+
         productCards.forEach((card, index) => {
             const distance = Math.abs(index - currentProductIndex);
-           
-            if (distance === 0) {
-                card.style.opacity = '1';
-                card.style.transform = 'scale(1)';
-            } else {
-                card.style.opacity = '0.6';
-                card.style.transform = 'scale(0.9)';
-            }
+            card.style.opacity = distance === 0 ? '1' : '0.6';
+            card.style.transform = distance === 0 ? 'scale(1)' : 'scale(0.9)';
         });
     }
+
+    updateCarouselPosition = updateCarousel;
 
 
     // Initialize carousel position
@@ -562,15 +559,8 @@ let resizeTimer;
 window.addEventListener('resize', function() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function() {
-        console.log('Window resized, recalculating layout');
-        // Recalculate carousel position if needed
-        const productTrack = document.querySelector('.product-track');
-        if (productTrack) {
-            const cardWidth = 398;
-            const gap = 32;
-            const totalWidth = cardWidth + gap;
-            const offset = -currentProductIndex * totalWidth;
-            productTrack.style.transform = `translateX(${offset}px)`;
+        if (typeof updateCarouselPosition === 'function') {
+            updateCarouselPosition();
         }
     }, 250);
 });
@@ -588,14 +578,10 @@ window.LandingPage = {
     addToCart,
     addToFavorites,
     goToProduct: (index) => {
+        if (index < 0 || index >= products.length) return;
         currentProductIndex = index;
-        const productTrack = document.querySelector('.product-track');
-        if (productTrack) {
-            const cardWidth = 398;
-            const gap = 32;
-            const totalWidth = cardWidth + gap;
-            const offset = -currentProductIndex * totalWidth;
-            productTrack.style.transform = `translateX(${offset}px)`;
+        if (typeof updateCarouselPosition === 'function') {
+            updateCarouselPosition();
         }
     }
 };
