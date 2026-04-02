@@ -42,96 +42,86 @@ body {
 }
 
 
-/* Header */
+/* HEADER BACKGROUND */
 .header {
   background: #7fa843;
-  padding: 18px 0 20px;
+  padding: 20px 0;
 }
 
+/* WHITE NAVBAR */
 .header-inner {
-  background-color: white;
+  background-color: #ffffff;
   border-radius: 50px;
-  padding: 1.5rem 2rem;
-  max-width: 1400px;
+  padding: 12px 28px;
+  max-width: 1300px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  min-height: 80px;
-  box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
+/* LOGO SECTION */
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-shrink: 0;
+  gap: 12px;
   text-decoration: none;
 }
 
-
 .logo {
-    width: 80px;
-    height: 80px;
-    border-radius: 30px;
-    object-fit: cover;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-
+/* TEXT LOGO */
 .brand-text {
-    height: 20px;
-    width: auto;
-    object-fit: contain;
+  height: 24px;
 }
 
-
+/* NAV LINKS */
 .nav {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    flex: 1;
-    justify-content: center;
+  display: flex;
+  gap: 40px;
 }
 
-
-.nav a, .nav p {
-    font-family: 'Inria Serif', serif;
-    font-weight: 700;
-    font-size: 20px;
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-    white-space: nowrap;
+.nav a {
+  font-family: 'Inria Serif', serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: black;
+  text-decoration: none;
+  transition: 0.2s;
 }
 
-
-.nav a:hover, .nav p:hover {
-    text-decoration: underline;
+.nav a:hover {
+  opacity: 0.6;
 }
 
-
+/* ICONS */
 .header-icons {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
-
 
 .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    transition: opacity 0.3s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
 }
 
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
 
 .icon-btn:hover {
-    opacity: 0.7;
+  opacity: 0.6;
 }
-
 
 /* Main Container */
 .container {
