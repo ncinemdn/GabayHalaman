@@ -93,6 +93,7 @@ function initializeCarousel() {
 
         productCards.forEach((card, index) => {
             const distance = Math.abs(index - currentProductIndex);
+            card.classList.toggle('is-active', distance === 0);
             card.style.opacity = distance === 0 ? '1' : '0.6';
             card.style.transform = distance === 0 ? 'scale(1)' : 'scale(0.9)';
         });
