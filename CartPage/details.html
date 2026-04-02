@@ -86,6 +86,54 @@
             text-decoration: underline;
         }
 
+        .nav-dropdown {
+            position: relative;
+        }
+
+        .nav-dropdown-toggle {
+            font-family: 'Inria Serif', serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: black;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            white-space: nowrap;
+        }
+
+        .nav-dropdown-toggle:hover {
+            text-decoration: underline;
+        }
+
+        .nav-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 170px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .nav-dropdown-menu a {
+            display: block;
+            padding: 10px 16px;
+            font-size: 16px;
+            white-space: nowrap;
+            pointer-events: auto;
+        }
+
+        .nav-dropdown:hover .nav-dropdown-menu {
+            display: block;
+            pointer-events: auto;
+        }
+
         .header-icons {
             display: flex;
             align-items: center;
@@ -277,7 +325,13 @@
             <nav class="nav">
                 <a href="../LandingPage/landingpage.html">Home</a>
                 <a href="../Shopage/Shoppage.html">Shop</a>
-                <a href="../Reservation/reservation.html">More</a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle" type="button">More</button>
+                    <div class="nav-dropdown-menu">
+                        <a href="../LandingPage/landingpage.html#about-us">About Us</a>
+                        <a href="../LandingPage/landingpage.html#users-manual">Users Manual</a>
+                    </div>
+                </div>
             </nav>
 
             <div class="header-icons">
