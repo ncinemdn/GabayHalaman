@@ -20,6 +20,7 @@ background:white;
   background-color: white;
   border-radius: 50px;
   padding: 1.5rem 2rem;
+    width: calc(100% - 32px);
   max-width: 1400px;
   margin: 0 auto;
   display: flex;
@@ -732,10 +733,6 @@ background:white;
 }
 
 @media (min-width: 768px) {
-    .header {
-        margin: 16px 32px 0;
-    }
-    
     .product-section {
         padding: 48px;
     }
@@ -750,10 +747,6 @@ background:white;
 }
 
 @media (min-width: 1024px) {
-    .header {
-        margin: 16px 96px 0;
-    }
-    
     .nav {
         display: flex;
     }
@@ -801,13 +794,13 @@ background:white;
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
     .header {
-        margin: 8px 16px 0;
-        padding: 10px 0 20px;
+        padding: 12px 0;
     }
 
     .header-inner {
-        padding: 1rem 1.5rem;
-        border-radius: 30px;
+        width: calc(100% - 20px);
+        padding: 0.75rem 1rem;
+        border-radius: 28px;
     }
 
     .logo {
