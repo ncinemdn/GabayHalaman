@@ -353,8 +353,10 @@
 
 
                 <div class="reviews-btn-container">
-                    <button class="reviews-btn">Write a review</button>
+                    <button class="reviews-btn" type="button">Write a review</button>
                 </div>
+
+                <div class="reviews-list" id="reviewsList" aria-live="polite"></div>
 
 
                 <div class="reviews-image">
@@ -362,6 +364,50 @@
                 </div>
             </div>
         </section>
+
+        <div class="review-modal" id="reviewModal" aria-hidden="true">
+            <div class="review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+                <button class="review-modal-close" id="closeReviewModal" type="button" aria-label="Close review form">×</button>
+                <h3 class="review-modal-title" id="reviewModalTitle">We’d love to hear from you!</h3>
+                <p class="review-modal-email">Email address: <span>example@gmail.com</span></p>
+                <p class="review-modal-phone">Phone Number: <span>09123456789</span></p>
+                <p class="review-modal-description">
+                    We are about our customers just as deeply<br>
+                    as we care about nature, so if there’s any concern,<br>
+                    issue your questions, ideas, feedback, or comments,<br>
+                    we’d absolutely love to hear your thoughts.
+                </p>
+                <p class="review-modal-prompt">Share your thoughts with us by leaving a review below.</p>
+                <form class="review-form" id="reviewForm">
+                    <div class="review-stars" role="radiogroup" aria-label="Rate your experience">
+                        <button type="button" class="review-star" data-rating="1" aria-label="1 star">★</button>
+                        <button type="button" class="review-star" data-rating="2" aria-label="2 stars">★</button>
+                        <button type="button" class="review-star" data-rating="3" aria-label="3 stars">★</button>
+                        <button type="button" class="review-star" data-rating="4" aria-label="4 stars">★</button>
+                        <button type="button" class="review-star" data-rating="5" aria-label="5 stars">★</button>
+                    </div>
+                    <input type="hidden" id="reviewRating" name="rating" value="0">
+                    <div class="review-input-row">
+                        <input type="text" class="review-input" id="reviewName" name="name" placeholder="Name:" required>
+                        <input type="email" class="review-input" id="reviewEmail" name="email" placeholder="Email (Optional)">
+                    </div>
+                    <textarea class="review-textarea" id="reviewComment" name="comment" placeholder="Comment" required></textarea>
+                    <button class="review-submit-btn" type="submit">Send a review</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="review-success-modal" id="reviewSuccessModal" aria-hidden="true">
+            <div class="review-success-card" role="dialog" aria-modal="true" aria-labelledby="reviewSuccessTitle">
+                <p class="review-success-text" id="reviewSuccessTitle">
+                    Thank you for your support!<br>
+                    We’re happy you had a great<br>
+                    experience and look forward<br>
+                    to serving you again.
+                </p>
+                <button class="review-success-btn" id="closeSuccessModal" type="button">Confirm</button>
+            </div>
+        </div>
 
 
         <!-- FAQs Section -->
