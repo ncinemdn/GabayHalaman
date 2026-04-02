@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFAQs();
     initializeButtons();
     initializeReviewModals();
+    initializeFooter();
     initializeNavigation();
 });
 
@@ -278,6 +279,83 @@ function initializeReviewModals() {
 
         reviewsList.prepend(reviewItem);
         updateReviewsNoteVisibility();
+    }
+
+
+    function initializeFooter() {
+        const backToTopButton = document.querySelector('.footer-back-to-top');
+
+        if (!backToTopButton) {
+            return;
+        }
+
+        function updateFooterArrow() {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+            const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            const maxScrollTop = Math.max(docHeight - viewportHeight, 0);
+            const distanceFromBottom = maxScrollTop - scrollTop;
+            const nearTop = scrollTop < 120;
+            const nearBottom = distanceFromBottom < 120;
+
+            if (nearTop) {
+                backToTopButton.textContent = '⌄';
+                backToTopButton.setAttribute('aria-label', 'Scroll to bottom');
+                backToTopButton.setAttribute('aria-expanded', 'false');
+                backToTopButton.classList.remove('is-bottom');
+                backToTopButton.dataset.direction = 'down';
+                return;
+            }
+
+            if (nearBottom) {
+                backToTopButton.textContent = '⌃';
+                backToTopButton.setAttribute('aria-label', 'Scroll to top');
+                backToTopButton.setAttribute('aria-expanded', 'true');
+                backToTopButton.classList.add('is-bottom');
+                backToTopButton.dataset.direction = 'up';
+                return;
+            }
+
+            if (scrollTop < docHeight / 2) {
+                backToTopButton.textContent = '⌄';
+                backToTopButton.setAttribute('aria-label', 'Scroll to bottom');
+                backToTopButton.setAttribute('aria-expanded', 'false');
+                backToTopButton.classList.remove('is-bottom');
+                backToTopButton.dataset.direction = 'down';
+            } else {
+                backToTopButton.textContent = '⌃';
+                backToTopButton.setAttribute('aria-label', 'Scroll to top');
+                backToTopButton.setAttribute('aria-expanded', 'true');
+                backToTopButton.classList.add('is-bottom');
+                backToTopButton.dataset.direction = 'up';
+            }
+        }
+
+        backToTopButton.addEventListener('click', function() {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+            const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            const maxScrollTop = Math.max(docHeight - viewportHeight, 0);
+            const direction = backToTopButton.dataset.direction || (scrollTop > maxScrollTop / 2 ? 'up' : 'down');
+
+            backToTopButton.classList.remove('is-animating-up', 'is-animating-down');
+            void backToTopButton.offsetWidth;
+            backToTopButton.classList.add(direction === 'up' ? 'is-animating-up' : 'is-animating-down');
+
+            if (direction === 'down') {
+                window.scrollTo({ top: maxScrollTop, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            window.setTimeout(function() {
+                backToTopButton.classList.remove('is-animating-up', 'is-animating-down');
+            }, 260);
+        });
+
+        updateFooterArrow();
+        window.addEventListener('scroll', updateFooterArrow, { passive: true });
+        window.addEventListener('resize', updateFooterArrow);
     }
 
     reviewsBtn.addEventListener('click', function() {
