@@ -158,6 +158,42 @@ body {
     opacity: 0.6;
 }
 
+/* Checkbox Styling */
+.product-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #7ea33d;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+.product-checkbox:hover {
+    border-color: #6b8a34;
+    box-shadow: 0 0 8px rgba(126, 163, 61, 0.3);
+}
+
+.product-checkbox:checked {
+    background-color: #7ea33d;
+    border-color: #7ea33d;
+    position: relative;
+}
+
+.product-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
 @media (max-width: 1024px) {
     .nav {
         display: none;
@@ -204,7 +240,7 @@ body {
        
         <nav class="nav">
             <a href="../LandingPage/landingpage.html">Home</a>
-            <a href="../Shopage/Shoppage.html">Shop</a>
+            <a href="../../LandingPage/landingpage.html">Shop</a>
             <div class="nav-dropdown">
                 <button class="nav-dropdown-toggle" type="button">More</button>
                 <div class="nav-dropdown-menu">
@@ -256,6 +292,10 @@ body {
 <span>Shipping</span>
 <span class="font-bold">FREE</span>
 </div>
+
+<p class="text-[12px] leading-5 text-gray-600">
+Shipping charges are determined based on the delivery distance to the destination address and are subject to change without prior notice.
+</p>
 </div>
 
 <div class="border-t border-gray-300 my-6"></div>
@@ -333,7 +373,8 @@ function loadReservationsToCart() {
         name: res.name,
         price: res.price,
         qty: res.quantity,
-        img: getPlantImage(res.name)
+        img: getPlantImage(res.name),
+        selected: true // All items selected by default
     }));
     render();
 }
@@ -345,7 +386,7 @@ function render(){
         container.innerHTML = `
             <div class="text-center py-12">
                 <p class="text-gray-500 mb-4">Your cart is empty</p>
-                <a href="../Shopage/Shoppage.html" class="text-[#7ea33d] font-semibold">Continue Shopping</a>
+                <a href="../../LandingPage/landingpage.html" class="text-[#7ea33d] font-semibold">Continue Shopping</a>
             </div>
         `;
         return;
@@ -355,6 +396,7 @@ function render(){
         <div class="bg-[#f3f1f7] rounded-[20px] p-6 flex justify-between items-center card-shadow transition hover:shadow-lg">
 
             <div class="flex items-center gap-4 flex-1">
+                <input type="checkbox" class="product-checkbox" id="checkbox-${item.id}" ${item.selected ? 'checked' : ''} onchange="toggleSelect(${item.id})" style="width: 24px; height: 24px; cursor: pointer; flex-shrink: 0;">
                 <img src="${item.img}" class="w-[120px] h-[120px] object-cover rounded-[15px] flex-shrink-0" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
                 <div>
                     <h3 class="serif text-[18px] font-semibold leading-tight">${item.name}</h3>
@@ -391,9 +433,18 @@ function del(id){
     render();
 }
 
+function toggleSelect(id){
+    let item = data.find(i=>i.id===id);
+    if (item) {
+        item.selected = !item.selected;
+        update();
+    }
+}
+
 function update(){
-    let totalQty = data.reduce((a,b)=>a+b.qty,0);
-    let totalPrice = data.reduce((a,b)=>a+(b.price*b.qty),0);
+    let selectedItems = data.filter(i=>i.selected);
+    let totalQty = selectedItems.reduce((a,b)=>a+b.qty,0);
+    let totalPrice = selectedItems.reduce((a,b)=>a+(b.price*b.qty),0);
 
     document.getElementById("count").innerText = `Subtotal (${totalQty} items)`;
 

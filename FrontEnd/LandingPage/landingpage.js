@@ -21,6 +21,74 @@ const productsByTab = {
     ]
 };
 
+const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+
+const reservationPlantsByCategory = {
+    'Fruit Bearing': [
+        { name: 'Rambutan RR Tuklapin', price: 250, image: 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Mangosteen', price: 350, image: 'https://images.unsplash.com/photo-1706698352015-a907c7f8a445?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Lansones Longkong', price: 350, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Durian Puyat', price: 300, image: 'https://images.unsplash.com/photo-1630510526315-aba311212355?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Sweet Tamarind', price: 250, image: 'https://images.unsplash.com/photo-1597081779002-314055fe24ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Bangkok Santol', price: 250, image: 'https://images.unsplash.com/photo-1737992468893-9c109da39f9b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: "Dian't Duhat", price: 250, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Sweet Balimbing', price: 250, image: 'https://images.unsplash.com/photo-1760509614441-e9ca05cba0df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+    ],
+    'Citrus Variety': [
+        { name: 'Japanese Orange', price: 300, image: 'https://images.unsplash.com/photo-1769968065899-832195e26d5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Davao Pomelo', price: 250, image: 'https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Satsuma Citrus', price: 250, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Dalanghita', price: 250, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Dayap', price: 250, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Calamansi', price: 200, image: 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Kiat Kiat', price: 300, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Lemon Meyer', price: 250, image: 'https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+    ],
+    'Mangga Variety': [
+        { name: 'Carabao Manggo', price: 350, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Queen Manggo', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Sweet Catimon', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Sweet Catimon Double Rootstock', price: 800, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Indian Manggo', price: 250, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'King Manggo', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Purple Manggo', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Apple Manggo', price: 250, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+    ],
+    'Dwarf Coconut': [
+        { name: 'Golden', price: 400, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Tacunan Variety', price: 550, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Catigan Variety', price: 250, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+    ],
+    'Cuttings/Dwarf': [
+        { name: 'Red Guaple', price: 200, image: 'https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Green Guaple', price: 200, image: 'https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Marang', price: 250, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Lychee', price: 350, image: 'https://images.unsplash.com/photo-1705335834319-92a152363ea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Langka', price: 200, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Hybrid Mulberry', price: 200, image: 'https://images.unsplash.com/photo-1711641011417-3162af1e834c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Red Cardinal Grapes', price: 250, image: 'https://images.unsplash.com/photo-1660805376081-c6b01b7b78f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Sweet Guyabano', price: 300, image: 'https://images.unsplash.com/photo-1651565919334-bf81165cd0a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+    ],
+    'Flowering Trees': [
+        { name: 'Golden Trumpet', price: 700, image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Pink Trumpet', price: 800, image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Golden Shower', price: 900, image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Fire Tree', price: 1200, image: 'https://images.unsplash.com/photo-1683356478048-ea3261e194b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Ilang Ilang', price: 700, image: 'https://images.unsplash.com/photo-1552017650-c117c3535f68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Jacaranda', price: 1000, image: 'https://images.unsplash.com/photo-1695389591261-ee471f900c62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Pine Tree', price: 1200, image: 'https://images.unsplash.com/photo-1643550265302-a91ec947eb43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Palm Tree', price: 1500, image: 'https://images.unsplash.com/photo-1761001826491-91409e63205a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+    ],
+    'Forest Trees': [
+        { name: 'Gemelina', price: 250, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Mahogany', price: 350, image: 'https://images.unsplash.com/photo-1544840281-274ae2755620?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Narra', price: 350, image: 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Molave', price: 250, image: DEFAULT_PLANT_IMAGE },
+        { name: 'Pole Bamboo', price: 550, image: 'https://images.unsplash.com/photo-1696677049444-f695a0935b49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Thai Bamboo', price: 550, image: 'https://images.unsplash.com/photo-1696677049444-f695a0935b49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+    ]
+};
+
 function getVisibleCards() {
     if (window.innerWidth <= 768) {
         return 1;
@@ -148,6 +216,59 @@ function initializeCategoryCarousel() {
 
     updateCategoryTrack();
     window.addEventListener('resize', updateCategoryTrack);
+}
+
+function formatPeso(value) {
+    return '₱' + Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderCategoryProducts(categoryKey, categoryLabel) {
+    const resultsSection = document.querySelector('#categoryProductsSection');
+    const resultsTitle = document.querySelector('#categoryProductsTitle');
+    const resultsGrid = document.querySelector('#categoryProductsGrid');
+    const plants = reservationPlantsByCategory[categoryKey] || [];
+
+    if (!resultsSection || !resultsTitle || !resultsGrid) {
+        return;
+    }
+
+    resultsTitle.textContent = categoryLabel + ' Plants';
+
+    if (!plants.length) {
+        resultsGrid.innerHTML = '<p class="category-products-empty">No plants found for this category.</p>';
+    } else {
+        resultsGrid.innerHTML = plants.map(function(plant) {
+            return '<article class="category-product-card">' +
+                '<div class="category-product-image-wrap">' +
+                    '<img class="category-product-image" src="' + plant.image + '" alt="' + plant.name + '" loading="lazy" onerror="this.src=\'' + DEFAULT_PLANT_IMAGE + '\'">' +
+                '</div>' +
+                '<h4 class="category-product-name">' + plant.name + '</h4>' +
+                '<p class="category-product-price">' + formatPeso(plant.price) + '</p>' +
+            '</article>';
+        }).join('');
+    }
+
+    resultsSection.hidden = false;
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function initializeCategoryShopByCategory() {
+    const categoryCards = document.querySelectorAll('.category-slide[data-reservation-category]');
+
+    categoryCards.forEach(function(card) {
+        card.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const reservationCategory = card.dataset.reservationCategory || '';
+            const categoryLabel = card.dataset.categoryLabel || reservationCategory;
+
+            if (!reservationCategory) {
+                return;
+            }
+
+            renderCategoryProducts(reservationCategory, categoryLabel);
+        });
+    });
 }
 
 function initializeFAQs() {
