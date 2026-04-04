@@ -49,12 +49,15 @@ let plants = [
 
 let editingPlantId = null;
 let currentImagePreview = null;
+let customCategories = new Set(['Coconut Variety', 'Mango Variety', 'Citrus', 'Forest Trees', 'Indoor Plants', 'Outdoor Plants', 'Flowering Plants', 'Herbs']);
 
 // DOM Elements
 const sidebar = document.getElementById('sidebar');
 const btnAddPlant = document.getElementById('btnAddPlant');
 const addPlantModal = document.getElementById('addPlantModal');
 const successModal = document.getElementById('successModal');
+const confirmationModal = document.getElementById('confirmationModal');
+const categoryManagementModal = document.getElementById('categoryManagementModal');
 const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
 const tableBody = document.getElementById('tableBody');
@@ -75,6 +78,18 @@ const plantDescription = document.getElementById('plantDescription');
 const btnCancel = document.getElementById('btnCancel');
 const btnSave = document.getElementById('btnSave');
 const btnOkay = document.getElementById('btnOkay');
+const confirmationMessage = document.getElementById('confirmationMessage');
+const btnConfirmCancel = document.getElementById('btnConfirmCancel');
+const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+
+// Category management elements
+const newCategoryInput = document.getElementById('newCategoryInput');
+const btnAddCategory = document.getElementById('btnAddCategory');
+const btnCloseCategoryModal = document.getElementById('btnCloseCategoryModal');
+const categoriesList = document.getElementById('categoriesList');
+
+// Confirmation tracking
+let pendingDeleteId = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -101,6 +116,14 @@ function attachEventListeners() {
     searchInput.addEventListener('input', filterPlants);
     categoryFilter.addEventListener('change', filterPlants);
 
+    // Confirmation modal
+    btnConfirmCancel.addEventListener('click', closeConfirmationModal);
+    btnConfirmDelete.addEventListener('click', confirmDelete);
+
+    // Category management modal
+    btnAddCategory.addEventListener('click', addNewCategory);
+    btnCloseCategoryModal.addEventListener('click', closeCategoryManagementModal);
+
     // Navigation
     document.querySelectorAll('[data-page]').forEach(item => {
         item.addEventListener('click', function() {
@@ -109,9 +132,6 @@ function attachEventListeners() {
                 window.location.href = '../Dashboard/dashboard.html';
             } else if (page === 'catalog') {
                 // Stay on current page
-            } else {
-                // For other pages, show alert for now
-                alert(`Navigation to ${page} not implemented yet.`);
             }
         });
     });
@@ -123,14 +143,28 @@ function attachEventListeners() {
     successModal.addEventListener('click', (e) => {
         if (e.target === successModal) closeSuccessModal();
     });
+    confirmationModal.addEventListener('click', (e) => {
+        if (e.target === confirmationModal) closeConfirmationModal();
+    });
+    categoryManagementModal.addEventListener('click', (e) => {
+        if (e.target === categoryManagementModal) closeCategoryManagementModal();
+    });
+
+    // Enter key for category input
+    newCategoryInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addNewCategory();
+    });
 }
 
 // Initialize categories
 function initializeCategories() {
-    const categories = ['All', ...new Set(plants.map(p => p.category))];
+    const categories = ['All', ...Array.from(customCategories).sort()];
     categoryFilter.innerHTML = categories.map(cat => 
         `<option value="${cat}">${cat}</option>`
     ).join('');
+    
+    // Also update the plant category select in the modal
+    updateCategorySelect();
 }
 
 // Get stock status
@@ -284,11 +318,97 @@ function editPlant(id) {
 
 // Delete plant
 function deletePlant(id) {
-    if (confirm('Are you sure you want to delete this plant?')) {
-        plants = plants.filter(p => p.id !== id);
+    pendingDeleteId = id;
+    confirmationMessage.textContent = 'Are you sure you want to delete this plant?';
+    confirmationModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Confirm delete
+function confirmDelete() {
+    if (pendingDeleteId) {
+        plants = plants.filter(p => p.id !== pendingDeleteId);
+        pendingDeleteId = null;
+        closeConfirmationModal();
         renderPlants();
         initializeCategories();
     }
+}
+
+// Close confirmation modal
+function closeConfirmationModal() {
+    confirmationModal.classList.remove('active');
+    document.body.style.overflow = '';
+    pendingDeleteId = null;
+}
+
+// Update category select in modal
+function updateCategorySelect() {
+    const categories = Array.from(customCategories).sort();
+    plantCategory.innerHTML = `<option value="">Select category</option>` + 
+        categories.map(cat => 
+            `<option value="${cat}">${cat}</option>`
+        ).join('');
+}
+
+// Open category management modal
+function openCategoryManagementModal() {
+    renderCategoriesList();
+    categoryManagementModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Close category management modal
+function closeCategoryManagementModal() {
+    categoryManagementModal.classList.remove('active');
+    document.body.style.overflow = '';
+    newCategoryInput.value = '';
+}
+
+// Add new category
+function addNewCategory() {
+    const newCategory = newCategoryInput.value.trim();
+    if (!newCategory) return;
+    
+    if (customCategories.has(newCategory)) {
+        confirmationMessage.textContent = 'This category already exists.';
+        confirmationModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        btnConfirmDelete.style.display = 'none';
+        btnConfirmCancel.textContent = 'Close';
+        btnConfirmCancel.addEventListener('click', function closeErrorModal() {
+            closeConfirmationModal();
+            btnConfirmDelete.style.display = '';
+            btnConfirmCancel.textContent = 'Cancel';
+            btnConfirmCancel.removeEventListener('click', closeErrorModal);
+        }, { once: true });
+        return;
+    }
+    
+    customCategories.add(newCategory);
+    newCategoryInput.value = '';
+    renderCategoriesList();
+    initializeCategories();
+    renderPlants();
+}
+
+// Delete category
+function deleteCategory(category) {
+    customCategories.delete(category);
+    renderCategoriesList();
+    initializeCategories();
+    renderPlants();
+}
+
+// Render categories list in management modal
+function renderCategoriesList() {
+    const categories = Array.from(customCategories).sort();
+    categoriesList.innerHTML = categories.map(cat => `
+        <div class="category-item">
+            <span class="category-item-name">${cat}</span>
+            <button class="category-item-delete" onclick="deleteCategory('${cat}')">Delete</button>
+        </div>
+    `).join('');
 }
 
 // Save plant
@@ -300,7 +420,18 @@ function savePlant() {
     const stock = parseInt(plantStock.value) || 0;
 
     if (!name || !category || !price || price <= 0 || stock < 0) {
-        alert('Please fill in all required fields');
+        confirmationMessage.textContent = 'Please fill in all required fields with valid data.';
+        confirmationModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        // Make it just a notification, not a delete confirmation
+        btnConfirmDelete.style.display = 'none';
+        btnConfirmCancel.textContent = 'Close';
+        btnConfirmCancel.addEventListener('click', function closeErrorModal() {
+            closeConfirmationModal();
+            btnConfirmDelete.style.display = '';
+            btnConfirmCancel.textContent = 'Cancel';
+            btnConfirmCancel.removeEventListener('click', closeErrorModal);
+        }, { once: true });
         return;
     }
 
