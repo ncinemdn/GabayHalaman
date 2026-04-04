@@ -13,65 +13,56 @@ body {
 
 /* HEADER */
 .header {
-  background: #7fa843;
-  padding: 18px 0 20px;
+    background: #7fa843;
+    padding: 20px 0;
 }
 
 .header-inner {
-  background-color: white;
-  border-radius: 50px;
-  padding: 1.5rem 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 80px;
-  box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+    background-color: #ffffff;
+    border-radius: 50px;
+    padding: 12px 28px;
+    max-width: 1300px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-shrink: 0;
+    gap: 12px;
   text-decoration: none;
 }
 
 .logo {
-  width: 80px;
-  height: 80px;
-  border-radius: 30px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
   object-fit: cover;
 }
 
 .brand-text {
-  height: 20px;
-  width: auto;
-  object-fit: contain;
+    height: 24px;
 }
 
 .nav {
   display: flex;
-  align-items: center;
-  gap: 2rem;
-  flex: 1;
-  justify-content: center;
+    gap: 40px;
 }
 
 .nav a, .nav p {
   font-family: 'Inria Serif', serif;
   font-weight: 700;
-  font-size: 20px;
+    font-size: 18px;
   color: black;
   text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap;
+    transition: 0.2s;
 }
 
 .nav a:hover, .nav p:hover {
-  text-decoration: underline;
+    opacity: 0.6;
 }
 
 .nav-dropdown {
@@ -81,17 +72,16 @@ body {
 .nav-dropdown-toggle {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 20px;
+    font-size: 18px;
     color: black;
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
-    white-space: nowrap;
 }
 
 .nav-dropdown-toggle:hover {
-    text-decoration: underline;
+    opacity: 0.6;
 }
 
 .nav-dropdown-menu {
@@ -125,26 +115,23 @@ body {
 .header-icons {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  flex-shrink: 0;
+    gap: 18px;
 }
 
 .icon-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: background-color 0.2s;
+    padding: 6px;
 }
 
 .icon-btn svg {
-  width: 24px;
-  height: 24px;
+    width: 20px;
+    height: 20px;
 }
 
 .icon-btn:hover {
-  background-color: rgba(0,0,0,0.1);
+    opacity: 0.6;
 }
 
 
@@ -250,79 +237,63 @@ body {
 }
 
 .header-inner {
-    background-color: white;
-    border-radius: 30px;
-    padding: 0.7rem 0.5rem;
-    max-width: 1400px;
+    background-color: #ffffff;
+    border-radius: 50px;
+    padding: 12px 28px;
+    max-width: 1300px;
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.3rem;
-    min-height: 70px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
-
-.logo {
-    width: 38px;
-    height: 38px;
-}
-
 
 .logo-section {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    flex-shrink: 0;
-    margin-right: 2rem;
+    gap: 12px;
+    text-decoration: none;
 }
 
 
 .logo {
-    width: 42px;
-    height: 42px;
-    border-radius: 30px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
     object-fit: cover;
 }
 
 
 .brand-text {
-    height: 28px;
-    width: auto;
-    object-fit: contain;
+    height: 24px;
 }
 
 
 .nav {
     display: flex;
-    align-items: center;
-    gap: 2rem;
-    flex: 1;
-    justify-content: center;
+    gap: 40px;
 }
 
 
 .nav a, .nav p {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 20px;
+    font-size: 18px;
     color: black;
     text-decoration: none;
-    cursor: pointer;
-    white-space: nowrap;
+    transition: 0.2s;
 }
 
 
 .nav a:hover, .nav p:hover {
-    text-decoration: underline;
+    opacity: 0.6;
 }
 
 
 .header-icons {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-    margin-left: -0.25rem;
+    gap: 18px;
 }
 
 
@@ -330,27 +301,24 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 2px;
-    transition: opacity 0.3s;
-    width: 26px;
-    height: 26px;
+    padding: 6px;
 }
 
 .icon-btn svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
 }
 
 
 .icon-btn:hover {
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
 
 /* Main Container */
 .container {
-    padding: 3rem 3rem;
-    max-width: 1400px;
+    padding: 2.5rem 2.5rem;
+    max-width: 1240px;
     margin: 0 auto;
 }
 
@@ -358,7 +326,7 @@ body {
 .page-header {
     background-color: #3e5a18;
     border-radius: 50px 50px 0 0;
-    padding: 2rem;
+    padding: 1.5rem;
     text-align: center;
 }
 
@@ -366,7 +334,7 @@ body {
 .page-title {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 40px;
+    font-size: 36px;
     color: white;
 }
 
@@ -375,14 +343,14 @@ body {
     background-color: #f6f4f9;
     border-radius: 0 0 50px 50px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    padding: 4rem;
+    padding: 3rem;
 }
 
 
 .grid-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 3rem;
+    gap: 2.25rem;
 }
 
 
@@ -560,7 +528,7 @@ input[type="date"] {
 
 .plant-card-inner {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
 }
@@ -578,13 +546,16 @@ input[type="date"] {
 .plant-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .plant-controls {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 0.5rem 1rem 0.75rem;
+    margin-top: 0.25rem;
     flex-wrap: wrap;
 }
 
