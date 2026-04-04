@@ -15,7 +15,7 @@
         <div id="sidebar" class="sidebar">
             <!-- Logo -->
             <div class="sidebar-logo">
-                <img alt="Gabay Halaman Logo" src="FrontEnd/src/assets/bb.png" />
+                <img alt="Gabay Halaman Logo" src="../../logo.png" />
             </div>
 
             <!-- Brand name -->
@@ -138,6 +138,10 @@
                     <button class="btn-add-plant" id="btnAddPlant">
                         <span class="add-icon">+</span>
                         <span>Add New Plant</span>
+                    </button>
+                    <button class="btn-add-plant" id="btnManageCategories" style="background-color: #7FAB81; margin-left: 1rem;" onclick="openCategoryManagementModal()">
+                        <span style="font-size: 1.25rem;">⚙️</span>
+                        <span>Manage Categories</span>
                     </button>
                 </div>
 
@@ -263,6 +267,43 @@
         <div class="modal-content-small">
             <p class="success-message">Successfully Add New Plant</p>
             <button class="btn-okay" id="btnOkay" type="button">Okay</button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content-small">
+            <p class="confirmation-message" id="confirmationMessage">Are you sure?</p>
+            <div class="modal-buttons-confirmation">
+                <button class="btn-cancel" id="btnConfirmCancel" type="button">Cancel</button>
+                <button class="btn-delete" id="btnConfirmDelete" type="button">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Management Modal -->
+    <div class="modal" id="categoryManagementModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Manage Categories</h2>
+            
+            <div class="form-row">
+                <div class="form-col" style="grid-column: 1 / -1;">
+                    <p class="form-label">Add New Category</p>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="newCategoryInput" placeholder="Enter new category name" class="form-input" style="flex: 1;">
+                        <button id="btnAddCategory" class="btn-save" style="flex: 0 0 auto; width: 130px;">Add</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-col" style="grid-column: 1 / -1; margin-top: 2rem;">
+                <p class="form-label">Existing Categories</p>
+                <div id="categoriesList" class="categories-list"></div>
+            </div>
+
+            <div class="modal-buttons" style="justify-content: flex-end;">
+                <button class="btn-cancel" id="btnCloseCategoryModal" type="button">Close</button>
+            </div>
         </div>
     </div>
 
