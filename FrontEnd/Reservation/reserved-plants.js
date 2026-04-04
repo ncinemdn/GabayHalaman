@@ -89,16 +89,16 @@ function loadReservations() {
 
     sortedDates.forEach(date => {
         const plants = groupedByDate[date];
+        const singleItemClass = plants.length === 1 ? ' single-item' : '';
        
         html += `
             <div class="date-group">
                 <h2 class="date-header">${formatDate(date)}</h2>
-                <div class="plants-grid">
+                <div class="plants-grid${singleItemClass}">
         `;
 
 
         plants.forEach(plant => {
-            const stars = '⭐⭐⭐⭐⭐';
             const image = getPlantImage(plant.name);
            
             html += `
@@ -110,16 +110,15 @@ function loadReservations() {
                     <div class="plant-info">
                         <div class="plant-name">${plant.name}</div>
                         <div class="plant-details">
+                            <strong>Delivery Date:</strong> <span>${formatDate(plant.deliveryDate)}</span>
+                        </div>
+                        <div class="plant-price">₱${plant.price.toFixed(2)}</div>
+                        <div class="plant-details">
                             <strong>Quantity:</strong> <span>${plant.quantity}</span>
                         </div>
                         <div class="plant-details">
                             <strong>Size:</strong> <span>${plant.plantSize}</span>
                         </div>
-                        <div class="plant-details">
-                            <strong>Delivery Date:</strong> <span>${formatDate(plant.deliveryDate)}</span>
-                        </div>
-                        <div class="plant-rating">${stars}</div>
-                        <div class="plant-price">₱${plant.price.toFixed(2)}</div>
                     </div>
                 </div>
             `;
@@ -128,34 +127,27 @@ function loadReservations() {
 
         html += `
                 </div>
+                <div class="date-actions">
+                    <button type="button" class="reservation-buy-now" onclick="goToDeliveryDetails('${date}')">Buy Now</button>
+                </div>
             </div>
         `;
     });
-
-
-    // Add view all link (optional)
-    if (sortedDates.length > 1) {
-        html += `
-            <div class="view-all">
-                <span class="view-all-link" onclick="scrollToTop()">Back to Top</span>
-            </div>
-        `;
-    }
-
-
-    // Add view all link
-    html += `
-        <div class="view-all">
-            <span class="view-all-link" onclick="scrollToTop()">View All</span>
-        </div>
-    `;
 
     container.innerHTML = html;
 }
 
 
-function scrollToTop() {
-    window.location.href = '../CartPage/cart.html';
+function goToDeliveryDetails(deliveryDate) {
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const selectedReservations = reservations.filter(reservation => reservation.deliveryDate === deliveryDate);
+
+    if (selectedReservations.length > 0) {
+        localStorage.setItem('selectedReservation', JSON.stringify(selectedReservations[0]));
+        localStorage.setItem('selectedReservations', JSON.stringify(selectedReservations));
+    }
+
+    window.location.href = '../CartPage/details.html';
 }
 
 

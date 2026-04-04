@@ -134,7 +134,6 @@ function init() {
 
     // Add event listeners
     document.getElementById('category').addEventListener('change', function() {
-        selectedPlants = [];
         updatePlantDisplay();
     });
 }
@@ -174,6 +173,25 @@ function updatePlantDisplay() {
                 <div class="plant-info">
                     <div class="plant-name">${plant.name}</div>
                     <div class="plant-price">₱${plant.price.toFixed(2)}</div>
+                    <div class="plant-controls" onclick="event.stopPropagation()">
+                        <label for="qty-${plant.id}" class="plant-quantity-label">Qty:</label>
+                        <input
+                            id="qty-${plant.id}"
+                            class="plant-quantity"
+                            type="number"
+                            min="1"
+                            max="99"
+                            value="${plantQty}"
+                            onchange="onPlantQuantityChange(${plant.id}, this.value)"
+                        />
+                        <label for="size-${plant.id}" class="plant-size-label">Size:</label>
+                        <select id="size-${plant.id}" class="plant-size" onchange="onPlantSizeChange(${plant.id}, this.value)">
+                            <option value="">Select</option>
+                            <option value="Small" ${plantSize === 'Small' ? 'selected' : ''}>Small</option>
+                            <option value="Large" ${plantSize === 'Large' ? 'selected' : ''}>Large</option>
+                            <option value="Extra Large" ${plantSize === 'Extra Large' ? 'selected' : ''}>Extra Large</option>
+                        </select>
+                    </div>
                 </div>
                 ${isSelected ? `
                     <div class="checkmark">
@@ -182,25 +200,6 @@ function updatePlantDisplay() {
                         </svg>
                     </div>
                 ` : ''}
-            </div>
-            <div class="plant-controls" onclick="event.stopPropagation()">
-                <label for="qty-${plant.id}" class="plant-quantity-label">Qty:</label>
-                <input
-                    id="qty-${plant.id}"
-                    class="plant-quantity"
-                    type="number"
-                    min="1"
-                    max="99"
-                    value="${plantQty}"
-                    onchange="onPlantQuantityChange(${plant.id}, this.value)"
-                />
-                <label for="size-${plant.id}" class="plant-size-label">Size:</label>
-                <select id="size-${plant.id}" class="plant-size" onchange="onPlantSizeChange(${plant.id}, this.value)">
-                    <option value="">Select</option>
-                    <option value="Small" ${plantSize === 'Small' ? 'selected' : ''}>Small</option>
-                    <option value="Large" ${plantSize === 'Large' ? 'selected' : ''}>Large</option>
-                    <option value="Extra Large" ${plantSize === 'Extra Large' ? 'selected' : ''}>Extra Large</option>
-                </select>
             </div>
         </div>
         `;
@@ -229,6 +228,9 @@ function onPlantSizeChange(plantId, size) {
 
 // Select/deselect plant (multi-select support)
 function selectPlant(plantId, category) {
+    const currentScrollY = window.scrollY;
+    const plantsList = document.querySelector('.plants-list');
+    const currentListScrollTop = plantsList ? plantsList.scrollTop : 0;
     const plants = plantsByCategory[category];
     const plant = plants.find(p => p.id === plantId);
     if (!plant) return;
@@ -246,22 +248,27 @@ function selectPlant(plantId, category) {
 
         selectedPlants.push({
             ...plant,
+            category,
             quantity: qty,
             size: size
         });
     }
 
     updatePlantDisplay();
+    const updatedPlantsList = document.querySelector('.plants-list');
+    if (updatedPlantsList) {
+        updatedPlantsList.scrollTop = currentListScrollTop;
+    }
+    window.scrollTo(0, currentScrollY);
 }
 
 
 // Handle reservation
 function handleReserve() {
-    const category = document.getElementById('category').value;
     const deliveryDate = document.getElementById('deliveryDate').value;
 
-    if (!category || !deliveryDate || selectedPlants.length === 0) {
-        alert('Please select category, delivery date, and at least one plant.');
+    if (!deliveryDate || selectedPlants.length === 0) {
+        alert('Please select a delivery date and at least one plant.');
         return;
     }
 
@@ -277,8 +284,8 @@ function handleReserve() {
         }
     }
 
-    const reservations = selectedPlants.map(plant => ({
-        category,
+    const newReservations = selectedPlants.map(plant => ({
+        category: plant.category,
         plantSize: plant.size,
         quantity: parseInt(plant.quantity, 10),
         deliveryDate,
@@ -287,7 +294,24 @@ function handleReserve() {
         id: plant.id,
     }));
 
-    localStorage.setItem('reservations', JSON.stringify(reservations));
+    const existingReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+
+    newReservations.forEach(newItem => {
+        const existingItem = existingReservations.find(item =>
+            item.id === newItem.id &&
+            item.deliveryDate === newItem.deliveryDate &&
+            item.plantSize === newItem.plantSize
+        );
+
+        if (existingItem) {
+            existingItem.quantity += newItem.quantity;
+            return;
+        }
+
+        existingReservations.push(newItem);
+    });
+
+    localStorage.setItem('reservations', JSON.stringify(existingReservations));
     localStorage.removeItem('deliveryDetails');
 
     window.location.href = 'confirmation.html';
