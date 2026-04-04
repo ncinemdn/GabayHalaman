@@ -20,7 +20,7 @@
 
                 <nav class="nav">
                     <a href="landingpage.html">Home</a>
-                    <a href="../Shopage/Shoppage.html">Shop</a>
+                    <a href="landingpage.html">Shop</a>
                     <div class="nav-dropdown">
                         <button class="nav-dropdown-toggle" type="button">More</button>
                         <div class="nav-dropdown-menu">
@@ -103,43 +103,43 @@
                 <button class="category-nav category-nav-prev" type="button" aria-label="Previous categories">&lt;</button>
                 <div class="category-viewport">
                     <div class="category-track" id="categoryTrack">
-                        <a class="category-card category-card-brown category-slide" href="../Shopage/Categories/coconut.html">
+                        <a class="category-card category-card-brown category-slide" href="../Shopage/Categories/coconut.html" data-reservation-category="Dwarf Coconut" data-category-label="Coconut">
                             <div class="category-image-standard">
                                 <img alt="Coconut" src="https://images.unsplash.com/photo-1629730071038-f0f445fdf5b6?auto=format&fit=crop&w=460&q=80">
                             </div>
                             <div class="category-label">Coconut</div>
                         </a>
-                        <a class="category-card category-card-green category-slide" href="../Shopage/Categories/mango.html">
+                        <a class="category-card category-card-green category-slide" href="../Shopage/Categories/mango.html" data-reservation-category="Mangga Variety" data-category-label="Mango">
                             <div class="category-image-standard">
                                 <img alt="Mango" src="https://images.unsplash.com/photo-1605027990121-cbae9e0642df?auto=format&fit=crop&w=460&q=80">
                             </div>
                             <div class="category-label">Mango</div>
                         </a>
-                        <a class="category-card category-card-sage category-slide" href="../Shopage/Categories/guava.html">
+                        <a class="category-card category-card-sage category-slide" href="../Shopage/Categories/guava.html" data-reservation-category="Cuttings/Dwarf" data-category-label="Guava">
                             <div class="category-image-standard">
                                 <img alt="Guava" src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=460&q=80">
                             </div>
                             <div class="category-label">Guava</div>
                         </a>
-                        <a class="category-card category-card-brown category-slide" href="../Shopage/Categories/citrus.html">
+                        <a class="category-card category-card-brown category-slide" href="../Shopage/Categories/citrus.html" data-reservation-category="Citrus Variety" data-category-label="Citrus">
                             <div class="category-image-standard">
                                 <img alt="Citrus" src="https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=460&q=80">
                             </div>
                             <div class="category-label">Citrus</div>
                         </a>
-                        <a class="category-card category-card-green category-slide" href="../Shopage/Categories/fruit-bearing.html">
+                        <a class="category-card category-card-green category-slide" href="../Shopage/Categories/fruit-bearing.html" data-reservation-category="Fruit Bearing" data-category-label="Fruit Bearing">
                             <div class="category-image-standard">
                                 <img alt="Fruit Bearing" src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=460&q=80">
                             </div>
                             <div class="category-label">Fruit Bearing</div>
                         </a>
-                        <a class="category-card category-card-sage category-slide" href="../Shopage/Categories/forest.html">
+                        <a class="category-card category-card-sage category-slide" href="../Shopage/Categories/forest.html" data-reservation-category="Forest Trees" data-category-label="Forest">
                             <div class="category-image-standard">
                                 <img alt="Forest" src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=460&q=80">
                             </div>
                             <div class="category-label">Forest</div>
                         </a>
-                        <a class="category-card category-card-brown category-slide" href="../Shopage/Categories/flowering.html">
+                        <a class="category-card category-card-brown category-slide" href="../Shopage/Categories/flowering.html" data-reservation-category="Flowering Trees" data-category-label="Flowering">
                             <div class="category-image-standard">
                                 <img alt="Flowering" src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=460&q=80">
                             </div>
@@ -148,6 +148,14 @@
                     </div>
                 </div>
                 <button class="category-nav category-nav-next" type="button" aria-label="Next categories">&gt;</button>
+            </div>
+        </section>
+
+        <section class="category-products-section" id="categoryProductsSection" aria-live="polite" hidden>
+            <div class="category-products-container">
+                <h3 class="category-products-title" id="categoryProductsTitle">Category Plants</h3>
+                <p class="category-products-subtitle">Choose from available plants in this category.</p>
+                <div class="category-products-grid" id="categoryProductsGrid"></div>
             </div>
         </section>
 
@@ -277,7 +285,7 @@
 
                 <nav class="footer-nav" aria-label="Footer navigation">
                     <a href="landingpage.html">Home</a>
-                    <a href="../Shopage/Shoppage.html">Shop</a>
+                    <a href="landingpage.html">Shop</a>
                     <a href="landingpage.html#about-us">About Us</a>
                     <a href="landingpage.html#users-manual">Users Manual</a>
                     <a href="../Reservation/confirmation.html">Contact</a>

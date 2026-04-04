@@ -5,18 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Citrus - Gabay Halaman</title>
     <style>
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: #f7f5ef; color: #2f2f2f; }
-        .wrap { max-width: 960px; margin: 0 auto; padding: 3rem 1.25rem; text-align: center; }
-        h1 { font-family: 'Inria Serif', serif; font-size: clamp(2rem, 6vw, 3.2rem); margin: 0 0 1rem; }
-        p { font-size: 1.05rem; line-height: 1.6; }
-        .btn { display: inline-block; margin-top: 1.4rem; padding: 0.75rem 1.2rem; border-radius: 999px; text-decoration: none; background: #3c5830; color: #fff; font-weight: 700; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: #f2f6ec; color: #1f2f14; }
+        .wrap { max-width: 1300px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+        h1 { font-family: 'Inria Serif', serif; font-size: clamp(2rem, 5vw, 3.3rem); margin: 0; text-align: center; }
+        .subtitle { text-align: center; margin: 0.75rem 0 2rem; font-size: 1.05rem; color: #486534; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 2rem;
+            justify-content: center;
+            align-items: start;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid #d5e3c2;
+            border-radius: 14px;
+            padding: 0.85rem;
+            box-shadow: 0 12px 22px rgba(40, 75, 20, 0.08);
+            text-align: center;
+        }
+        .card img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 0.7rem;
+            display: block;
+        }
+        .name { font-size: 1.12rem; min-height: 2.8rem; margin-bottom: 0.2rem; color: #1f2f14; }
+        .price { font-weight: 600; color: #365821; }
+        .card { text-decoration: none; color: inherit; display: flex; flex-direction: column; cursor: pointer; transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(40, 75, 20, 0.15); }
+        .actions { display: flex; justify-content: center; margin-top: 2rem; }
+        .btn { display: inline-block; padding: 0.8rem 1.4rem; border-radius: 999px; text-decoration: none; background: #3c5830; color: #fff; font-weight: 700; }
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; }
+        }
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="wrap">
-        <h1>Citrus Category</h1>
-        <p>Find citrus options from calamansi to lemon and more.</p>
-        <a class="btn" href="../Shoppage.html">View Shop</a>
+        <h1>Citrus Variety</h1>
+        <p class="subtitle">Fresh citrus options with aligned cards and wider spacing for easier browsing.</p>
+
+        <section class="grid" aria-label="Citrus plants">
+            <a href="../product-detail.html?id=14" class="card"><img src="https://images.unsplash.com/photo-1769968065899-832195e26d5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Japanese Orange"><h2 class="name">Japanese Orange</h2><p class="price">₱300.00</p></a>
+            <a href="../product-detail.html?id=15" class="card"><img src="https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Davao Pomelo"><h2 class="name">Davao Pomelo</h2><p class="price">₱250.00</p></a>
+            <a href="../product-detail.html?id=19" class="card"><img src="https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Calamansi"><h2 class="name">Calamansi</h2><p class="price">₱200.00</p></a>
+            <a href="../product-detail.html?id=22" class="card"><img src="https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Lemon Meyer"><h2 class="name">Lemon Meyer</h2><p class="price">₱250.00</p></a>
+        </section>
+
+        <div class="actions">
+            <a class="btn" href="../../LandingPage/landingpage.html">Back to Home</a>
+        </div>
     </div>
 </body>
 </html>

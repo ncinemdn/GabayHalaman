@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initSizeButtons();
     initTabs();
     initMoreProductsCarousel();
+    initAddToCartToast();
 });
 
 // Product Image Carousel
@@ -219,4 +220,90 @@ function initMoreProductsCarousel() {
             behavior: 'smooth'
         });
     }
+}
+
+function initAddToCartToast() {
+    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+
+    if (!addToCartBtn) {
+        return;
+    }
+
+    addToCartBtn.addEventListener('click', () => {
+        showAddToCartToast();
+    });
+}
+
+function showAddToCartToast() {
+    const existingToast = document.querySelector('.cart-toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const productTitle = document.querySelector('.product-title')?.textContent?.trim() || 'Plant Item';
+    const selectedSizeLabel = state.selectedSize.charAt(0).toUpperCase() + state.selectedSize.slice(1);
+    const productImage = productImages[state.currentImageIndex];
+
+    // Save to cart in localStorage
+    const cart = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const existingItem = cart.find(item => item.name === productTitle);
+    
+    if (existingItem) {
+        // If item already in cart, increase quantity
+        existingItem.quantity += state.quantity;
+    } else {
+        // Add new item to cart with a generated ID based on the name
+        const newId = Math.max(0, ...cart.map(item => item.id || 0)) + 1;
+        cart.push({
+            id: newId,
+            name: productTitle,
+            price: 999, // Default price for shop page products
+            image: productImage,
+            quantity: state.quantity,
+            size: state.selectedSize,
+            category: 'Shop'
+        });
+    }
+    
+    localStorage.setItem('reservations', JSON.stringify(cart));
+
+    const toast = document.createElement('aside');
+    toast.className = 'cart-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.innerHTML = `
+        <button class="cart-toast-close" type="button" aria-label="Close">×</button>
+        <p class="cart-toast-title">Just added to your cart</p>
+        <div class="cart-toast-content">
+            <img src="${productImage}" alt="${productTitle}" class="cart-toast-image">
+            <div class="cart-toast-details">
+                <p class="cart-toast-product">${productTitle} (${selectedSizeLabel})</p>
+                <p class="cart-toast-meta">Qty: ${state.quantity}</p>
+            </div>
+        </div>
+        <a href="../CartPage/cart.html" class="cart-toast-view">VIEW CART</a>
+        <button class="cart-toast-continue" type="button">Continue shopping</button>
+    `;
+
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    const closeToast = () => {
+        toast.classList.remove('show');
+        window.setTimeout(() => {
+            toast.remove();
+        }, 220);
+    };
+
+    toast.querySelector('.cart-toast-close')?.addEventListener('click', closeToast);
+    toast.querySelector('.cart-toast-continue')?.addEventListener('click', closeToast);
+
+    window.setTimeout(() => {
+        if (document.body.contains(toast)) {
+            closeToast();
+        }
+    }, 4500);
 }
