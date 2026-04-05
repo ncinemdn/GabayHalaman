@@ -124,10 +124,18 @@ function renderTrendingProducts() {
             '</div>' +
             '<div class="product-info">' +
                 '<h3 class="product-name">' + item.name + '</h3>' +
-                '<div class="product-actions">' + buildActionButton('cart') + buildActionButton('sale') + '</div>' +
+                '<div class="product-actions">' + buildActionButton('cart') + '</div>' +
             '</div>' +
         '</article>';
     }).join('');
+
+    // Add click handler for cart button to navigate to shop
+    const cartButtons = track.querySelectorAll('.action-btn');
+    cartButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            window.location.href = '../Shopage/Shoppage.html';
+        });
+    });
 
     const shift = Math.max(trendingCenterIndex - Math.floor(visibleCards / 2), 0);
     const maxShift = Math.max(items.length - visibleCards, 0);
