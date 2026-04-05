@@ -5,23 +5,23 @@ let categoryIndex = 0;
 const productsByTab = {
     new: [
         { name: 'Calamansi', image: '../LandingPage/calamansi.jpg' },
-        { name: 'Pine Tree', image: '../LandingPage/pine_tree.jpg' },
-        { name: 'Thai Bamboo', image: '../LandingPage/thai_bamboo.jpg' },
-        { name: 'Meyer Lemon', image: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Dwarf Coconut', image: 'https://images.unsplash.com/photo-1629730071038-f0f445fdf5b6?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Blossom Guava', image: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80' }
+        { name: 'Carabao Mango', image: '../Admin/PlantCatalog/images/carabao_mango.jpg' },
+        { name: 'Dwarf Coconut', image: '../Admin/PlantCatalog/images/native_coconut.jpg' },
+        { name: 'Davao Pomelo', image: '../Admin/PlantCatalog/images/suha_davao.jpg' },
+        { name: 'Guava', image: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80' },
+        { name: 'Golden Trumpet Flower', image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
     ],
     bestseller: [
-        { name: 'Mango Deluxe', image: 'https://images.unsplash.com/photo-1605027990121-cbae9e0642df?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Sun Citrus', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Forest Shade', image: 'https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Ruby Flowering', image: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Evergreen Palm', image: 'https://images.unsplash.com/photo-1520315342629-6ea920342047?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Fruit King Mix', image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=680&q=80' }
+        { name: 'Mango Deluxe', image: '../Admin/PlantCatalog/images/carabao_mango.jpg' },
+        { name: 'Sun Citrus', image: '../Admin/PlantCatalog/images/suha_davao.jpg' },
+        { name: 'Dwarf Coconut', image: '../Admin/PlantCatalog/images/native_coconut.jpg' },
+        { name: 'Calamansi Fresh', image: '../LandingPage/calamansi.jpg' },
+        { name: 'Pink Trumpet Flower', image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Golden Shower Flower', image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
     ]
 };
 
-const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+const DEFAULT_PLANT_IMAGE = '../LandingPage/calamansi.jpg';
 
 const reservationPlantsByCategory = {
     'Fruit Bearing': [

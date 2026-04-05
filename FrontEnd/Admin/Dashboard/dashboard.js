@@ -46,7 +46,7 @@ const pages = {
                             </svg>
                         </div>
                         <div class="stat-details">
-                            <p class="stat-label">Total Ordes</p>
+                            <p class="stat-label">Total Orders</p>
                             <p class="stat-value">1,458</p>
                             <p class="stat-info">+12.5% this month</p>
                         </div>
@@ -278,10 +278,17 @@ function loadPage(pageName) {
     // Update active nav item
     document.querySelectorAll('.nav-item, .bottom-action').forEach(item => {
         item.classList.remove('active');
-        if (item.getAttribute('data-page') === pageName) {
-            item.classList.add('active');
-        }
     });
+
+    const matchedNavItem = document.querySelector(`.nav-item[data-page="${pageName}"], .bottom-action[data-page="${pageName}"]`);
+    if (matchedNavItem) {
+        matchedNavItem.classList.add('active');
+    } else if (pageName === 'dashboard') {
+        const dashboardLink = document.querySelector('.sidebar-nav .nav-item[href$="dashboard.html"]');
+        if (dashboardLink) {
+            dashboardLink.classList.add('active');
+        }
+    }
 
     // Update URL without reloading
     history.pushState({ page: pageName }, '', `#${pageName}`);
