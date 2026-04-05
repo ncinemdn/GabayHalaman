@@ -37,8 +37,31 @@ const products = [
     }
 ];
 
+const allPlantsPool = [
+    { name: 'Hybrid Coconut', category: 'Coconut', image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Golden Coconut', category: 'Coconut', image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Carabao Mango', category: 'Mango', image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Sweet Catimon Mango', category: 'Mango', image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Guapple', category: 'Guava', image: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80' },
+    { name: 'Calamansi', category: 'Citrus', image: 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Suha Davao', category: 'Citrus', image: 'https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Yellow Lemon', category: 'Citrus', image: 'https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Mangosteen', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1706698352015-a907c7f8a445?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Lychee', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1705335834319-92a152363ea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Rambutan (RR)', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Sweet Tamarind', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1597081779002-314055fe24ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Mahogany', category: 'Forest', image: 'https://images.unsplash.com/photo-1544840281-274ae2755620?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Narra', category: 'Forest', image: 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Thai Bamboo', category: 'Forest', image: 'https://images.unsplash.com/photo-1696677049444-f695a0935b49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Golden Trumpet', category: 'Flowering', image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Pink Trumpet', category: 'Flowering', image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Golden Shower', category: 'Flowering', image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+    { name: 'Fire Tree', category: 'Flowering', image: 'https://images.unsplash.com/photo-1683356478048-ea3261e194b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+];
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
+    initAllPlantsSection();
     initProductImageCarousel();
     initQuantityControls();
     initSizeButtons();
@@ -46,6 +69,48 @@ document.addEventListener('DOMContentLoaded', function() {
     initMoreProductsCarousel();
     initAddToCartToast();
 });
+
+function getRandomPlants(count) {
+    const shuffled = [...allPlantsPool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+}
+
+function renderAllPlantsRandom() {
+    const grid = document.getElementById('allPlantsGrid');
+    if (!grid) {
+        return;
+    }
+
+    const randomPlants = getRandomPlants(12);
+    grid.innerHTML = randomPlants.map((plant) => {
+        return `
+            <a class="all-plant-card" href="product-detail.html">
+                <img src="${plant.image}" alt="${plant.name}" class="all-plant-image">
+                <div class="all-plant-content">
+                    <h3 class="all-plant-name">${plant.name}</h3>
+                    <p class="all-plant-category">${plant.category}</p>
+                </div>
+            </a>
+        `;
+    }).join('');
+}
+
+function initAllPlantsSection() {
+    renderAllPlantsRandom();
+
+    const allPlantsChip = document.getElementById('allPlantsChip');
+    const allPlantsSection = document.getElementById('allPlantsSection');
+
+    if (!allPlantsChip || !allPlantsSection) {
+        return;
+    }
+
+    allPlantsChip.addEventListener('click', function(event) {
+        event.preventDefault();
+        renderAllPlantsRandom();
+        allPlantsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
 
 // Product Image Carousel
 function initProductImageCarousel() {

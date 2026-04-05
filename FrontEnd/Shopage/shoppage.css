@@ -174,6 +174,109 @@ body {
     color: #000000;
 }
 
+.shop-categories-section {
+    padding: 20px 24px 8px;
+}
+
+.shop-categories-wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.shop-categories-label {
+    font-size: 18px;
+    font-weight: 600;
+    color: #33462a;
+    margin-bottom: 14px;
+}
+
+.shop-categories-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.shop-category-chip {
+    text-decoration: none;
+    color: #2f4825;
+    border: 1px solid #93b16a;
+    background: #f7fbef;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.shop-category-chip:hover {
+    background: #d9ebbd;
+    border-color: #7fa843;
+}
+
+.all-plants-section {
+    padding: 18px 24px 28px;
+}
+
+.all-plants-header {
+    margin-bottom: 14px;
+}
+
+.all-plants-title {
+    font-family: 'Inria Serif', serif;
+    font-size: 34px;
+    color: #233619;
+    margin-bottom: 6px;
+}
+
+.all-plants-subtitle {
+    color: #4a6440;
+    font-size: 15px;
+}
+
+.all-plants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+}
+
+.all-plant-card {
+    text-decoration: none;
+    color: #1f2f14;
+    background: #ffffff;
+    border: 1px solid #d7e7c5;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(37, 60, 27, 0.07);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.all-plant-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 26px rgba(37, 60, 27, 0.12);
+}
+
+.all-plant-image {
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    display: block;
+}
+
+.all-plant-content {
+    padding: 12px 12px 14px;
+}
+
+.all-plant-name {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.all-plant-category {
+    font-size: 13px;
+    color: #5b7a4d;
+    font-weight: 600;
+}
+
 /* Product Section */
 .product-section {
     padding: 24px 24px 48px;
@@ -1046,6 +1149,20 @@ body {
 
     .shop-title {
         font-size: 32px;
+    }
+
+    .shop-categories-section {
+        padding: 14px 16px 2px;
+    }
+
+    .shop-categories-label {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    .shop-category-chip {
+        font-size: 13px;
+        padding: 7px 12px;
     }
 
     .product-section {
