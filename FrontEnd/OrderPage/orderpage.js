@@ -33,35 +33,42 @@ function getPlantImage(plantName) {
 }
 
 function loadCurrentOrder() {
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+    const purchases = getPurchaseOrders();
+    const latestOrder = purchases[0];
 
-    if (reservations.length === 0) {
+    const container = document.getElementById('currentOrderContainer');
+    if (!container) return;
+
+    if (!latestOrder || !latestOrder.items || latestOrder.items.length === 0) {
+        container.innerHTML = '<p style="padding:24px;color:#888;">No orders placed yet.</p>';
         return;
     }
 
     let itemsHTML = '';
     let totalQty = 0;
 
-    reservations.forEach(item => {
-        totalQty += item.quantity;
-        itemsHTML += `<p>${item.name} (${item.quantity} pcs)</p>`;
+    latestOrder.items.forEach(item => {
+        totalQty += item.qty;
+        itemsHTML += `<p>${item.name} (${item.qty} pcs)</p>`;
     });
 
-    const firstItemImage = reservations.length > 0 ? getPlantImage(reservations[0].name) : DEFAULT_PLANT_IMAGE;
-    const totalPrice = reservations.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const firstItem = latestOrder.items[0];
+    const firstItemImage = firstItem.image || getPlantImage(firstItem.name);
+    const totalPrice = latestOrder.totalAmount || 0;
+    const orderId = latestOrder.orderId || '';
 
     const currentOrderHTML = `
         <div class="order-card">
             <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
                 <div class="product-image">
-                    <img alt="" src="${firstItemImage}" />
+                    <img alt="" src="${firstItemImage}" onerror="this.src='${DEFAULT_PLANT_IMAGE}'" />
                 </div>
                 <div style="flex: 1;">
-                    <p class="order-category">Category : ${reservations[0].category}</p>
+                    <p class="order-category">Order ${orderId}</p>
                     <div class="order-items">
                         ${itemsHTML}
                     </div>
+                    <p style="margin-top:6px;font-size:13px;color:#555;">Total: \u20B1${totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2})}</p>
                 </div>
                 <p class="order-status pending">Confirmed</p>
             </div>
@@ -82,10 +89,7 @@ function loadCurrentOrder() {
         </div>
     `;
 
-    const container = document.getElementById('currentOrderContainer');
-    if (container) {
-        container.innerHTML = currentOrderHTML;
-    }
+    container.innerHTML = currentOrderHTML;
 }
 
 function trackCurrentOrder() {
@@ -93,20 +97,24 @@ function trackCurrentOrder() {
 }
 
 function loadOrderDetails() {
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+    const purchases = getPurchaseOrders();
+    const latestOrder = purchases[0];
 
-    if (reservations.length === 0) {
+    if (!latestOrder || !latestOrder.items || latestOrder.items.length === 0) {
         document.getElementById('detailsFullName').textContent = 'No Data';
         return;
     }
 
+    const deliveryDetails = latestOrder.deliveryDetails || {};
+
     // Set image from first item
-    const firstItemImage = getPlantImage(reservations[0].name);
+    const firstItem = latestOrder.items[0];
+    const firstItemImage = firstItem.image || getPlantImage(firstItem.name);
     document.getElementById('detailsImage').src = firstItemImage;
+    document.getElementById('detailsImage').onerror = function() { this.src = DEFAULT_PLANT_IMAGE; };
 
     // Set full name
-    document.getElementById('detailsFullName').textContent = deliveryDetails.fullName || 'N/A';
+    document.getElementById('detailsFullName').textContent = deliveryDetails.fullName || latestOrder.customerName || 'N/A';
 
     // Set phone
     document.getElementById('detailsPhone').textContent = deliveryDetails.phone || 'N/A';
@@ -118,14 +126,14 @@ function loadOrderDetails() {
     let itemsHTML = '';
     let totalQty = 0;
     let totalPrice = 0;
-    reservations.forEach(item => {
-        totalQty += item.quantity;
-        totalPrice += item.price * item.quantity;
-        itemsHTML += `<p>${item.name} (${item.quantity} pcs)</p>`;
+    latestOrder.items.forEach(item => {
+        totalQty += item.qty;
+        totalPrice += item.price * item.qty;
+        itemsHTML += `<p>${item.name} (${item.qty} pcs) — \u20B1${(item.price * item.qty).toLocaleString('en-PH', {minimumFractionDigits: 2})}</p>`;
     });
     document.getElementById('detailsItems').innerHTML = itemsHTML;
     document.getElementById('detailsTotalQty').textContent = totalQty;
-    document.getElementById('detailsTotalPrice').textContent = '₱' + totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('detailsTotalPrice').textContent = '\u20B1' + totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2});
 }
 
 function updateHistoryButtons() {

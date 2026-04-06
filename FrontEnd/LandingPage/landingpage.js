@@ -108,12 +108,24 @@ function buildActionButton(type) {
 }
 
 function buildProductDetailUrl(plant) {
+    let plantId = '';
+    if (window.GHPlantData) {
+        const found = window.GHPlantData.getPlantByName(plant.name);
+        if (found) {
+            plantId = String(found.id);
+        }
+    }
+
     const params = new URLSearchParams({
         name: plant.name,
         category: plant.category || 'Shop',
         image: plant.image,
         price: String(plant.price || 250)
     });
+
+    if (plantId) {
+        params.set('id', plantId);
+    }
 
     return `../Shopage/product-detail.html?${params.toString()}`;
 }
@@ -300,22 +312,8 @@ function renderCategoryProducts(categoryKey, categoryLabel) {
 }
 
 function initializeCategoryShopByCategory() {
-    const categoryCards = document.querySelectorAll('.category-slide[data-reservation-category]');
-
-    categoryCards.forEach(function(card) {
-        card.addEventListener('click', function(event) {
-            event.preventDefault();
-
-            const reservationCategory = card.dataset.reservationCategory || '';
-            const categoryLabel = card.dataset.categoryLabel || reservationCategory;
-
-            if (!reservationCategory) {
-                return;
-            }
-
-            renderCategoryProducts(reservationCategory, categoryLabel);
-        });
-    });
+    // Category cards now have direct hrefs to Shoppage.html?category=...
+    // No JS override needed – let the <a> links navigate naturally.
 }
 
 function initializeFAQs() {
@@ -514,6 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTabs();
     initializeTrendingCarousel();
     initializeCategoryCarousel();
+    initializeCategoryShopByCategory();
     initializeFAQs();
     initializeButtons();
     initializeReviewModals();

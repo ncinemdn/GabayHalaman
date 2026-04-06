@@ -113,7 +113,7 @@
             price: Number(plant.price) || 0,
             image: plant.image || DEFAULT_PLANT_IMAGE,
             stock: Math.max(0, Number(plant.stock) || 0),
-            available: Boolean(plant.available)
+            available: plant.available !== false
         };
     }
 

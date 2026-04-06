@@ -180,10 +180,26 @@ function renderPlantsByCategory(categoryKey) {
 }
 
 function initAllPlantsSection() {
-    renderPreferredPlants();
-
     const categoryChips = document.querySelectorAll('.shop-category-chip[data-category]');
     const allPlantsSection = document.getElementById('allPlantsSection');
+
+    // Check for incoming category filter from URL (e.g. from landing page category cards)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCategory = (urlParams.get('category') || '').trim();
+
+    if (urlCategory && urlCategory !== 'all') {
+        // Activate matching chip visually
+        categoryChips.forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.category === urlCategory);
+        });
+        renderPlantsByCategory(urlCategory);
+        // Scroll to plant grid after a short delay so the page has rendered
+        setTimeout(function() {
+            if (allPlantsSection) allPlantsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    } else {
+        renderPreferredPlants();
+    }
 
     if (!categoryChips.length || !allPlantsSection) {
         return;
