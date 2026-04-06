@@ -99,18 +99,21 @@ body {
 }
 
 .nav-dropdown-menu {
-    display: none;
+    display: block;
     position: absolute;
     top: calc(100% + 5px);
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(8px);
     min-width: 170px;
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     padding: 10px 0;
     z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
 }
 
 .nav-dropdown-menu a {
@@ -121,9 +124,22 @@ body {
     pointer-events: auto;
 }
 
-.nav-dropdown:hover .nav-dropdown-menu {
-    display: block;
+.nav-dropdown.is-open .nav-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
     pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.cart-dropdown-menu {
+    left: auto;
+    right: 0;
+    transform: translateY(8px);
+    min-width: 170px;
+}
+
+.nav-dropdown.cart-dropdown.is-open .cart-dropdown-menu {
+    transform: translateY(0);
 }
 
 /* ICONS */
