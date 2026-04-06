@@ -4,20 +4,20 @@ let categoryIndex = 0;
 
 const productsByTab = {
     new: [
-        { name: 'Calamansi', image: '../LandingPage/calamansi.jpg' },
-        { name: 'Carabao Mango', image: '../Admin/PlantCatalog/images/carabao_mango.jpg' },
-        { name: 'Dwarf Coconut', image: '../Admin/PlantCatalog/images/native_coconut.jpg' },
-        { name: 'Davao Pomelo', image: '../Admin/PlantCatalog/images/suha_davao.jpg' },
-        { name: 'Guava', image: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80' },
-        { name: 'Golden Trumpet Flower', image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+        { name: 'Calamansi', category: 'Citrus Variety', price: 200, image: '../LandingPage/calamansi.jpg' },
+        { name: 'Carabao Manggo', category: 'Mangga Variety', price: 350, image: '../Admin/PlantCatalog/images/carabao_mango.jpg' },
+        { name: 'Golden', category: 'Dwarf Coconut', price: 400, image: '../Admin/PlantCatalog/images/native_coconut.jpg' },
+        { name: 'Davao Pomelo', category: 'Citrus Variety', price: 250, image: '../Admin/PlantCatalog/images/suha_davao.jpg' },
+        { name: 'Red Guaple', category: 'Cuttings/Dwarf', price: 200, image: 'https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Golden Trumpet', category: 'Flowering Trees', price: 700, image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
     ],
     bestseller: [
-        { name: 'Mango Deluxe', image: '../Admin/PlantCatalog/images/carabao_mango.jpg' },
-        { name: 'Sun Citrus', image: '../Admin/PlantCatalog/images/suha_davao.jpg' },
-        { name: 'Dwarf Coconut', image: '../Admin/PlantCatalog/images/native_coconut.jpg' },
-        { name: 'Calamansi Fresh', image: '../LandingPage/calamansi.jpg' },
-        { name: 'Pink Trumpet Flower', image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Golden Shower Flower', image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
+        { name: 'Queen Manggo', category: 'Mangga Variety', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Lemon Meyer', category: 'Citrus Variety', price: 250, image: 'https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Tacunan Variety', category: 'Dwarf Coconut', price: 550, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Sweet Catimon', category: 'Mangga Variety', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Pink Trumpet', category: 'Flowering Trees', price: 800, image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
+        { name: 'Golden Shower', category: 'Flowering Trees', price: 900, image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
     ]
 };
 
@@ -107,6 +107,17 @@ function buildActionButton(type) {
     return '<button class="action-btn" title="Sale"><svg class="action-icon" fill="none" viewBox="0 0 24 24"><path d="M5 7.5V5h2.5L14.4 11.9a2.8 2.8 0 0 1 0 4l-2.5 2.5a2.8 2.8 0 0 1-4 0L1 11.5V9h2.5L9.3 14.8a.95.95 0 1 0 1.35-1.35L5 7.5Zm11.25-2.25A2.25 2.25 0 1 1 18.5 7.5a2.25 2.25 0 0 1-2.25-2.25Z" fill="#3c5830"/></svg></button>';
 }
 
+function buildProductDetailUrl(plant) {
+    const params = new URLSearchParams({
+        name: plant.name,
+        category: plant.category || 'Shop',
+        image: plant.image,
+        price: String(plant.price || 250)
+    });
+
+    return `../Shopage/product-detail.html?${params.toString()}`;
+}
+
 function renderTrendingProducts() {
     const track = document.querySelector('#trendingTrack');
     const items = productsByTab[selectedTab] || [];
@@ -129,11 +140,35 @@ function renderTrendingProducts() {
         '</article>';
     }).join('');
 
-    // Add click handler for cart button to navigate to shop
-    const cartButtons = track.querySelectorAll('.action-btn');
-    cartButtons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            window.location.href = '../Shopage/Shoppage.html';
+    const productCards = track.querySelectorAll('.product-card');
+    productCards.forEach(function(card) {
+        card.addEventListener('click', function() {
+            const index = Number(card.dataset.index);
+            const selectedPlant = items[index];
+            if (!selectedPlant) {
+                return;
+            }
+
+            window.location.href = buildProductDetailUrl(selectedPlant);
+        });
+    });
+
+    const actionButtons = track.querySelectorAll('.action-btn');
+    actionButtons.forEach(function(btn) {
+        btn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const parentCard = btn.closest('.product-card');
+            if (!parentCard) {
+                return;
+            }
+
+            const index = Number(parentCard.dataset.index);
+            const selectedPlant = items[index];
+            if (!selectedPlant) {
+                return;
+            }
+
+            window.location.href = buildProductDetailUrl(selectedPlant);
         });
     });
 
