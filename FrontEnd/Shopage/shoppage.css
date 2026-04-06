@@ -213,6 +213,12 @@ body {
     border-color: #7fa843;
 }
 
+.shop-category-chip.active {
+    background: #7fa843;
+    border-color: #7fa843;
+    color: #ffffff;
+}
+
 .all-plants-section {
     padding: 18px 24px 28px;
 }

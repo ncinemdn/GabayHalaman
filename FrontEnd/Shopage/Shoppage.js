@@ -37,27 +37,79 @@ const products = [
     }
 ];
 
-const allPlantsPool = [
-    { name: 'Hybrid Coconut', category: 'Coconut', image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Golden Coconut', category: 'Coconut', image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Carabao Mango', category: 'Mango', image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Sweet Catimon Mango', category: 'Mango', image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Guapple', category: 'Guava', image: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80' },
-    { name: 'Calamansi', category: 'Citrus', image: 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Suha Davao', category: 'Citrus', image: 'https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Yellow Lemon', category: 'Citrus', image: 'https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Mangosteen', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1706698352015-a907c7f8a445?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Lychee', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1705335834319-92a152363ea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Rambutan (RR)', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Sweet Tamarind', category: 'Other Varieties', image: 'https://images.unsplash.com/photo-1597081779002-314055fe24ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Mahogany', category: 'Forest', image: 'https://images.unsplash.com/photo-1544840281-274ae2755620?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Narra', category: 'Forest', image: 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Thai Bamboo', category: 'Forest', image: 'https://images.unsplash.com/photo-1696677049444-f695a0935b49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Golden Trumpet', category: 'Flowering', image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Pink Trumpet', category: 'Flowering', image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Golden Shower', category: 'Flowering', image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-    { name: 'Fire Tree', category: 'Flowering', image: 'https://images.unsplash.com/photo-1683356478048-ea3261e194b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-];
+const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+
+const reservationPlantsByCategory = {
+    'Fruit Bearing': [
+        ['Rambutan RR Tuklapin', 250], ['Mangosteen', 350], ['Lansones Longkong', 350], ['Durian Puyat', 300],
+        ['Sweet Tamarind', 250], ['Bangkok Santol', 250], ["Dian't Duhat", 250], ['Sweet Balimbing', 250],
+        ['Atis', 300], ['Chico', 300], ['Macopa Red', 260], ['Avocado Lagkitan', 350], ['Cacao', 200]
+    ],
+    'Citrus Variety': [
+        ['Japanese Orange', 300], ['Davao Pomelo', 250], ['Satsuma Citrus', 250], ['Dalanghita', 250],
+        ['Dayap', 250], ['Calamansi', 200], ['Kiat Kiat', 300], ['Poncan', 250], ['Lemon Meyer', 250]
+    ],
+    'Mangga Variety': [
+        ['Carabao Manggo', 350], ['Queen Manggo', 350], ['Sweet Catimon', 350], ['Sweet Catimon Double Rootstock', 800],
+        ['Indian Manggo', 250], ['King Manggo', 350], ['Purple Manggo', 350], ['Apple Manggo', 250]
+    ],
+    'Dwarf Coconut': [
+        ['Golden', 400], ['Tacunan Variety', 550], ['Catigan Variety', 250]
+    ],
+    'Cuttings/Dwarf': [
+        ['Red Guaple', 200], ['Green Guaple', 200], ['Marang', 250], ['Lychee', 350], ['Langka', 200], ['Hybrid Mulberry', 200],
+        ['Paminta', 250], ['Red Cardinal Grapes', 250], ['Miracle Fruit', 300], ['Magic Fruit', 300], ['Sweet Guyabano', 300],
+        ['Karamay', 300], ['Sarguelas/Siniguelas', 300], ['Abiu', 300], ['Caimito', 250], ['Mabolo', 300], ['Cacao', 200],
+        ['Kamias/Pias', 250], ['Bignay', 250], ['Pomegranate', 300], ['Longan', 300]
+    ],
+    'Flowering Trees': [
+        ['Golden Trumpet', 700], ['Pink Trumpet', 800], ['Golden Shower', 900], ['Fire Tree', 1200], ['Ilang Ilang', 700],
+        ['Jacaranda', 1000], ['Pine Tree', 1200], ['Palm Tree', 1500], ['Dates Palm', 1500], ['Dates Palm Bull Out', 5500],
+        ['Palawan Cherry Blossom 3ft', 450], ['Palawan Cherry Blossom Bull Out', 3500]
+    ],
+    'Forest Trees': [
+        ['Gemelina', 250], ['Mahogany', 350], ['Narra', 350], ['Molave', 250], ['Pole Bamboo', 550], ['Thai Bamboo', 550]
+    ],
+    'Others': [
+        ['Arabica Coffee', 150], ['Robusta', 150], ['Barako', 150]
+    ]
+};
+
+const categoryDisplayMap = {
+    'Fruit Bearing': 'Fruit Bearing',
+    'Citrus Variety': 'Citrus',
+    'Mangga Variety': 'Mango',
+    'Dwarf Coconut': 'Coconut',
+    'Cuttings/Dwarf': 'Guava',
+    'Flowering Trees': 'Flowering',
+    'Forest Trees': 'Forest',
+    'Others': 'Others'
+};
+
+const categoryImageMap = {
+    'Fruit Bearing': 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Citrus Variety': 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Mangga Variety': 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Dwarf Coconut': 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Cuttings/Dwarf': 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80',
+    'Flowering Trees': 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Forest Trees': 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Others': DEFAULT_PLANT_IMAGE
+};
+
+const allPlantsPool = Object.entries(reservationPlantsByCategory).flatMap(([reservationCategory, plants]) => {
+    const displayCategory = categoryDisplayMap[reservationCategory] || reservationCategory;
+    const categoryImage = categoryImageMap[reservationCategory] || DEFAULT_PLANT_IMAGE;
+
+    return plants.map(([name, price], index) => ({
+        id: `${reservationCategory}-${index}`,
+        name,
+        price,
+        category: displayCategory,
+        sourceCategory: reservationCategory,
+        image: categoryImage
+    }));
+});
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -75,16 +127,53 @@ function getRandomPlants(count) {
     return shuffled.slice(0, count);
 }
 
-function renderAllPlantsRandom() {
+function buildProductDetailUrl(plant) {
+    const params = new URLSearchParams({
+        name: plant.name,
+        category: plant.category,
+        image: plant.image,
+        price: String(plant.price || 250)
+    });
+
+    return `product-detail.html?${params.toString()}`;
+}
+
+function getPreferredPlants(count) {
+    const floweringPlants = allPlantsPool.filter((plant) => plant.category === 'Flowering');
+
+    if (floweringPlants.length >= count) {
+        return floweringPlants.slice(0, count);
+    }
+
+    const remainder = allPlantsPool.filter((plant) => plant.category !== 'Flowering');
+    return [...floweringPlants, ...remainder.slice(0, Math.max(0, count - floweringPlants.length))];
+}
+
+function renderPlants(plantList, title, subtitle) {
     const grid = document.getElementById('allPlantsGrid');
+    const titleEl = document.querySelector('.all-plants-title');
+    const subtitleEl = document.querySelector('.all-plants-subtitle');
+
     if (!grid) {
         return;
     }
 
-    const randomPlants = getRandomPlants(12);
-    grid.innerHTML = randomPlants.map((plant) => {
+    if (titleEl) {
+        titleEl.textContent = title;
+    }
+
+    if (subtitleEl) {
+        subtitleEl.textContent = subtitle;
+    }
+
+    if (!plantList.length) {
+        grid.innerHTML = '<p class="all-plants-subtitle">No plants found in this category yet.</p>';
+        return;
+    }
+
+    grid.innerHTML = plantList.map((plant) => {
         return `
-            <a class="all-plant-card" href="product-detail.html">
+            <a class="all-plant-card" href="${buildProductDetailUrl(plant)}">
                 <img src="${plant.image}" alt="${plant.name}" class="all-plant-image">
                 <div class="all-plant-content">
                     <h3 class="all-plant-name">${plant.name}</h3>
@@ -95,20 +184,61 @@ function renderAllPlantsRandom() {
     }).join('');
 }
 
-function initAllPlantsSection() {
-    renderAllPlantsRandom();
+function renderPreferredPlants() {
+    const preferredPlants = getPreferredPlants(10);
+    renderPlants(
+        preferredPlants,
+        'Preferred Plants',
+        `Showing ${preferredPlants.length} preferred plants from Flowering category.`
+    );
+}
 
-    const allPlantsChip = document.getElementById('allPlantsChip');
+function renderPlantsByCategory(categoryKey) {
+    const normalized = categoryKey.toLowerCase();
+    const plants = allPlantsPool.filter((plant) => {
+        const plantCategory = plant.category.toLowerCase();
+
+        return plantCategory === normalized;
+    });
+
+    const prettyLabel = categoryKey
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+    renderPlants(
+        plants,
+        `${prettyLabel} Plants`,
+        `Showing all plants under ${prettyLabel}.`
+    );
+}
+
+function initAllPlantsSection() {
+    renderPreferredPlants();
+
+    const categoryChips = document.querySelectorAll('.shop-category-chip[data-category]');
     const allPlantsSection = document.getElementById('allPlantsSection');
 
-    if (!allPlantsChip || !allPlantsSection) {
+    if (!categoryChips.length || !allPlantsSection) {
         return;
     }
 
-    allPlantsChip.addEventListener('click', function(event) {
-        event.preventDefault();
-        renderAllPlantsRandom();
-        allPlantsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    categoryChips.forEach((chip) => {
+        chip.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            categoryChips.forEach(item => item.classList.remove('active'));
+            chip.classList.add('active');
+
+            const selected = chip.dataset.category;
+            if (selected === 'all') {
+                renderPreferredPlants();
+            } else {
+                renderPlantsByCategory(selected);
+            }
+
+            allPlantsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     });
 }
 
