@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gabay & Halaman | Order Now</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.2px;
+}
+
+.serif {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.3px;
+}
+
+:root{
+    --green:#7ea33d;
+}
+
+.nav-shadow { box-shadow: 0 6px 25px rgba(0,0,0,0.08); }
+.card-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
+.soft-shadow { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.btn-green { background: var(--green); }
+.btn-green:hover { filter: brightness(0.95); }
+
+.header {
+    background: #7fa843;
+    padding: 20px 0;
+}
+
+.header-inner {
+    background-color: #ffffff;
+    border-radius: 50px;
+    padding: 12px 28px;
+    max-width: 1300px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.logo {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.brand-text {
+    height: 24px;
+}
+
+.nav {
+    display: flex;
+    gap: 40px;
+}
+
+.nav a {
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: black;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.nav a:hover {
+    opacity: 0.6;
+}
+
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown-toggle {
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: black;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.nav-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 170px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    padding: 10px 0;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.nav-dropdown-menu a {
+    display: block;
+    padding: 10px 16px;
+    font-size: 16px;
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu {
+    display: block;
+    pointer-events: auto;
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-btn:hover {
+    opacity: 0.6;
+}
+
+@media (max-width: 1024px) {
+    .nav {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 10px 0 20px;
+    }
+
+    .header-inner {
+        padding: 1rem 1.5rem;
+        border-radius: 30px;
+    }
+
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .header-icons {
+        gap: 1rem;
+    }
+
+    .icon-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+</style>
+
+</head>
+
+<body class="bg-white min-h-screen">
+
+<header class="header">
+    <div class="header-inner">
+        <a href="../LandingPage/landingpage.html" class="logo-section">
+            <img src="../logo.png" alt="Logo" class="logo">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30'%3E%3Ctext x='0' y='20' font-family='Inria Serif' font-weight='700' font-size='18' fill='%23000000'%3EGabay Halaman%3C/text%3E%3C/svg%3E" alt="Gabay Halaman" class="brand-text">
+        </a>
+
+        <nav class="nav">
+            <a href="../LandingPage/landingpage.html">Home</a>
+            <a href="../Shopage/Shoppage.html">Shop</a>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-toggle" type="button">More</button>
+                <div class="nav-dropdown-menu">
+                    <a href="../LandingPage/landingpage.html#about-us">About Us</a>
+                    <a href="../LandingPage/landingpage.html#users-manual">Users Manual</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="header-icons">
+            <button class="icon-btn" aria-label="Search">
+                <svg width="27" height="30" fill="none" viewBox="0 0 27 30">
+                    <path d="M22.05 26.25L14.9625 18.375C14.4 18.875 13.7531 19.2708 13.0219 19.5625C12.2906 19.8542 11.5125 20 10.6875 20C8.64375 20 6.91406 19.2135 5.49844 17.6406C4.08281 16.0677 3.375 14.1458 3.375 11.875C3.375 9.60417 4.08281 7.68229 5.49844 6.10937C6.91406 4.53646 8.64375 3.75 10.6875 3.75C12.7312 3.75 14.4609 4.53646 15.8766 6.10937C17.2922 7.68229 18 9.60417 18 11.875C18 12.7917 17.8687 13.6562 17.6062 14.4687C17.3437 15.2812 16.9875 16 16.5375 16.625L23.625 24.5L22.05 26.25ZM10.6875 17.5C12.0937 17.5 13.2891 16.9531 14.2734 15.8594C15.2578 14.7656 15.75 13.4375 15.75 11.875C15.75 10.3125 15.2578 8.98437 14.2734 7.89062C13.2891 6.79687 12.0937 6.25 10.6875 6.25C9.28125 6.25 8.08594 6.79687 7.10156 7.89062C6.11719 8.98437 5.625 10.3125 5.625 11.875C5.625 13.4375 6.11719 14.7656 7.10156 15.8594C8.08594 16.9531 9.28125 17.5 10.6875 17.5Z" fill="black"/>
+                </svg>
+            </button>
+
+            <a href="../Reservation/reserved-plants.html" class="icon-btn" aria-label="View reservations">
+                <svg width="31" height="33" fill="none" viewBox="0 0 31 33">
+                    <path d="M9.42917 28.875C8.61111 28.875 7.91146 28.5599 7.33021 27.9297C6.74896 27.2995 6.45833 26.549 6.45833 25.6781V12.925L4.10104 6.875H1.29167V4.125H5.84479L7.97604 9.625H27.0604C27.5556 9.625 27.9323 9.84271 28.1906 10.2781C28.449 10.7135 28.4597 11.1604 28.2229 11.6187L24.5417 19.2844C25.6396 19.4677 26.5599 20.0062 27.3026 20.9C28.0453 21.7937 28.4167 22.8479 28.4167 24.0625C28.4167 25.3917 27.9807 26.526 27.1089 27.4656C26.237 28.4052 25.1767 28.875 23.9281 28.875C22.658 28.875 21.587 28.4052 20.7151 27.4656C19.8432 26.526 19.4073 25.3917 19.4073 24.0625C19.4073 23.6042 19.4611 23.1802 19.5687 22.7906C19.6764 22.401 19.8271 22.0229 20.0208 21.6562L15.7906 21.2437L11.9156 27.4313C11.6358 27.8896 11.2752 28.2448 10.8339 28.4969C10.3925 28.749 9.92431 28.875 9.42917 28.875ZM21.7646 19.0781L24.9615 12.375H9.04167L10.6562 16.5C10.8285 16.9583 11.103 17.3422 11.4797 17.6516C11.8564 17.9609 12.2924 18.1385 12.7875 18.1844L21.7646 19.0781ZM9.46146 26.0906C9.50451 26.0906 9.60139 26.0333 9.75208 25.9187L12.8844 20.9687C11.8295 20.8542 11.0007 20.5849 10.3979 20.1609C9.79514 19.737 9.34306 19.2958 9.04167 18.8375V25.7125C9.04167 25.8271 9.08472 25.9187 9.17083 25.9875C9.25694 26.0562 9.35382 26.0906 9.46146 26.0906ZM23.8958 26.125C24.4556 26.125 24.9184 25.9245 25.2844 25.5234C25.6503 25.1224 25.8333 24.6354 25.8333 24.0625C25.8333 23.4667 25.6503 22.974 25.2844 22.5844C24.9184 22.1948 24.4556 22 23.8958 22C23.3576 22 22.9002 22.1948 22.5234 22.5844C22.1467 22.974 21.9583 23.4667 21.9583 24.0625C21.9583 24.6354 22.1467 25.1224 22.5234 25.5234C22.9002 25.9245 23.3576 26.125 23.8958 26.125Z" fill="black"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="max-w-[1120px] mx-auto px-8 py-8">
+    <h1 class="serif text-[40px] font-bold mb-12">Order now</h1>
+
+    <div class="flex gap-10 flex-col lg:flex-row">
+        <div id="orderNowContainer" class="lg:w-[60%] space-y-5"></div>
+
+        <div class="lg:w-[40%]">
+            <div class="bg-white rounded-[20px] p-8 card-shadow sticky top-20">
+                <h2 class="serif text-[24px] font-bold mb-8">Order Summary</h2>
+
+                <div class="space-y-5 text-[15px] mb-8">
+                    <div class="flex justify-between">
+                        <span id="count">Subtotal (0 item)</span>
+                        <span id="subtotal" class="font-semibold">₱0.00</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span>Shipping</span>
+                        <span class="font-bold">FREE</span>
+                    </div>
+
+                    <p class="text-[12px] leading-5 text-gray-600">
+                        Shipping charges are determined based on the delivery distance to the destination address and are subject to change without prior notice.
+                    </p>
+                </div>
+
+                <div class="border-t border-gray-300 my-6"></div>
+
+                <div class="flex justify-between mb-8 text-[16px]">
+                    <span class="font-bold">Total</span>
+                    <span id="total" class="font-bold text-[18px]">₱0.00</span>
+                </div>
+
+                <button id="deliveryBtn" class="w-full py-4 rounded-[18px] text-white text-[16px] font-semibold btn-green mb-3 soft-shadow transition hover:opacity-90">
+                    Add Delivery Details
+                </button>
+
+                <button id="orderNowBtn" class="w-full py-4 rounded-[18px] text-white text-[16px] font-semibold soft-shadow transition" style="background-color: #d1d5db; cursor: not-allowed;" disabled>
+                    Order Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let orderItem = null;
+let isSubmittingOrderNow = false;
+
+function peso(amount) {
+    return '₱' + Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getOrderItem() {
+    const raw = localStorage.getItem('orderNowItem');
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw);
+    } catch (error) {
+        return null;
+    }
+}
+
+function renderOrderItem() {
+    const container = document.getElementById('orderNowContainer');
+
+    if (!orderItem) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <p class="text-gray-500 mb-4">No item selected for Order Now</p>
+                <a href="../Shopage/Shoppage.html" class="text-[#7ea33d] font-semibold">Go to Shop</a>
+            </div>
+        `;
+        updateSummary();
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="bg-[#f3f1f7] rounded-[20px] p-6 flex justify-between items-center card-shadow transition hover:shadow-lg">
+            <div class="flex items-center gap-4 flex-1">
+                <img src="${orderItem.image}" class="w-[120px] h-[120px] object-cover rounded-[15px] flex-shrink-0" alt="${orderItem.name}">
+                <div>
+                    <h3 class="serif text-[18px] font-semibold leading-tight">${orderItem.name}</h3>
+                    <p class="text-[14px] text-gray-600 mt-1">Size: ${String(orderItem.size || 'small')}</p>
+                    <p class="font-bold text-[16px] mt-2">${peso(orderItem.price)}</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 flex-shrink-0">
+                <div class="bg-gray-300 rounded-full flex items-center px-3 py-1 h-[38px] min-w-[110px] justify-between">
+                    <button class="font-bold text-[16px]" onclick="changeQty(-1)">−</button>
+                    <span class="font-semibold text-[14px]">${orderItem.quantity}</span>
+                    <button class="font-bold text-[16px]" onclick="changeQty(1)">+</button>
+                </div>
+
+                <button onclick="clearOrderNow()" class="text-red-500 text-xl" aria-label="Remove">🗑</button>
+            </div>
+        </div>
+    `;
+
+    updateSummary();
+}
+
+function changeQty(delta) {
+    if (!orderItem) {
+        return;
+    }
+
+    orderItem.quantity = Math.max(1, Number(orderItem.quantity || 1) + delta);
+    localStorage.setItem('orderNowItem', JSON.stringify(orderItem));
+    renderOrderItem();
+}
+
+function clearOrderNow() {
+    localStorage.removeItem('orderNowItem');
+    orderItem = null;
+    renderOrderItem();
+    updateButtonStates();
+}
+
+function updateSummary() {
+    const qty = orderItem ? Number(orderItem.quantity || 1) : 0;
+    const total = orderItem ? Number(orderItem.price || 0) * qty : 0;
+
+    document.getElementById('count').innerText = `Subtotal (${qty} ${qty === 1 ? 'item' : 'items'})`;
+    document.getElementById('subtotal').innerText = peso(total);
+    document.getElementById('total').innerText = peso(total);
+}
+
+function generatePurchaseOrderId(existingOrders) {
+    const fallbackNumber = 1001;
+    const maxExisting = existingOrders.reduce(function(maxValue, order) {
+        const parsed = Number(String(order.orderId || '').replace(/[^0-9]/g, ''));
+        if (!Number.isFinite(parsed)) {
+            return maxValue;
+        }
+        return Math.max(maxValue, parsed);
+    }, 0);
+
+    return '#ORD-' + String(Math.max(fallbackNumber, maxExisting + 1));
+}
+
+function saveOrderNowPurchase() {
+    if (!orderItem) {
+        return;
+    }
+
+    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+    const existingPurchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+
+    const purchaseEntry = {
+        id: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
+        orderId: generatePurchaseOrderId(existingPurchases),
+        customerName: deliveryDetails.fullName || 'Guest Customer',
+        items: [{
+            name: orderItem.name,
+            qty: Number(orderItem.quantity || 1),
+            price: Number(orderItem.price || 0),
+            image: orderItem.image
+        }],
+        totalAmount: Number(orderItem.price || 0) * Number(orderItem.quantity || 1),
+        paymentStatus: 'paid',
+        orderStatus: 'pending',
+        createdAt: new Date().toISOString(),
+        deliveryDetails: deliveryDetails
+    };
+
+    existingPurchases.unshift(purchaseEntry);
+    localStorage.setItem('purchaseOrders', JSON.stringify(existingPurchases));
+}
+
+function handleOrderNow() {
+    if (!orderItem || isSubmittingOrderNow) {
+        return;
+    }
+
+    isSubmittingOrderNow = true;
+    saveOrderNowPurchase();
+    localStorage.removeItem('orderNowItem');
+    window.location.href = '../OrderPage/orderpage.html';
+}
+
+function updateButtonStates() {
+    const deliveryDetails = localStorage.getItem('deliveryDetails');
+    const deliveryBtn = document.getElementById('deliveryBtn');
+    const orderNowBtn = document.getElementById('orderNowBtn');
+
+    deliveryBtn.textContent = deliveryDetails ? 'Edit Delivery Details' : 'Add Delivery Details';
+    deliveryBtn.onclick = function() {
+        window.location.href = 'details.html';
+    };
+
+    const canOrder = Boolean(deliveryDetails) && Boolean(orderItem);
+
+    orderNowBtn.disabled = !canOrder;
+    orderNowBtn.style.backgroundColor = canOrder ? '#ffc107' : '#d1d5db';
+    orderNowBtn.style.color = canOrder ? '#000' : '#fff';
+    orderNowBtn.style.cursor = canOrder ? 'pointer' : 'not-allowed';
+    orderNowBtn.onclick = canOrder ? handleOrderNow : null;
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    orderItem = getOrderItem();
+    renderOrderItem();
+    updateButtonStates();
+});
+</script>
+
+<script src="../search-plants.js"></script>
+</body>
+</html>

@@ -365,6 +365,7 @@ function getPlantImage(plantName) {
 }
 
 let data = [];
+let isPlacingOrder = false;
 
 function loadReservationsToCart() {
     const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
@@ -454,7 +455,65 @@ function update(){
     document.getElementById("total").innerText = price;
 }
 
+function generatePurchaseOrderId(existingOrders) {
+    const fallbackNumber = 1001;
+    const maxExisting = existingOrders.reduce((maxValue, order) => {
+        const parsed = Number(String(order.orderId || '').replace(/[^0-9]/g, ''));
+        if (!Number.isFinite(parsed)) {
+            return maxValue;
+        }
+        return Math.max(maxValue, parsed);
+    }, 0);
+
+    return '#ORD-' + String(Math.max(fallbackNumber, maxExisting + 1));
+}
+
+function createPurchaseFromCartItems(items) {
+    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+    const existingPurchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const purchaseOrderId = generatePurchaseOrderId(existingPurchases);
+
+    const purchaseEntry = {
+        id: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
+        orderId: purchaseOrderId,
+        customerName: deliveryDetails.fullName || 'Guest Customer',
+        items: items.map(item => ({
+            name: item.name,
+            qty: item.qty,
+            price: item.price,
+            image: item.img
+        })),
+        totalAmount: items.reduce((sum, item) => sum + (item.price * item.qty), 0),
+        paymentStatus: 'paid',
+        orderStatus: 'pending',
+        createdAt: new Date().toISOString(),
+        deliveryDetails: deliveryDetails
+    };
+
+    existingPurchases.unshift(purchaseEntry);
+    localStorage.setItem('purchaseOrders', JSON.stringify(existingPurchases));
+}
+
 function placeOrder(){
+    if (isPlacingOrder) {
+        return;
+    }
+
+    const selectedItems = data.filter(item => item.selected);
+
+    if (!selectedItems.length) {
+        alert('Please select at least one item to place an order.');
+        return;
+    }
+
+    isPlacingOrder = true;
+
+    createPurchaseFromCartItems(selectedItems);
+
+    data = [];
+    localStorage.setItem('reservations', JSON.stringify([]));
+
+    render();
     window.location.href = '../OrderPage/orderpage.html';
 }
 
@@ -463,7 +522,9 @@ function updateButtonStates() {
     const deliveryBtn = document.getElementById('deliveryBtn');
     const placeOrderBtn = document.getElementById('placeOrderBtn');
 
-    if (deliveryDetails) {
+    const hasCartItems = data.length > 0;
+
+    if (deliveryDetails && hasCartItems) {
         // Delivery details exist
         deliveryBtn.textContent = 'Edit Delivery Details';
         deliveryBtn.onclick = () => window.location.href = 'details.html';

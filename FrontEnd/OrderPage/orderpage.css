@@ -230,10 +230,14 @@ body {
 }
 
 .order-status.delivered {
-  color: red;
+  color: #09873D;
 }
 
 .order-status.pending {
+  color: #AA6608;
+}
+
+.order-status.cancel {
   color: red;
 }
 

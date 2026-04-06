@@ -100,6 +100,27 @@ const state = {
     currentPlant: null
 };
 
+function buildPlantFromQuery(urlParams) {
+    const name = (urlParams.get('name') || '').trim();
+    if (!name) {
+        return null;
+    }
+
+    const category = (urlParams.get('category') || 'Shop').trim();
+    const image = (urlParams.get('image') || '').trim();
+    const parsedPrice = Number(urlParams.get('price'));
+    const price = Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : 250;
+    const generatedId = Math.abs(name.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0));
+
+    return {
+        id: generatedId,
+        name,
+        category,
+        image: image || 'https://images.unsplash.com/photo-1509937528035-ad76254b0356?w=800&h=800&fit=crop',
+        price
+    };
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     loadPlantData();
@@ -108,26 +129,29 @@ document.addEventListener('DOMContentLoaded', function() {
     initSizeButtons();
     initTabs();
     initAddToCartToast();
+    initBuyNowButton();
 });
 
 // Load plant data from URL parameters
 function loadPlantData() {
     const urlParams = new URLSearchParams(window.location.search);
     const plantId = parseInt(urlParams.get('id'));
-    
-    if (!plantId) {
-        console.error('No plant ID provided');
-        return;
-    }
-    
-    // Find plant in categories
+
+    // Find plant in categories by ID when present
     let foundPlant = null;
-    for (const category in plantsByCategory) {
-        const plant = plantsByCategory[category].find(p => p.id === plantId);
-        if (plant) {
-            foundPlant = { ...plant, category };
-            break;
+    if (plantId) {
+        for (const category in plantsByCategory) {
+            const plant = plantsByCategory[category].find(p => p.id === plantId);
+            if (plant) {
+                foundPlant = { ...plant, category };
+                break;
+            }
         }
+    }
+
+    // Fallback for category pages that pass plant data as query params
+    if (!foundPlant) {
+        foundPlant = buildPlantFromQuery(urlParams);
     }
     
     if (!foundPlant) {
@@ -346,4 +370,32 @@ function showAddToCartToast() {
             closeToast();
         }
     }, 4500);
+}
+
+function initBuyNowButton() {
+    const buyNowBtn = document.querySelector('.buy-now-btn');
+    if (!buyNowBtn) {
+        return;
+    }
+
+    buyNowBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        if (!state.currentPlant) {
+            return;
+        }
+
+        const orderNowItem = {
+            id: state.currentPlant.id,
+            name: state.currentPlant.name,
+            price: state.currentPlant.price,
+            image: state.currentPlant.image,
+            quantity: state.quantity,
+            size: state.selectedSize,
+            category: state.currentPlant.category
+        };
+
+        localStorage.setItem('orderNowItem', JSON.stringify(orderNowItem));
+        window.location.href = '../CartPage/order-now.html';
+    });
 }
