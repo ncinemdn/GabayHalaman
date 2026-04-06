@@ -123,7 +123,7 @@ function isPlantAvailable(plant) {
 }
 
 function getSelectedPlant(id) {
-    return selectedPlants.find(p => p.id === id);
+    return selectedPlants.find(p => String(p.id) === String(id));
 }
 
 function openCalendar() {
@@ -139,7 +139,7 @@ function openCalendar() {
 }
 
 function removeSelectedPlant(id) {
-    selectedPlants = selectedPlants.filter(p => p.id !== id);
+    selectedPlants = selectedPlants.filter(p => String(p.id) !== String(id));
 }
 
 function updateSelectedPlant(id, patch) {
@@ -149,14 +149,43 @@ function updateSelectedPlant(id, patch) {
     }
 }
 
+function handlePlantSelectionClick(event) {
+    const clickedControl = event.target.closest('.plant-controls');
+    if (clickedControl) {
+        return;
+    }
+
+    const clickedCard = event.target.closest('.plant-card');
+    if (!clickedCard) {
+        return;
+    }
+
+    if (clickedCard.classList.contains('unavailable')) {
+        return;
+    }
+
+    const plantId = Number(clickedCard.dataset.plantId);
+    const category = clickedCard.dataset.category;
+
+    if (!plantId || !category) {
+        return;
+    }
+
+    selectPlant(plantId, category);
+}
+
 // Initialize the display
 function init() {
+    const categoryField = document.getElementById('category');
+    const plantDisplay = document.getElementById('plantDisplay');
+
     updatePlantDisplay();
 
-    // Add event listeners
-    document.getElementById('category').addEventListener('change', function() {
+    categoryField.addEventListener('change', function() {
         updatePlantDisplay();
     });
+
+    plantDisplay.addEventListener('click', handlePlantSelectionClick);
 }
 
 
@@ -190,14 +219,29 @@ function updatePlantDisplay() {
         const plantSize = selectedPlantData ? selectedPlantData.size : '';
 
         return `
-        <div class="plant-card ${isSelected ? 'selected' : ''} ${isAvailable ? '' : 'unavailable'}" onclick="selectPlant(${plant.id}, '${category}')">
+        <div class="plant-card ${isSelected ? 'selected' : ''} ${isAvailable ? '' : 'unavailable'}" data-plant-id="${plant.id}" data-category="${category}">
             <div class="plant-card-inner">
+                <button
+                    type="button"
+                    class="plant-select-circle ${isSelected ? 'selected' : ''}"
+                    aria-label="${isSelected ? 'Unselect' : 'Select'} ${plant.name}"
+                    aria-pressed="${isSelected ? 'true' : 'false'}"
+                    ${isAvailable ? '' : 'disabled'}
+                >
+                    <span class="plant-select-circle-mark">
+                        ${isSelected ? `
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        ` : ''}
+                    </span>
+                </button>
                 <img src="${plant.image}" alt="${plant.name}" class="plant-image" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
                 <div class="plant-info">
                     <div class="plant-name">${plant.name}</div>
                     <div class="plant-price">₱${plant.price.toFixed(2)}</div>
                     <div class="plant-stock ${isAvailable ? 'in' : 'out'}">${isAvailable ? `${maxStock} available` : 'Out of Stock'}</div>
-                    <div class="plant-controls" onclick="event.stopPropagation()">
+                    <div class="plant-controls">
                         <label for="qty-${plant.id}" class="plant-quantity-label">Qty:</label>
                         <input
                             id="qty-${plant.id}"
@@ -218,13 +262,6 @@ function updatePlantDisplay() {
                         </select>
                     </div>
                 </div>
-                ${isSelected ? `
-                    <div class="checkmark">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                        </svg>
-                    </div>
-                ` : ''}
             </div>
         </div>
         `;
@@ -237,7 +274,7 @@ function updatePlantDisplay() {
 // Called when quantity input changes on a plant card
 function onPlantQuantityChange(plantId, value) {
     const categoryData = getSourcePlantsByCategory();
-    const matchingPlant = Object.values(categoryData).flat().find(plant => plant.id === plantId);
+    const matchingPlant = Object.values(categoryData).flat().find(plant => String(plant.id) === String(plantId));
     const maxStock = matchingPlant ? Math.max(1, getAvailableStock(matchingPlant)) : 99;
     const qty = Math.min(maxStock, Math.max(1, parseInt(value, 10) || 1));
     const selected = getSelectedPlant(plantId);
@@ -260,7 +297,7 @@ function selectPlant(plantId, category) {
     const plantsList = document.querySelector('.plants-list');
     const currentListScrollTop = plantsList ? plantsList.scrollTop : 0;
     const plants = getSourcePlantsByCategory()[category] || [];
-    const plant = plants.find(p => p.id === plantId);
+    const plant = plants.find(p => String(p.id) === String(plantId));
     if (!plant) return;
     if (!isPlantAvailable(plant)) return;
 

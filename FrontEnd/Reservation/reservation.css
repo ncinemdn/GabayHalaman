@@ -550,6 +550,7 @@ input[type="date"] {
 .plant-card.selected {
     border-color: #3e5a18;
     background-color: rgba(62, 90, 24, 0.05);
+    box-shadow: 0 10px 24px rgba(62, 90, 24, 0.14);
 }
 
 
@@ -558,6 +559,44 @@ input[type="date"] {
     align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
+}
+
+.plant-select-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #7e8a73;
+    background: #ffffff;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.plant-select-circle:hover:not(:disabled) {
+    border-color: #3e5a18;
+    transform: scale(1.05);
+}
+
+.plant-select-circle:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.plant-select-circle.selected {
+    background: #3e5a18;
+    border-color: #3e5a18;
+}
+
+.plant-select-circle-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
 }
 
 
@@ -651,19 +690,6 @@ input[type="date"] {
 
 .plant-stock.out {
     color: #b42318;
-}
-
-
-.checkmark {
-    background-color: #3e5a18;
-    color: white;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
 }
 
 
