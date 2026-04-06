@@ -140,8 +140,12 @@ function renderTrendingProducts() {
     const shift = Math.max(trendingCenterIndex - Math.floor(visibleCards / 2), 0);
     const maxShift = Math.max(items.length - visibleCards, 0);
     const clampedShift = Math.min(shift, maxShift);
-    const percentage = 100 / visibleCards;
-    track.style.transform = 'translateX(-' + (clampedShift * percentage) + '%)';
+    const firstCard = track.querySelector('.product-card');
+    const trackStyles = window.getComputedStyle(track);
+    const gap = parseFloat(trackStyles.columnGap || trackStyles.gap || '0') || 0;
+    const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : 0;
+    const step = cardWidth + gap;
+    track.style.transform = 'translateX(-' + (clampedShift * step) + 'px)';
 }
 
 function initializeTabs() {
