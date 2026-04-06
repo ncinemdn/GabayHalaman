@@ -59,6 +59,40 @@ function normalizeStatus(status) {
     return 'pending';
 }
 
+function normalizeTrackingStatus(status) {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
+        return 'prepared';
+    }
+
+    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
+        return 'out_for_delivery';
+    }
+
+    if (value === 'delivered') {
+        return 'delivered';
+    }
+
+    return 'confirmed';
+}
+
+function formatTrackingLabel(status) {
+    if (status === 'prepared') {
+        return 'Prepared by Seller';
+    }
+
+    if (status === 'out_for_delivery') {
+        return 'Out for Delivery';
+    }
+
+    if (status === 'delivered') {
+        return 'Delivered';
+    }
+
+    return 'Confirmed';
+}
+
 function formatPeso(value) {
     return '₱' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -102,13 +136,17 @@ function getTotalAmount(order) {
 function loadPurchaseOrders() {
     const stored = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
     if (!stored.length) {
-        purchaseOrders = SAMPLE_PURCHASE_ORDERS.map(order => ({ ...order }));
+        purchaseOrders = SAMPLE_PURCHASE_ORDERS.map(order => ({
+            ...order,
+            trackingStatus: 'confirmed'
+        }));
         return;
     }
 
     purchaseOrders = stored.map(order => ({
         ...order,
-        orderStatus: normalizeStatus(order.orderStatus)
+        orderStatus: normalizeStatus(order.orderStatus),
+        trackingStatus: normalizeTrackingStatus(order.trackingStatus)
     }));
 }
 
@@ -159,6 +197,8 @@ function renderMiniTable(containerId, orders) {
                     <th>Plant</th>
                     <th>Payment</th>
                     <th>Status</th>
+                    <th>Tracking</th>
+                    <th>Tracking</th>
                 </tr>
             </thead>
             <tbody>
@@ -168,6 +208,8 @@ function renderMiniTable(containerId, orders) {
                         <td>${getPlantOrdered(order)}</td>
                         <td><span class="status-badge ${order.paymentStatus}">${capitalizeFirst(order.paymentStatus)}</span></td>
                         <td><span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span></td>
+                        <td><span class="status-badge ${normalizeTrackingStatus(order.trackingStatus)}">${formatTrackingLabel(normalizeTrackingStatus(order.trackingStatus))}</span></td>
+                        <td><span class="status-badge ${normalizeTrackingStatus(order.trackingStatus)}">${formatTrackingLabel(normalizeTrackingStatus(order.trackingStatus))}</span></td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -197,6 +239,7 @@ function expandTable(type) {
                 <div class="expanded-header-cell">TOTAL<br>AMOUNT</div>
                 <div class="expanded-header-cell">PAYMENT<br>STATUS</div>
                 <div class="expanded-header-cell">STATUS</div>
+                <div class="expanded-header-cell">TRACKING<br>STATUS</div>
                 <div class="expanded-header-cell">Actions</div>
             </div>
         </div>
@@ -215,10 +258,16 @@ function expandTable(type) {
                         <span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span>
                     </div>
                     <div class="expanded-cell">
+                        <span class="status-badge ${normalizeTrackingStatus(order.trackingStatus)}">${formatTrackingLabel(normalizeTrackingStatus(order.trackingStatus))}</span>
+                    </div>
+                    <div class="expanded-cell expanded-actions">
                         ${type === 'purchase' ? `
                             <button class="status-btn" onclick="setOrderStatus('${order.id}', 'pending')">Pending</button>
-                            <button class="status-btn" onclick="setOrderStatus('${order.id}', 'delivered')">Delivered</button>
                             <button class="status-btn" onclick="setOrderStatus('${order.id}', 'cancel')">Cancel</button>
+                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'confirmed')">Confirmed</button>
+                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'prepared')">Prepared by Seller</button>
+                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'out_for_delivery')">Out for Delivery</button>
+                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'delivered')">Delivered</button>
                         ` : ''}
                         <button class="delete-btn" onclick="deleteOrder('${type}', '${order.id}')" title="Delete order">
                             <svg width="16" height="19" viewBox="0 0 16 19" fill="currentColor">
@@ -248,6 +297,21 @@ function setOrderStatus(orderId, status) {
     order.orderStatus = normalizeStatus(status);
     persistPurchaseOrders();
     updateStats();
+    if (expandedTable) {
+        expandTable(expandedTable);
+    } else {
+        renderMiniTables();
+    }
+}
+
+function setTrackingStatus(orderId, status) {
+    const order = purchaseOrders.find(item => item.id === orderId);
+    if (!order) {
+        return;
+    }
+
+    order.trackingStatus = normalizeTrackingStatus(status);
+    persistPurchaseOrders();
     if (expandedTable) {
         expandTable(expandedTable);
     } else {

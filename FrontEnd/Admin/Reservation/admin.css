@@ -685,7 +685,7 @@ body {
 
 .expanded-header-grid {
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.5fr 1fr;
+    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr 1.6fr;
     gap: 1rem;
 }
 
@@ -703,7 +703,7 @@ body {
 
 .expanded-row {
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.5fr 1fr;
+    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr 1.6fr;
     gap: 1rem;
     align-items: center;
     margin-bottom: 1rem;
@@ -725,6 +725,25 @@ body {
 
 .expanded-cell.bold {
     font-weight: 600;
+}
+
+.expanded-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.expanded-actions .status-btn {
+    margin: 0;
+}
+
+.expanded-actions .delete-btn {
+    padding: 0.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .expanded-footer {

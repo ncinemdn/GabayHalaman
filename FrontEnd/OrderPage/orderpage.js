@@ -1,323 +1,316 @@
 let historyStack = [];
 let futureStack = [];
-let selectedOrderId = null;
+
+// Plant image mapping
+const plantImages = {
+    "Rambutan RR Tuklapin": "https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Mangosteen": "https://images.unsplash.com/photo-1706698352015-a907c7f8a445?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Durian Puyat": "https://images.unsplash.com/photo-1630510526315-aba311212355?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Tamarind": "https://images.unsplash.com/photo-1597081779002-314055fe24ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Bangkok Santol": "https://images.unsplash.com/photo-1737992468893-9c109da39f9b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Balimbing": "https://images.unsplash.com/photo-1760509614441-e9ca05cba0df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Avocado Lagkitan": "https://images.unsplash.com/photo-1726177551991-270f9e79b65e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Cacao": "https://images.unsplash.com/photo-1625558904461-6cf9d0a18a18?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Japanese Orange": "https://images.unsplash.com/photo-1769968065899-832195e26d5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Davao Pomelo": "https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Calamansi": "https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Lemon Meyer": "https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Queen Manggo": "https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Golden": "https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Red Guaple": "https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Lychee": "https://images.unsplash.com/photo-1705335834319-92a152363ea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Hybrid Mulberry": "https://images.unsplash.com/photo-1711641011417-3162af1e834c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Red Cardinal Grapes": "https://images.unsplash.com/photo-1660805376081-c6b01b7b78f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Sweet Guyabano": "https://images.unsplash.com/photo-1651565919334-bf81165cd0a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Pomegranate": "https://images.unsplash.com/photo-1761135174741-5507a710bb49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+    "Longan": "https://images.unsplash.com/photo-1752368198532-4e5d4c892b91?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
+};
 
 const DEFAULT_PLANT_IMAGE = "https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGZydWl0JTIwdHJlZXxlbnwxfHx8fDE3NzI5NTQxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral";
 
-function getPurchases() {
-    return JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
-}
-
-function normalizeStatus(status) {
-    const value = String(status || '').toLowerCase();
-
-    if (value === 'delivered' || value === 'completed' || value === 'reserved') {
-        return 'delivered';
-    }
-
-    if (value === 'cancel' || value === 'cancelled' || value === 'canceled') {
-        return 'cancel';
-    }
-
-    return 'pending';
-}
-
-function statusLabel(status) {
-    if (status === 'delivered') {
-        return 'Delivered';
-    }
-
-    if (status === 'cancel') {
-        return 'Cancel';
-    }
-
-    return 'Pending';
-}
-
-function getOrderById(orderId) {
-    const purchases = getPurchases();
-    return purchases.find(order => order.id === orderId) || null;
-}
-
-function getOrderImage(order) {
-    if (!order || !Array.isArray(order.items) || !order.items.length) {
-        return DEFAULT_PLANT_IMAGE;
-    }
-
-    return order.items[0].image || DEFAULT_PLANT_IMAGE;
-}
-
-function renderItems(order) {
-    if (!order || !Array.isArray(order.items)) {
-        return '';
-    }
-
-    return order.items.map(item => `<p>${item.name} (${item.qty} pcs)</p>`).join('');
-}
-
-function formatPeso(value) {
-    return '₱' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function getDeliveryBannerText(status) {
-    if (status === 'delivered') {
-        return 'Order Delivered';
-    }
-
-    if (status === 'cancel') {
-        return 'Order Cancelled';
-    }
-
-    return 'Order Pending Approval';
+function getPlantImage(plantName) {
+    return plantImages[plantName] || DEFAULT_PLANT_IMAGE;
 }
 
 function loadCurrentOrder() {
-    const purchases = getPurchases();
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+
+    if (reservations.length === 0) {
+        return;
+    }
+
+    let itemsHTML = '';
+    let totalQty = 0;
+
+    reservations.forEach(item => {
+        totalQty += item.quantity;
+        itemsHTML += `<p>${item.name} (${item.quantity} pcs)</p>`;
+    });
+
+    const firstItemImage = reservations.length > 0 ? getPlantImage(reservations[0].name) : DEFAULT_PLANT_IMAGE;
+    const totalPrice = reservations.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const currentOrderHTML = `
+        <div class="order-card">
+            <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
+                <div class="product-image">
+                    <img alt="" src="${firstItemImage}" />
+                </div>
+                <div style="flex: 1;">
+                    <p class="order-category">Category : ${reservations[0].category}</p>
+                    <div class="order-items">
+                        ${itemsHTML}
+                    </div>
+                </div>
+                <p class="order-status pending">Confirmed</p>
+            </div>
+            
+            <div class="delivery-banner">
+                <p class="delivery-text">Order Confirmed Today</p>
+                <div class="delivery-chevron">
+                    <svg fill="none" preserveAspectRatio="none" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
+                        <path d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z" fill="#359C4D" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button class="order-btn disabled">Order Received</button>
+                <button class="order-btn primary" onclick="navigateTo('order-details')">Order Details</button>
+            </div>
+        </div>
+    `;
+
     const container = document.getElementById('currentOrderContainer');
-
-    if (!container) {
-        return;
+    if (container) {
+        container.innerHTML = currentOrderHTML;
     }
-
-    if (!purchases.length) {
-        container.innerHTML = `
-            <div class="order-card">
-                <p class="order-items">No purchases yet. Place an order from cart to see it here.</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = purchases.map(order => {
-        const normalized = normalizeStatus(order.orderStatus);
-        const totalQty = Array.isArray(order.items) ? order.items.reduce((sum, item) => sum + Number(item.qty || 0), 0) : 0;
-        const categoryText = order.items && order.items.length ? order.items[0].name : 'Plant Order';
-
-        return `
-            <div class="order-card">
-                <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
-                    <div class="product-image">
-                        <img alt="" src="${getOrderImage(order)}" />
-                    </div>
-                    <div style="flex: 1;">
-                        <p class="order-category">Order: ${order.orderId || ''}</p>
-                        <p class="order-items">${categoryText}</p>
-                        <div class="order-items">${renderItems(order)}</div>
-                        <p class="order-items">Total Quantity: ${totalQty}</p>
-                        <p class="order-items">Total Price: ${formatPeso(order.totalAmount)}</p>
-                    </div>
-                    <p class="order-status ${normalized}">${statusLabel(normalized)}</p>
-                </div>
-
-                <div class="delivery-banner">
-                    <p class="delivery-text">${getDeliveryBannerText(normalized)}</p>
-                    <div class="delivery-chevron">
-                        <svg fill="none" preserveAspectRatio="none" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
-                            <path d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z" fill="#359C4D" />
-                        </svg>
-                    </div>
-                </div>
-
-                <div class="button-container">
-                    <button class="order-btn disabled">${statusLabel(normalized)}</button>
-                    <button class="order-btn primary" onclick="openOrderDetails('${order.id}')">Order Details</button>
-                </div>
-            </div>
-        `;
-    }).join('');
 }
 
-function openOrderDetails(orderId) {
-    selectedOrderId = orderId;
-    navigateTo('order-details');
+function trackCurrentOrder() {
+    navigateTo('track-order');
 }
 
 function loadOrderDetails() {
-    const order = getOrderById(selectedOrderId) || getPurchases()[0] || null;
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
 
-    if (!order) {
+    if (reservations.length === 0) {
         document.getElementById('detailsFullName').textContent = 'No Data';
-        document.getElementById('detailsItems').innerHTML = '<p>No order details available.</p>';
-        document.getElementById('detailsTotalQty').textContent = '0';
-        document.getElementById('detailsTotalPrice').textContent = '₱0.00';
         return;
     }
 
-    selectedOrderId = order.id;
+    // Set image from first item
+    const firstItemImage = getPlantImage(reservations[0].name);
+    document.getElementById('detailsImage').src = firstItemImage;
 
-    const delivery = order.deliveryDetails || {};
+    // Set full name
+    document.getElementById('detailsFullName').textContent = deliveryDetails.fullName || 'N/A';
 
-    document.getElementById('detailsImage').src = getOrderImage(order);
-    document.getElementById('detailsFullName').textContent = delivery.fullName || order.customerName || 'N/A';
-    document.getElementById('detailsPhone').textContent = delivery.phone || 'N/A';
-    document.getElementById('detailsAddress').textContent = delivery.address || 'N/A';
-    document.getElementById('detailsItems').innerHTML = renderItems(order) || '<p>No item details.</p>';
+    // Set phone
+    document.getElementById('detailsPhone').textContent = deliveryDetails.phone || 'N/A';
 
-    const totalQty = Array.isArray(order.items) ? order.items.reduce((sum, item) => sum + Number(item.qty || 0), 0) : 0;
+    // Set address
+    document.getElementById('detailsAddress').textContent = deliveryDetails.address || 'N/A';
 
-    document.getElementById('detailsTotalQty').textContent = String(totalQty);
-    document.getElementById('detailsTotalPrice').textContent = formatPeso(order.totalAmount);
+    // Set items
+    let itemsHTML = '';
+    let totalQty = 0;
+    let totalPrice = 0;
+    reservations.forEach(item => {
+        totalQty += item.quantity;
+        totalPrice += item.price * item.quantity;
+        itemsHTML += `<p>${item.name} (${item.quantity} pcs)</p>`;
+    });
+    document.getElementById('detailsItems').innerHTML = itemsHTML;
+    document.getElementById('detailsTotalQty').textContent = totalQty;
+    document.getElementById('detailsTotalPrice').textContent = '₱' + totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2});
 }
 
 function updateHistoryButtons() {
-    const backBtn = document.getElementById('back-btn');
-    const forwardBtn = document.getElementById('forward-btn');
-    if (backBtn) backBtn.disabled = historyStack.length === 0;
-    if (forwardBtn) forwardBtn.disabled = futureStack.length === 0;
+  const backBtn = document.getElementById('back-btn');
+  const forwardBtn = document.getElementById('forward-btn');
+  if (backBtn) backBtn.disabled = historyStack.length === 0;
+  if (forwardBtn) forwardBtn.disabled = futureStack.length === 0;
 }
 
 function navigateTo(pageId, fromHistory = false) {
-    const currentPage = document.querySelector('.page.active');
-    const currentId = currentPage ? currentPage.id.replace('-page', '') : null;
+  const currentPage = document.querySelector('.page.active');
+  const currentId = currentPage ? currentPage.id.replace('-page', '') : null;
 
-    if (!fromHistory && currentId && currentId !== pageId) {
-        historyStack.push(currentId);
-        futureStack = [];
+  if (!fromHistory && currentId && currentId !== pageId) {
+    historyStack.push(currentId);
+    futureStack = [];
+  }
+
+  const pages = document.querySelectorAll('.page');
+  pages.forEach(page => page.classList.remove('active'));
+
+  const target = document.getElementById(pageId + '-page');
+  if (target) {
+    target.classList.add('active');
+    window.scrollTo(0, 0);
+
+    if (pageId === 'order-details') {
+      loadOrderDetails();
+    } else if (pageId === 'track-order') {
+      loadTrackOrder('123456');
     }
+  }
 
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => page.classList.remove('active'));
-
-    const target = document.getElementById(pageId + '-page');
-    if (target) {
-        target.classList.add('active');
-        window.scrollTo(0, 0);
-
-        if (pageId === 'order-details') {
-            loadOrderDetails();
-        } else if (pageId === 'track-order') {
-            loadTrackOrder(selectedOrderId);
-        }
-    }
-
-    updateHistoryButtons();
+  updateHistoryButtons();
 }
 
 function goBack() {
-    if (historyStack.length === 0) return;
-    const currentPage = document.querySelector('.page.active');
-    const currentId = currentPage ? currentPage.id.replace('-page', '') : null;
+  if (historyStack.length === 0) return;
+  const currentPage = document.querySelector('.page.active');
+  const currentId = currentPage ? currentPage.id.replace('-page', '') : null;
 
-    const previousPage = historyStack.pop();
-    if (currentId) futureStack.push(currentId);
+  const previousPage = historyStack.pop();
+  if (currentId) futureStack.push(currentId);
 
-    navigateTo(previousPage, true);
+  navigateTo(previousPage, true);
 }
 
 function goForward() {
-    if (futureStack.length === 0) return;
-    const currentPage = document.querySelector('.page.active');
-    const currentId = currentPage ? currentPage.id.replace('-page', '') : null;
+  if (futureStack.length === 0) return;
+  const currentPage = document.querySelector('.page.active');
+  const currentId = currentPage ? currentPage.id.replace('-page', '') : null;
 
-    const nextPage = futureStack.pop();
-    if (currentId) historyStack.push(currentId);
+  const nextPage = futureStack.pop();
+  if (currentId) historyStack.push(currentId);
 
-    navigateTo(nextPage, true);
+  navigateTo(nextPage, true);
 }
 
-function fetchOrderTracking(order) {
-    const normalized = normalizeStatus(order ? order.orderStatus : 'pending');
+function getPurchaseOrders() {
+  return JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+}
 
-    let statusIndex = 0;
-    if (normalized === 'pending') {
-        statusIndex = 1;
-    } else if (normalized === 'delivered') {
-        statusIndex = 3;
-    } else if (normalized === 'cancel') {
-        statusIndex = 0;
-    }
+function normalizeTrackingStatus(status) {
+  const value = String(status || '').toLowerCase();
 
-    return {
-        orderId: order ? (order.orderId || 'N/A') : 'N/A',
-        currentStatus: statusLabel(normalized),
-        statusIndex,
-        statusLabels: ['Order Confirmed', 'Prepared by Seller', 'Out for Delivery', 'Delivered'],
-        eta: normalized === 'delivered' ? 'Delivered' : (normalized === 'cancel' ? 'Cancelled' : '1-2 days'),
-        location: normalized === 'cancel' ? 'Order cancelled by admin' : 'Processing at nursery',
-        routeMap: 'https://via.placeholder.com/1339x450.png?text=Delivery+Map+Preview',
-        mapLink: 'https://www.google.com/maps/search/?api=1&query=14.5450,121.1350'
-    };
+  if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
+    return 'prepared';
+  }
+
+  if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
+    return 'out_for_delivery';
+  }
+
+  if (value === 'delivered') {
+    return 'delivered';
+  }
+
+  return 'confirmed';
+}
+
+function getTrackingPayload(order) {
+  const states = ['Order Confirmed', 'Prepared by Seller', 'Out for Delivery', 'Delivered'];
+  const normalized = normalizeTrackingStatus(order ? order.trackingStatus : 'confirmed');
+
+  const currentIndex = {
+    confirmed: 0,
+    prepared: 1,
+    out_for_delivery: 2,
+    delivered: 3
+  }[normalized] ?? 0;
+
+  return {
+    orderId: order ? (order.orderId || 'N/A') : 'N/A',
+    currentStatus: states[currentIndex],
+    statusIndex: currentIndex,
+    statusLabels: states,
+    eta: normalized === 'delivered' ? 'Delivered' : '1-2 days',
+    location: normalized === 'delivered' ? 'Delivered to customer' : 'Processing at nursery',
+    routeMap: 'https://via.placeholder.com/1339x450.png?text=Delivery+Map+Preview',
+    mapLink: 'https://www.google.com/maps/search/?api=1&query=14.5450,121.1350'
+  };
 }
 
 function renderTrackSteps(data) {
-    const trackSteps = document.getElementById('track-steps');
-    trackSteps.innerHTML = '';
+  const trackSteps = document.getElementById('track-steps');
+  trackSteps.innerHTML = '';
 
-    const trackLine = document.createElement('div');
-    trackLine.className = 'track-progress-line';
-    trackSteps.appendChild(trackLine);
+  const trackLine = document.createElement('div');
+  trackLine.className = 'track-progress-line';
+  trackSteps.appendChild(trackLine);
 
-    const activeLine = document.createElement('div');
-    activeLine.className = 'track-progress-active';
-    const percent = ((data.statusIndex) / (data.statusLabels.length - 1)) * 100;
-    activeLine.style.width = `calc(8% + ${percent} * 0.84%)`;
-    trackSteps.appendChild(activeLine);
+  const activeLine = document.createElement('div');
+  activeLine.className = 'track-progress-active';
+  const percent = ((data.statusIndex) / (data.statusLabels.length - 1)) * 100;
+  activeLine.style.width = `calc(8% + ${percent} * 0.84%)`;
+  trackSteps.appendChild(activeLine);
 
-    const icons = {
-        'Order Confirmed': '✅',
-        'Prepared by Seller': '✅',
-        'Out for Delivery': '🚚',
-        'Delivered': '📦'
-    };
+  const icons = {
+    'Order Confirmed': '✅',
+    'Prepared by Seller': '✅',
+    'Out for Delivery': '🚚',
+    'Delivered': '📦'
+  };
 
-    data.statusLabels.forEach((label, idx) => {
-        const step = document.createElement('div');
-        step.className = 'track-step';
+  data.statusLabels.forEach((label, idx) => {
+    const step = document.createElement('div');
+    step.className = 'track-step';
 
-        const circle = document.createElement('div');
-        circle.className = 'step-circle';
-        if (idx < data.statusIndex) {
-            circle.classList.add('active');
-            circle.textContent = '✓';
-        } else if (idx === data.statusIndex) {
-            circle.classList.add('active');
-            circle.textContent = icons[label] || '●';
-        } else {
-            circle.textContent = icons[label] || '○';
-        }
+    const circle = document.createElement('div');
+    circle.className = 'step-circle';
+    if (idx < data.statusIndex) {
+      circle.classList.add('active');
+      circle.textContent = '✓';
+    } else if (idx === data.statusIndex) {
+      circle.classList.add('active');
+      circle.textContent = icons[label] || '●';
+    } else {
+      circle.textContent = icons[label] || '○';
+    }
 
-        const title = document.createElement('div');
-        title.className = 'step-label';
-        title.innerText = label;
+    const title = document.createElement('div');
+    title.className = 'step-label';
+    title.innerText = label;
 
-        const stepContent = document.createElement('div');
-        stepContent.className = 'track-step-content';
-        stepContent.appendChild(circle);
-        stepContent.appendChild(title);
+    const stepContent = document.createElement('div');
+    stepContent.className = 'track-step-content';
+    stepContent.appendChild(circle);
+    stepContent.appendChild(title);
 
-        step.appendChild(stepContent);
-        trackSteps.appendChild(step);
-    });
+    step.appendChild(stepContent);
+    trackSteps.appendChild(step);
+  });
 }
 
 function renderTrackInfo(data) {
-    document.getElementById('order-id').textContent = data.orderId;
-    document.getElementById('status-text').textContent = data.currentStatus;
-    document.getElementById('eta-text').textContent = data.eta;
-    document.getElementById('location-text').textContent = data.location;
+  document.getElementById('order-id').textContent = '#' + data.orderId;
+  document.getElementById('status-text').textContent = data.currentStatus;
+  document.getElementById('eta-text').textContent = data.eta;
+  document.getElementById('location-text').textContent = data.location;
 
-    const mapImage = document.getElementById('map-image');
-    mapImage.onerror = () => {
-        mapImage.src = 'https://via.placeholder.com/1339x450.png?text=Map+currently+unavailable';
-    };
-    mapImage.src = data.routeMap;
-    const mapLink = document.getElementById('map-link');
-    mapLink.href = data.mapLink;
+  const mapImage = document.getElementById('map-image');
+  mapImage.onerror = () => {
+    mapImage.src = 'https://via.placeholder.com/1339x450.png?text=Map+currently+unavailable';
+  };
+  mapImage.src = data.routeMap;
+  const mapLink = document.getElementById('map-link');
+  mapLink.href = data.mapLink;
 }
 
 function loadTrackOrder(orderId) {
-    const order = getOrderById(orderId) || getPurchases()[0] || null;
-    const payload = fetchOrderTracking(order);
-    renderTrackSteps(payload);
-    renderTrackInfo(payload);
+  const purchases = getPurchaseOrders();
+  const order = purchases.find(item => item.id === orderId) || purchases[0] || null;
+
+  if (!order) {
+    document.getElementById('status-text').textContent = 'No tracking available';
+    return;
+  }
+
+  const payload = getTrackingPayload(order);
+  renderTrackSteps(payload);
+  renderTrackInfo(payload);
 }
 
-// Initialize
+// Initialize - show order list by default
 document.addEventListener('DOMContentLoaded', () => {
-    const purchases = getPurchases();
-    if (purchases.length) {
-        selectedOrderId = purchases[0].id;
-    }
-    loadCurrentOrder();
-    navigateTo('order-list');
+  loadCurrentOrder();
+  navigateTo('order-list');
 });

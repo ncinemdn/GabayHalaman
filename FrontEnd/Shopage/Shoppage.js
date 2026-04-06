@@ -4,7 +4,7 @@ const state = {
     quantity: 1,
     selectedSize: 'small',
     selectedTab: 'additional',
-    currentProductIndex: 1, // Start with middle product (Calamansi)
+    currentProductIndex: 0,
 };
 
 // Product images
@@ -15,27 +15,7 @@ const productImages = [
     'https://images.unsplash.com/photo-1481687727648-08e5f80f6bf0?w=800&h=800&fit=crop'
 ];
 
-// More products data
-const products = [
-    {
-        id: 1,
-        name: 'Calamansi Plant',
-        image: 'https://images.unsplash.com/photo-1591958911259-bee2173bdccc?w=600&h=600&fit=crop',
-        rating: '⭐⭐⭐⭐⭐'
-    },
-    {
-        id: 2,
-        name: 'Palm Plant',
-        image: 'https://images.unsplash.com/photo-1545165375-5f08d2eb73e2?w=600&h=600&fit=crop',
-        rating: '⭐⭐⭐⭐⭐'
-    },
-    {
-        id: 3,
-        name: 'Decorative Plant',
-        image: 'https://images.unsplash.com/photo-1506804749661-b288ff6f9f55?w=600&h=600&fit=crop',
-        rating: '⭐⭐⭐⭐⭐'
-    }
-];
+let refreshMoreCarousel = null;
 
 const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
 
@@ -111,6 +91,14 @@ const allPlantsPool = Object.entries(reservationPlantsByCategory).flatMap(([rese
     }));
 });
 
+const products = getRandomPlants(Math.min(12, allPlantsPool.length)).map((plant, index) => ({
+    id: index + 1,
+    name: plant.name,
+    image: plant.image,
+    category: plant.category,
+    price: plant.price
+}));
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     initAllPlantsSection();
@@ -119,7 +107,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initSizeButtons();
     initTabs();
     initMoreProductsCarousel();
+    initMorePlantsToggle();
     initAddToCartToast();
+    initFooter();
 });
 
 function getRandomPlants(count) {
@@ -139,14 +129,7 @@ function buildProductDetailUrl(plant) {
 }
 
 function getPreferredPlants(count) {
-    const floweringPlants = allPlantsPool.filter((plant) => plant.category === 'Flowering');
-
-    if (floweringPlants.length >= count) {
-        return floweringPlants.slice(0, count);
-    }
-
-    const remainder = allPlantsPool.filter((plant) => plant.category !== 'Flowering');
-    return [...floweringPlants, ...remainder.slice(0, Math.max(0, count - floweringPlants.length))];
+    return getRandomPlants(Math.min(count, allPlantsPool.length));
 }
 
 function renderPlants(plantList, title, subtitle) {
@@ -189,14 +172,22 @@ function renderPreferredPlants() {
     renderPlants(
         preferredPlants,
         'Preferred Plants',
-        `Showing ${preferredPlants.length} preferred plants from Flowering category.`
+        `Showing ${preferredPlants.length} random plants from our collection.`
     );
 }
 
+function normalizeCategoryName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/-/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 function renderPlantsByCategory(categoryKey) {
-    const normalized = categoryKey.toLowerCase();
+    const normalized = normalizeCategoryName(categoryKey);
     const plants = allPlantsPool.filter((plant) => {
-        const plantCategory = plant.category.toLowerCase();
+        const plantCategory = normalizeCategoryName(plant.category);
 
         return plantCategory === normalized;
     });
@@ -248,6 +239,10 @@ function initProductImageCarousel() {
     const thumbnailsContainer = document.getElementById('thumbnails');
     const prevBtn = document.getElementById('prevImageBtn');
     const nextBtn = document.getElementById('nextImageBtn');
+
+    if (!mainImage || !prevBtn || !nextBtn) {
+        return;
+    }
     
     if (thumbnailsContainer) {
         productImages.forEach((img, index) => {
@@ -296,6 +291,10 @@ function initQuantityControls() {
     const quantityValue = document.getElementById('quantityValue');
     const decrementBtn = document.getElementById('decrementBtn');
     const incrementBtn = document.getElementById('incrementBtn');
+
+    if (!quantityValue || !decrementBtn || !incrementBtn) {
+        return;
+    }
     
     decrementBtn.onclick = () => {
         if (state.quantity > 1) {
@@ -331,6 +330,10 @@ function initTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const additionalTab = document.getElementById('additionalTab');
     const reviewsTab = document.getElementById('reviewsTab');
+
+    if (!tabButtons.length || !additionalTab || !reviewsTab) {
+        return;
+    }
     
     tabButtons.forEach(btn => {
         btn.onclick = () => {
@@ -359,17 +362,36 @@ function initMoreProductsCarousel() {
     const progressContainer = document.getElementById('carouselProgress');
     const prevBtn = document.getElementById('prevProductBtn');
     const nextBtn = document.getElementById('nextProductBtn');
+
+    if (!carouselContainer || !progressContainer || !prevBtn || !nextBtn) {
+        return;
+    }
     
     // Generate product items
     products.forEach((product, index) => {
+        const productDetailUrl = buildProductDetailUrl(product);
         const item = document.createElement('div');
         item.className = `carousel-item ${index === state.currentProductIndex ? 'center' : ''}`;
         item.innerHTML = `
-            <img src="${product.image}" alt="${product.name}">
-            <div class="product-info">
-                <h3 class="product-name">${product.name}</h3>
-                <div class="product-rating">${product.rating}</div>
-            </div>
+            <a class="carousel-item-link" href="${productDetailUrl}">
+                <article class="carousel-item-card">
+                    <div class="carousel-image-wrap">
+                        <img src="${product.image}" alt="${product.name}">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">${product.name}</h3>
+                        <div class="product-actions" aria-hidden="true">
+                            <span class="product-action-icon">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="9" cy="20" r="1"></circle>
+                                    <circle cx="19" cy="20" r="1"></circle>
+                                    <path d="M3 4h2l2 12h12l2-8H7"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </article>
+            </a>
         `;
         carouselContainer.appendChild(item);
     });
@@ -391,8 +413,14 @@ function initMoreProductsCarousel() {
         state.currentProductIndex = (state.currentProductIndex + 1) % products.length;
         updateCarousel();
     };
+
+    updateCarousel(true);
+
+    refreshMoreCarousel = () => {
+        updateCarousel(true);
+    };
     
-    function updateCarousel() {
+    function updateCarousel(isInstant = false) {
         // Update product items
         const items = document.querySelectorAll('.carousel-item');
         items.forEach((item, index) => {
@@ -404,18 +432,44 @@ function initMoreProductsCarousel() {
         progressBars.forEach((bar, index) => {
             bar.classList.toggle('active', index === state.currentProductIndex);
         });
-        
-        // Scroll to center the active item
+
         const activeItem = items[state.currentProductIndex];
-        const containerRect = carouselContainer.getBoundingClientRect();
-        const itemRect = activeItem.getBoundingClientRect();
-        const scrollLeft = itemRect.left - containerRect.left - (containerRect.width / 2) + (itemRect.width / 2);
-        
-        carouselContainer.scrollBy({
-            left: scrollLeft,
-            behavior: 'smooth'
+        if (!activeItem) {
+            return;
+        }
+
+        const targetScrollLeft = Math.max(
+            0,
+            activeItem.offsetLeft - (carouselContainer.clientWidth / 2) + (activeItem.clientWidth / 2)
+        );
+
+        carouselContainer.scrollTo({
+            left: targetScrollLeft,
+            behavior: isInstant ? 'auto' : 'smooth'
         });
     }
+}
+
+function initMorePlantsToggle() {
+    const moreToggleBtn = document.getElementById('moreToggleBtn');
+    const morePlantsPanel = document.getElementById('morePlantsPanel');
+
+    if (!moreToggleBtn || !morePlantsPanel) {
+        return;
+    }
+
+    moreToggleBtn.addEventListener('click', () => {
+        const willExpand = morePlantsPanel.hidden;
+        morePlantsPanel.hidden = !willExpand;
+        moreToggleBtn.setAttribute('aria-expanded', String(willExpand));
+        moreToggleBtn.classList.toggle('expanded', willExpand);
+
+        if (willExpand && typeof refreshMoreCarousel === 'function') {
+            requestAnimationFrame(() => {
+                refreshMoreCarousel();
+            });
+        }
+    });
 }
 
 function initAddToCartToast() {
@@ -502,4 +556,15 @@ function showAddToCartToast() {
             closeToast();
         }
     }, 4500);
+}
+
+function initFooter() {
+    const backToTopButton = document.querySelector('.footer-back-to-top');
+    if (!backToTopButton) {
+        return;
+    }
+
+    backToTopButton.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 }

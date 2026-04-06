@@ -513,6 +513,18 @@ body {
   box-shadow: 0 0 0 4px #f6f4f9;
 }
 
+.step-circle.completed {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: white;
+}
+
+.step-circle.current {
+  background: #78a240;
+  border-color: #78a240;
+  color: white;
+}
+
 .step-label {
   font-weight: 700;
   font-size: 14px;

@@ -775,12 +775,58 @@ body {
     background-color: #a8c589;
     padding: 24px 0;
     margin: 0 -16px 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .more-title {
     font-size: 40px;
     text-align: center;
     color: #000000;
+}
+
+.more-toggle-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: #ffffff;
+    color: #365322;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(20, 45, 10, 0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.more-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(20, 45, 10, 0.22);
+}
+
+.more-toggle-btn svg {
+    transition: transform 0.25s ease;
+}
+
+.more-toggle-btn.expanded svg {
+    transform: rotate(180deg);
+}
+
+.more-plants-panel {
+    animation: moreReveal 0.28s ease;
+}
+
+@keyframes moreReveal {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .carousel-wrapper {
@@ -791,49 +837,79 @@ body {
 
 .carousel-container {
     display: flex;
-    gap: 80px;
+    gap: 28px;
     overflow: hidden;
-    padding: 0 80px;
-    align-items: center;
+    padding: 0 74px;
+    align-items: stretch;
+    scroll-behavior: smooth;
 }
 
 .carousel-item {
     flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: 260px;
     transition: all 0.5s ease;
-    opacity: 0.3;
-    filter: grayscale(100%);
-    transform: scale(0.85);
+    opacity: 0.55;
+    transform: scale(0.92);
 }
 
 .carousel-item.center {
     opacity: 1;
-    filter: grayscale(0%);
     transform: scale(1);
+}
+
+.carousel-item-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.carousel-item-card {
+    background: #f3f5f0;
+    border: 1px solid #e2e7dc;
+    border-radius: 18px;
+    box-shadow: 0 8px 18px rgba(20, 45, 10, 0.12);
+    overflow: hidden;
+}
+
+.carousel-image-wrap {
+    background: linear-gradient(180deg, #d1e3bf 0%, #f6faf2 100%);
+    padding: 18px 14px;
 }
 
 .carousel-item img {
     width: 100%;
-    max-width: 384px;
-    height: auto;
+    height: 180px;
     object-fit: contain;
 }
 
 .product-info {
     text-align: center;
-    margin-top: 24px;
+    margin-top: 0;
+    padding: 12px 10px 14px;
 }
 
 .product-name {
-    font-size: 20px;
+    font-size: 30px;
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    font-family: 'Inria Serif', serif;
 }
 
-.product-rating {
-    font-size: 18px;
+.product-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.product-action-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #7fa843;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .carousel-arrow {
@@ -870,15 +946,16 @@ body {
 }
 
 .progress-bar {
-    height: 8px;
-    width: 96px;
+    height: 6px;
+    width: 24px;
     border-radius: 4px;
     background-color: #d1d5db;
-    transition: background-color 0.3s;
+    transition: all 0.3s;
 }
 
 .progress-bar.active {
     background-color: #78a240;
+    width: 44px;
 }
 
 /* Footer */
@@ -1303,33 +1380,38 @@ body {
         font-size: 32px;
     }
 
+    .more-toggle-btn {
+        width: 46px;
+        height: 46px;
+    }
+
     .carousel-container {
-        padding: 0 60px;
-        gap: 60px;
+        padding: 0 54px;
+        gap: 20px;
     }
 
     .carousel-item {
-        opacity: 0.5;
-        filter: grayscale(50%);
-        transform: scale(0.9);
+        width: 220px;
+        opacity: 0.6;
+        transform: scale(0.95);
     }
 
     .carousel-item.center {
         opacity: 1;
-        filter: grayscale(0%);
         transform: scale(1);
     }
 
     .product-info {
-        margin-top: 16px;
+        padding-top: 10px;
     }
 
     .product-name {
-        font-size: 16px;
+        font-size: 24px;
     }
 
-    .product-rating {
-        font-size: 16px;
+    .product-action-icon {
+        width: 24px;
+        height: 24px;
     }
 
     .carousel-arrow {
@@ -1390,8 +1472,12 @@ body {
     }
 
     .carousel-container {
-        padding: 0 40px;
-        gap: 40px;
+        padding: 0 36px;
+        gap: 16px;
+    }
+
+    .carousel-item {
+        width: 190px;
     }
 
     .footer-links {

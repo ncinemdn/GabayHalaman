@@ -97,8 +97,12 @@ const state = {
     quantity: 1,
     selectedSize: 'small',
     selectedTab: 'additional',
+    currentMoreProductIndex: 0,
     currentPlant: null
 };
+
+let moreProducts = [];
+let refreshMoreCarousel = null;
 
 function buildPlantFromQuery(urlParams) {
     const name = (urlParams.get('name') || '').trim();
@@ -128,9 +132,37 @@ document.addEventListener('DOMContentLoaded', function() {
     initQuantityControls();
     initSizeButtons();
     initTabs();
+    initMoreProductsCarousel();
+    initMorePlantsToggle();
     initAddToCartToast();
     initBuyNowButton();
 });
+
+function getRandomPlants(count, excludedPlantId) {
+    if (typeof plantsByCategory === 'undefined') {
+        return [];
+    }
+
+    const flattened = Object.entries(plantsByCategory).flatMap(([category, plants]) => {
+        return plants.map((plant) => ({ ...plant, category }));
+    });
+
+    const filtered = flattened.filter((plant) => plant.id !== excludedPlantId);
+    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+}
+
+function buildProductDetailUrl(plant) {
+    const params = new URLSearchParams({
+        id: String(plant.id),
+        name: plant.name,
+        category: plant.category,
+        image: plant.image,
+        price: String(plant.price || 250)
+    });
+
+    return `product-detail.html?${params.toString()}`;
+}
 
 // Load plant data from URL parameters
 function loadPlantData() {
@@ -397,5 +429,132 @@ function initBuyNowButton() {
 
         localStorage.setItem('orderNowItem', JSON.stringify(orderNowItem));
         window.location.href = '../CartPage/order-now.html';
+    });
+}
+
+function initMoreProductsCarousel() {
+    const carouselContainer = document.getElementById('productCarousel');
+    const progressContainer = document.getElementById('carouselProgress');
+    const prevBtn = document.getElementById('prevProductBtn');
+    const nextBtn = document.getElementById('nextProductBtn');
+
+    if (!carouselContainer || !progressContainer || !prevBtn || !nextBtn) {
+        return;
+    }
+
+    const currentPlantId = state.currentPlant ? state.currentPlant.id : null;
+    moreProducts = getRandomPlants(12, currentPlantId);
+    state.currentMoreProductIndex = 0;
+
+    if (!moreProducts.length) {
+        carouselContainer.innerHTML = '<p class="all-plants-subtitle">No plants available yet.</p>';
+        progressContainer.innerHTML = '';
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        return;
+    }
+
+    carouselContainer.innerHTML = '';
+    progressContainer.innerHTML = '';
+    prevBtn.disabled = false;
+    nextBtn.disabled = false;
+
+    moreProducts.forEach((product, index) => {
+        const productDetailUrl = buildProductDetailUrl(product);
+        const item = document.createElement('div');
+        item.className = `carousel-item ${index === state.currentMoreProductIndex ? 'center' : ''}`;
+        item.innerHTML = `
+            <a class="carousel-item-link" href="${productDetailUrl}">
+                <article class="carousel-item-card">
+                    <div class="carousel-image-wrap">
+                        <img src="${product.image}" alt="${product.name}">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">${product.name}</h3>
+                        <div class="product-actions" aria-hidden="true">
+                            <span class="product-action-icon">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="9" cy="20" r="1"></circle>
+                                    <circle cx="19" cy="20" r="1"></circle>
+                                    <path d="M3 4h2l2 12h12l2-8H7"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+        `;
+        carouselContainer.appendChild(item);
+    });
+
+    moreProducts.forEach((_, index) => {
+        const progressBar = document.createElement('div');
+        progressBar.className = `progress-bar ${index === state.currentMoreProductIndex ? 'active' : ''}`;
+        progressContainer.appendChild(progressBar);
+    });
+
+    prevBtn.onclick = () => {
+        state.currentMoreProductIndex = (state.currentMoreProductIndex - 1 + moreProducts.length) % moreProducts.length;
+        updateCarousel();
+    };
+
+    nextBtn.onclick = () => {
+        state.currentMoreProductIndex = (state.currentMoreProductIndex + 1) % moreProducts.length;
+        updateCarousel();
+    };
+
+    updateCarousel(true);
+
+    refreshMoreCarousel = () => {
+        updateCarousel(true);
+    };
+
+    function updateCarousel(isInstant = false) {
+        const items = carouselContainer.querySelectorAll('.carousel-item');
+        items.forEach((item, index) => {
+            item.classList.toggle('center', index === state.currentMoreProductIndex);
+        });
+
+        const progressBars = progressContainer.querySelectorAll('.progress-bar');
+        progressBars.forEach((bar, index) => {
+            bar.classList.toggle('active', index === state.currentMoreProductIndex);
+        });
+
+        const activeItem = items[state.currentMoreProductIndex];
+        if (!activeItem) {
+            return;
+        }
+
+        const targetScrollLeft = Math.max(
+            0,
+            activeItem.offsetLeft - (carouselContainer.clientWidth / 2) + (activeItem.clientWidth / 2)
+        );
+
+        carouselContainer.scrollTo({
+            left: targetScrollLeft,
+            behavior: isInstant ? 'auto' : 'smooth'
+        });
+    }
+}
+
+function initMorePlantsToggle() {
+    const moreToggleBtn = document.getElementById('moreToggleBtn');
+    const morePlantsPanel = document.getElementById('morePlantsPanel');
+
+    if (!moreToggleBtn || !morePlantsPanel) {
+        return;
+    }
+
+    moreToggleBtn.addEventListener('click', () => {
+        const willExpand = morePlantsPanel.hidden;
+        morePlantsPanel.hidden = !willExpand;
+        moreToggleBtn.setAttribute('aria-expanded', String(willExpand));
+        moreToggleBtn.classList.toggle('expanded', willExpand);
+
+        if (willExpand && typeof refreshMoreCarousel === 'function') {
+            requestAnimationFrame(() => {
+                refreshMoreCarousel();
+            });
+        }
     });
 }

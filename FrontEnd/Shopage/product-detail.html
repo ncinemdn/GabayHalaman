@@ -137,6 +137,38 @@
             </div>
         </section>
 
+        <!-- More Products Section -->
+        <section class="more-products-section">
+            <div class="more-header">
+                <h2 class="more-title">More</h2>
+                <button class="more-toggle-btn" id="moreToggleBtn" type="button" aria-expanded="false" aria-controls="morePlantsPanel" aria-label="Show more plants">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="more-plants-panel" id="morePlantsPanel" hidden>
+                <div class="carousel-wrapper">
+                    <button class="carousel-arrow carousel-arrow-left" id="prevProductBtn" aria-label="Previous product">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+
+                    <div class="carousel-container" id="productCarousel"></div>
+
+                    <button class="carousel-arrow carousel-arrow-right" id="nextProductBtn" aria-label="Next product">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="carousel-progress" id="carouselProgress"></div>
+            </div>
+        </section>
+
         <!-- Footer -->
         <footer class="site-footer">
             <button class="footer-back-to-top" type="button" aria-label="Back to top">Back to Top</button>
