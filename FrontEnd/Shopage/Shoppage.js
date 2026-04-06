@@ -17,43 +17,8 @@ const productImages = [
 
 let refreshMoreCarousel = null;
 
-const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
-
-const reservationPlantsByCategory = {
-    'Fruit Bearing': [
-        ['Rambutan RR Tuklapin', 250], ['Mangosteen', 350], ['Lansones Longkong', 350], ['Durian Puyat', 300],
-        ['Sweet Tamarind', 250], ['Bangkok Santol', 250], ["Dian't Duhat", 250], ['Sweet Balimbing', 250],
-        ['Atis', 300], ['Chico', 300], ['Macopa Red', 260], ['Avocado Lagkitan', 350], ['Cacao', 200]
-    ],
-    'Citrus Variety': [
-        ['Japanese Orange', 300], ['Davao Pomelo', 250], ['Satsuma Citrus', 250], ['Dalanghita', 250],
-        ['Dayap', 250], ['Calamansi', 200], ['Kiat Kiat', 300], ['Poncan', 250], ['Lemon Meyer', 250]
-    ],
-    'Mangga Variety': [
-        ['Carabao Manggo', 350], ['Queen Manggo', 350], ['Sweet Catimon', 350], ['Sweet Catimon Double Rootstock', 800],
-        ['Indian Manggo', 250], ['King Manggo', 350], ['Purple Manggo', 350], ['Apple Manggo', 250]
-    ],
-    'Dwarf Coconut': [
-        ['Golden', 400], ['Tacunan Variety', 550], ['Catigan Variety', 250]
-    ],
-    'Cuttings/Dwarf': [
-        ['Red Guaple', 200], ['Green Guaple', 200], ['Marang', 250], ['Lychee', 350], ['Langka', 200], ['Hybrid Mulberry', 200],
-        ['Paminta', 250], ['Red Cardinal Grapes', 250], ['Miracle Fruit', 300], ['Magic Fruit', 300], ['Sweet Guyabano', 300],
-        ['Karamay', 300], ['Sarguelas/Siniguelas', 300], ['Abiu', 300], ['Caimito', 250], ['Mabolo', 300], ['Cacao', 200],
-        ['Kamias/Pias', 250], ['Bignay', 250], ['Pomegranate', 300], ['Longan', 300]
-    ],
-    'Flowering Trees': [
-        ['Golden Trumpet', 700], ['Pink Trumpet', 800], ['Golden Shower', 900], ['Fire Tree', 1200], ['Ilang Ilang', 700],
-        ['Jacaranda', 1000], ['Pine Tree', 1200], ['Palm Tree', 1500], ['Dates Palm', 1500], ['Dates Palm Bull Out', 5500],
-        ['Palawan Cherry Blossom 3ft', 450], ['Palawan Cherry Blossom Bull Out', 3500]
-    ],
-    'Forest Trees': [
-        ['Gemelina', 250], ['Mahogany', 350], ['Narra', 350], ['Molave', 250], ['Pole Bamboo', 550], ['Thai Bamboo', 550]
-    ],
-    'Others': [
-        ['Arabica Coffee', 150], ['Robusta', 150], ['Barako', 150]
-    ]
-};
+const DEFAULT_PLANT_IMAGE = (window.GHPlantData && window.GHPlantData.DEFAULT_PLANT_IMAGE)
+    || 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
 
 const categoryDisplayMap = {
     'Fruit Bearing': 'Fruit Bearing',
@@ -77,30 +42,38 @@ const categoryImageMap = {
     'Others': DEFAULT_PLANT_IMAGE
 };
 
-const allPlantsPool = Object.entries(reservationPlantsByCategory).flatMap(([reservationCategory, plants]) => {
-    const displayCategory = categoryDisplayMap[reservationCategory] || reservationCategory;
-    const categoryImage = categoryImageMap[reservationCategory] || DEFAULT_PLANT_IMAGE;
+let allPlantsPool = [];
+let products = [];
 
-    return plants.map(([name, price], index) => ({
-        id: `${reservationCategory}-${index}`,
-        name,
-        price,
-        category: displayCategory,
-        sourceCategory: reservationCategory,
-        image: categoryImage
-    }));
-});
+function buildAllPlantsPool() {
+    const inventory = window.GHPlantData ? window.GHPlantData.getPlantInventory() : [];
 
-const products = getRandomPlants(Math.min(12, allPlantsPool.length)).map((plant, index) => ({
-    id: index + 1,
-    name: plant.name,
-    image: plant.image,
-    category: plant.category,
-    price: plant.price
-}));
+    return inventory.map((plant) => {
+        const sourceCategory = plant.category;
+        const displayCategory = categoryDisplayMap[sourceCategory] || sourceCategory;
+        const categoryImage = categoryImageMap[sourceCategory] || DEFAULT_PLANT_IMAGE;
+
+        return {
+            id: String(plant.id),
+            name: plant.name,
+            price: plant.price,
+            category: displayCategory,
+            sourceCategory,
+            image: plant.image || categoryImage,
+            availableStock: window.GHPlantData ? window.GHPlantData.getEffectiveStock(plant) : 0,
+            inStock: window.GHPlantData ? window.GHPlantData.isInStock(plant) : false
+        };
+    });
+}
+
+function refreshPlantsData() {
+    allPlantsPool = buildAllPlantsPool();
+    products = getRandomPlants(Math.min(12, allPlantsPool.length));
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
+    refreshPlantsData();
     initAllPlantsSection();
     initProductImageCarousel();
     initQuantityControls();
@@ -119,8 +92,9 @@ function getRandomPlants(count) {
 
 function buildProductDetailUrl(plant) {
     const params = new URLSearchParams({
+        id: String(plant.id || ''),
         name: plant.name,
-        category: plant.category,
+        category: plant.sourceCategory || plant.category,
         image: plant.image,
         price: String(plant.price || 250)
     });
@@ -156,11 +130,12 @@ function renderPlants(plantList, title, subtitle) {
 
     grid.innerHTML = plantList.map((plant) => {
         return `
-            <a class="all-plant-card" href="${buildProductDetailUrl(plant)}">
+            <a class="all-plant-card ${plant.inStock ? '' : 'out'}" href="${buildProductDetailUrl(plant)}">
                 <img src="${plant.image}" alt="${plant.name}" class="all-plant-image">
                 <div class="all-plant-content">
                     <h3 class="all-plant-name">${plant.name}</h3>
                     <p class="all-plant-category">${plant.category}</p>
+                    <p class="all-plant-stock ${plant.inStock ? 'in' : 'out'}">${plant.inStock ? `${plant.availableStock} available` : 'Out of Stock'}</p>
                 </div>
             </a>
         `;

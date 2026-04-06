@@ -513,6 +513,17 @@ input[type="date"] {
     transition: all 0.3s;
 }
 
+.plant-card.unavailable {
+    opacity: 0.75;
+    border-color: #c9b0b0;
+    background-color: #fdf5f5;
+}
+
+.plant-card.unavailable:hover {
+    box-shadow: none;
+    border-color: #c9b0b0;
+}
+
 
 .plant-card:hover {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -610,6 +621,20 @@ input[type="date"] {
     font-size: 16px;
     color: #3e5a18;
     font-weight: 600;
+}
+
+.plant-stock {
+    font-family: 'Inria Serif', serif;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.plant-stock.in {
+    color: #2f6f1f;
+}
+
+.plant-stock.out {
+    color: #b42318;
 }
 
 

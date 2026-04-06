@@ -1,55 +1,9 @@
 // Plant data storage
-let plants = [
-    {
-        id: '1',
-        name: 'Native Coconut',
-        category: 'Coconut Variety',
-        price: 500,
-        stock: 55,
-        image: '../PlantCatalog/images/native_coconut.jpg',
-        available: true
-    },
-    {
-        id: '2',
-        name: 'Carabao Mango',
-        category: 'Mango Variety',
-        price: 500,
-        stock: 50,
-        image: '../PlantCatalog/images/carabao_mango.jpg',
-        available: true
-    },
-    {
-        id: '3',
-        name: 'Suha Davao',
-        category: 'Citrus',
-        price: 500,
-        stock: 0,
-        image: '../PlantCatalog/images/suha_davao.jpg',
-        available: false
-    },
-    {
-        id: '4',
-        name: 'Thai Bamboo',
-        category: 'Forest Trees',
-        price: 500,
-        stock: 10,
-        image: '../PlantCatalog/images/thai_bamboo.jpg',
-        available: true
-    },
-    {
-        id: '5',
-        name: 'African Talisay',
-        category: 'Forest Trees',
-        price: 500,
-        stock: 20,
-        image: '../PlantCatalog/images/african_talisay.jpg',
-        available: true
-    }
-];
+let plants = [];
 
 let editingPlantId = null;
 let currentImagePreview = null;
-let customCategories = new Set(['Coconut Variety', 'Mango Variety', 'Citrus', 'Forest Trees', 'Indoor Plants', 'Outdoor Plants', 'Flowering Plants', 'Herbs']);
+let customCategories = new Set();
 
 // DOM Elements
 const sidebar = document.getElementById('sidebar');
@@ -93,10 +47,25 @@ let pendingDeleteId = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    loadPlantInventory();
     initializeCategories();
     renderPlants();
     attachEventListeners();
 });
+
+function loadPlantInventory() {
+    if (window.GHPlantData) {
+        plants = window.GHPlantData.getPlantInventory();
+    }
+
+    customCategories = new Set(plants.map(plant => plant.category));
+}
+
+function syncPlantInventory() {
+    if (window.GHPlantData) {
+        window.GHPlantData.savePlantInventory(plants);
+    }
+}
 
 // Event Listeners
 function attachEventListeners() {
@@ -168,8 +137,8 @@ function initializeCategories() {
 }
 
 // Get stock status
-function getStockStatus(stock) {
-    if (stock === 0) return { label: 'Out of Stock', class: 'stock-out' };
+function getStockStatus(stock, available) {
+    if (!available || stock === 0) return { label: 'Out of Stock', class: 'stock-out' };
     if (stock <= 15) return { label: 'Low Stock', class: 'stock-low' };
     return { label: 'In Stock', class: 'stock-in' };
 }
@@ -192,7 +161,7 @@ function renderPlants() {
 // Render desktop table
 function renderDesktopTable(filteredPlants) {
     tableBody.innerHTML = filteredPlants.map(plant => {
-        const stockStatus = getStockStatus(plant.stock);
+        const stockStatus = getStockStatus(plant.stock, plant.available);
         return `
             <div class="table-row">
                 <div class="table-cell">
@@ -232,7 +201,7 @@ function renderDesktopTable(filteredPlants) {
 // Render mobile cards
 function renderMobileCards(filteredPlants) {
     cardsContainer.innerHTML = filteredPlants.map(plant => {
-        const stockStatus = getStockStatus(plant.stock);
+        const stockStatus = getStockStatus(plant.stock, plant.available);
         return `
             <div class="plant-card">
                 <div class="card-header">
@@ -277,6 +246,7 @@ function toggleAvailability(id) {
     const plant = plants.find(p => p.id === id);
     if (plant) {
         plant.available = !plant.available;
+        syncPlantInventory();
         renderPlants();
     }
 }
@@ -328,6 +298,7 @@ function deletePlant(id) {
 function confirmDelete() {
     if (pendingDeleteId) {
         plants = plants.filter(p => p.id !== pendingDeleteId);
+        syncPlantInventory();
         pendingDeleteId = null;
         closeConfirmationModal();
         renderPlants();
@@ -440,7 +411,7 @@ function savePlant() {
         category,
         price,
         stock,
-        image: currentImagePreview || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400',
+        image: currentImagePreview || (window.GHPlantData ? window.GHPlantData.DEFAULT_PLANT_IMAGE : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'),
         available: stock > 0
     };
 
@@ -448,13 +419,20 @@ function savePlant() {
         // Update existing plant
         const index = plants.findIndex(p => p.id === editingPlantId);
         if (index !== -1) {
-            plants[index] = { ...plants[index], ...plantData };
+            plants[index] = {
+                ...plants[index],
+                ...plantData,
+                available: stock > 0 ? plants[index].available : false
+            };
         }
     } else {
         // Add new plant
         plantData.id = Date.now().toString();
         plants.push(plantData);
     }
+
+    customCategories.add(category);
+    syncPlantInventory();
 
     closeAddModal();
     renderPlants();

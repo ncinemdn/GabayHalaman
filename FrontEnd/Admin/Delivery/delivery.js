@@ -78,16 +78,19 @@ function formatId(id) {
     return `<div>${parts[0]}-</div><div>${parts[1]}</div>`;
 }
 
-// Create status badge
-function createStatusBadge(status) {
-    const config = statusConfig[status];
+// Create status dropdown
+function createStatusDropdown(delivery) {
+    const statuses = ['out-for-delivery', 'pending', 'delivered'];
+    const options = statuses.map(status => `
+        <option value="${status}" ${delivery.status === status ? 'selected' : ''}>
+            ${statusConfig[status].label}
+        </option>
+    `).join('');
+
     return `
-        <button class="status-badge ${status}" data-status="${status}">
-            <span class="status-badge-text">${config.label}</span>
-            <svg class="status-badge-icon" viewBox="0 0 12 8" fill="none">
-                <path d="M6 8L0 1.51351L1.4 0L6 4.97297L10.6 0L12 1.51351L6 8Z" fill="black"/>
-            </svg>
-        </button>
+        <select class="status-select ${delivery.status}" data-id="${delivery.id}" aria-label="Delivery status for ${delivery.deliveryId}">
+            ${options}
+        </select>
     `;
 }
 
@@ -118,7 +121,7 @@ function renderDeliveries(filteredDeliveries = deliveries) {
                 ${delivery.scheduledDate}
             </div>
             <div class="table-cell">
-                ${createStatusBadge(delivery.status)}
+                ${createStatusDropdown(delivery)}
             </div>
             <div class="table-cell action-cell">
                 <button class="delete-btn" data-id="${delivery.id}" title="Delete delivery">
@@ -132,8 +135,8 @@ function renderDeliveries(filteredDeliveries = deliveries) {
 
     // Setup delete buttons
     setupDeleteButtons();
-    // Setup status badge clicks
-    setupStatusBadges();
+    // Setup status dropdown changes
+    setupStatusDropdowns();
 }
 
 // Setup event listeners
@@ -194,35 +197,24 @@ function handleDelete(event) {
     }
 }
 
-// Setup status badge clicks
-function setupStatusBadges() {
-    const statusBadges = document.querySelectorAll('.status-badge');
-    statusBadges.forEach(badge => {
-        badge.addEventListener('click', handleStatusChange);
+// Setup status dropdowns
+function setupStatusDropdowns() {
+    const statusDropdowns = document.querySelectorAll('.status-select');
+    statusDropdowns.forEach(dropdown => {
+        dropdown.addEventListener('change', handleStatusChange);
     });
 }
 
 // Handle status change
 function handleStatusChange(event) {
-    const currentStatus = event.currentTarget.getAttribute('data-status');
-    const row = event.currentTarget.closest('.table-row');
-    const deliveryId = row.getAttribute('data-id');
-    
-    // Show a simple status change menu
-    const statuses = ['out-for-delivery', 'pending', 'delivered'];
-    const otherStatuses = statuses.filter(s => s !== currentStatus);
-    
-    const message = `Change status to:\n1. ${statusConfig[otherStatuses[0]].label}\n2. ${statusConfig[otherStatuses[1]].label}`;
-    const choice = prompt(message + '\n\nEnter 1 or 2:');
-    
-    if (choice === '1' || choice === '2') {
-        const newStatus = otherStatuses[parseInt(choice) - 1];
-        const delivery = deliveries.find(d => d.id === deliveryId);
-        if (delivery) {
-            delivery.status = newStatus;
-            updateStats();
-            renderDeliveries();
-        }
+    const deliveryId = event.currentTarget.getAttribute('data-id');
+    const newStatus = event.currentTarget.value;
+
+    const delivery = deliveries.find(d => d.id === deliveryId);
+    if (delivery) {
+        delivery.status = newStatus;
+        updateStats();
+        renderDeliveries();
     }
 }
 

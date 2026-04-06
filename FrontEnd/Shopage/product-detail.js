@@ -104,6 +104,26 @@ const state = {
 let moreProducts = [];
 let refreshMoreCarousel = null;
 
+function getInventory() {
+    if (!window.GHPlantData) {
+        return [];
+    }
+    return window.GHPlantData.getPlantInventory();
+}
+
+function getPlantStockState(plant) {
+    if (!window.GHPlantData) {
+        return { inStock: true, stock: 1 };
+    }
+
+    const latest = window.GHPlantData.getPlantById(plant.id) || plant;
+    const stock = window.GHPlantData.getEffectiveStock(latest);
+    return {
+        inStock: stock > 0,
+        stock
+    };
+}
+
 function buildPlantFromQuery(urlParams) {
     const name = (urlParams.get('name') || '').trim();
     if (!name) {
@@ -139,15 +159,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function getRandomPlants(count, excludedPlantId) {
-    if (typeof plantsByCategory === 'undefined') {
-        return [];
-    }
+    const flattened = getInventory();
 
-    const flattened = Object.entries(plantsByCategory).flatMap(([category, plants]) => {
-        return plants.map((plant) => ({ ...plant, category }));
-    });
-
-    const filtered = flattened.filter((plant) => plant.id !== excludedPlantId);
+    const filtered = flattened.filter((plant) => String(plant.id) !== String(excludedPlantId));
     const shuffled = [...filtered].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
 }
@@ -167,18 +181,13 @@ function buildProductDetailUrl(plant) {
 // Load plant data from URL parameters
 function loadPlantData() {
     const urlParams = new URLSearchParams(window.location.search);
-    const plantId = parseInt(urlParams.get('id'));
+    const plantId = String(urlParams.get('id') || '').trim();
+    const inventory = getInventory();
 
     // Find plant in categories by ID when present
     let foundPlant = null;
     if (plantId) {
-        for (const category in plantsByCategory) {
-            const plant = plantsByCategory[category].find(p => p.id === plantId);
-            if (plant) {
-                foundPlant = { ...plant, category };
-                break;
-            }
-        }
+        foundPlant = inventory.find(plant => String(plant.id) === plantId) || null;
     }
 
     // Fallback for category pages that pass plant data as query params
@@ -192,6 +201,8 @@ function loadPlantData() {
     }
     
     state.currentPlant = foundPlant;
+    const stockState = getPlantStockState(foundPlant);
+    const numericPlantId = Number(foundPlant.id);
     
     // Update page title and meta
     document.title = `${foundPlant.name} - Gabay Halaman`;
@@ -199,14 +210,33 @@ function loadPlantData() {
     // Update plant details
     document.getElementById('plantName').textContent = foundPlant.name;
     document.getElementById('plantPrice').textContent = `₱${foundPlant.price.toLocaleString()}.00`;
-    document.getElementById('plantDescription').textContent = plantDescriptions[plantId] || 'A beautiful plant from our collection, carefully cultivated for optimal health and growth.';
+    document.getElementById('plantDescription').textContent = plantDescriptions[numericPlantId] || 'A beautiful plant from our collection, carefully cultivated for optimal health and growth.';
+    const stockStatus = document.getElementById('plantStockStatus');
+    stockStatus.textContent = stockState.inStock ? `${stockState.stock} available stock` : 'Out of Stock';
+    stockStatus.classList.toggle('out', !stockState.inStock);
     document.getElementById('additionalInfo').innerHTML = `
         <p><strong>Category:</strong> ${foundPlant.category}</p>
         <p><strong>Price:</strong> ₱${foundPlant.price.toLocaleString()}.00</p>
-        <p>${plantDescriptions[plantId] || 'Premium plant selection.'}</p>
+        <p><strong>Stock:</strong> ${stockState.inStock ? `${stockState.stock} available` : 'Out of Stock'}</p>
+        <p>${plantDescriptions[numericPlantId] || 'Premium plant selection.'}</p>
         <p><strong>Caring Tips:</strong> Water regularly, ensure proper drainage, and provide appropriate sunlight based on the plant type. Most tropical plants thrive in warm, humid conditions.</p>
         <p><strong>Shipping:</strong> Carefully packaged to ensure safe delivery. Plants arrive in excellent condition.</p>
     `;
+
+    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+    const buyNowBtn = document.querySelector('.buy-now-btn');
+    const reserveBtn = document.querySelector('.reserve-btn');
+    const incrementBtn = document.getElementById('incrementBtn');
+
+    if (!stockState.inStock) {
+        if (addToCartBtn) addToCartBtn.disabled = true;
+        if (buyNowBtn) buyNowBtn.disabled = true;
+        if (reserveBtn) {
+            reserveBtn.disabled = true;
+            reserveBtn.textContent = 'Out of Stock';
+        }
+        if (incrementBtn) incrementBtn.disabled = true;
+    }
     
     // Update main image
     document.getElementById('mainImage').src = foundPlant.image;
@@ -280,7 +310,8 @@ function initQuantityControls() {
     };
     
     incrementBtn.onclick = () => {
-        state.quantity++;
+        const stockState = state.currentPlant ? getPlantStockState(state.currentPlant) : { stock: 99 };
+        state.quantity = Math.min(stockState.stock || 1, state.quantity + 1);
         quantityValue.textContent = state.quantity;
     };
 }
@@ -330,6 +361,8 @@ function initAddToCartToast() {
 
 function showAddToCartToast() {
     if (!state.currentPlant) return;
+    const stockState = getPlantStockState(state.currentPlant);
+    if (!stockState.inStock) return;
     
     // Save to cart in localStorage
     const cart = JSON.parse(localStorage.getItem('reservations') || '[]');
@@ -414,6 +447,11 @@ function initBuyNowButton() {
         event.preventDefault();
 
         if (!state.currentPlant) {
+            return;
+        }
+
+        const stockState = getPlantStockState(state.currentPlant);
+        if (!stockState.inStock) {
             return;
         }
 

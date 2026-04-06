@@ -101,6 +101,27 @@ const plantsByCategory = {
 // State management
 let selectedPlants = [];
 
+function getSourcePlantsByCategory() {
+    if (window.GHPlantData) {
+        return window.GHPlantData.getPlantsByCategory();
+    }
+    return plantsByCategory;
+}
+
+function getAvailableStock(plant) {
+    if (window.GHPlantData) {
+        return window.GHPlantData.getEffectiveStock(plant);
+    }
+    return Math.max(0, Number(plant.stock) || 0);
+}
+
+function isPlantAvailable(plant) {
+    if (window.GHPlantData) {
+        return window.GHPlantData.isInStock(plant);
+    }
+    return getAvailableStock(plant) > 0;
+}
+
 function getSelectedPlant(id) {
     return selectedPlants.find(p => p.id === id);
 }
@@ -157,22 +178,25 @@ function updatePlantDisplay() {
     }
 
 
-    const allPlants = plantsByCategory[category] || [];
+    const allPlants = getSourcePlantsByCategory()[category] || [];
     // Limit to maximum 8 plants per category to reduce scrolling
     const plants = allPlants.slice(0, 8);
     const plantsHTML = plants.map(plant => {
         const selectedPlantData = getSelectedPlant(plant.id);
         const isSelected = Boolean(selectedPlantData);
-        const plantQty = selectedPlantData ? selectedPlantData.quantity : 1;
+        const maxStock = getAvailableStock(plant);
+        const isAvailable = isPlantAvailable(plant);
+        const plantQty = selectedPlantData ? Math.min(selectedPlantData.quantity, Math.max(1, maxStock)) : 1;
         const plantSize = selectedPlantData ? selectedPlantData.size : '';
 
         return `
-        <div class="plant-card ${isSelected ? 'selected' : ''}" onclick="selectPlant(${plant.id}, '${category}')">
+        <div class="plant-card ${isSelected ? 'selected' : ''} ${isAvailable ? '' : 'unavailable'}" onclick="selectPlant(${plant.id}, '${category}')">
             <div class="plant-card-inner">
                 <img src="${plant.image}" alt="${plant.name}" class="plant-image" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
                 <div class="plant-info">
                     <div class="plant-name">${plant.name}</div>
                     <div class="plant-price">₱${plant.price.toFixed(2)}</div>
+                    <div class="plant-stock ${isAvailable ? 'in' : 'out'}">${isAvailable ? `${maxStock} available` : 'Out of Stock'}</div>
                     <div class="plant-controls" onclick="event.stopPropagation()">
                         <label for="qty-${plant.id}" class="plant-quantity-label">Qty:</label>
                         <input
@@ -180,12 +204,13 @@ function updatePlantDisplay() {
                             class="plant-quantity"
                             type="number"
                             min="1"
-                            max="99"
+                            max="${Math.max(1, maxStock)}"
                             value="${plantQty}"
+                            ${isAvailable ? '' : 'disabled'}
                             onchange="onPlantQuantityChange(${plant.id}, this.value)"
                         />
                         <label for="size-${plant.id}" class="plant-size-label">Size:</label>
-                        <select id="size-${plant.id}" class="plant-size" onchange="onPlantSizeChange(${plant.id}, this.value)">
+                        <select id="size-${plant.id}" class="plant-size" ${isAvailable ? '' : 'disabled'} onchange="onPlantSizeChange(${plant.id}, this.value)">
                             <option value="">Select</option>
                             <option value="Small" ${plantSize === 'Small' ? 'selected' : ''}>Small</option>
                             <option value="Large" ${plantSize === 'Large' ? 'selected' : ''}>Large</option>
@@ -211,7 +236,10 @@ function updatePlantDisplay() {
 
 // Called when quantity input changes on a plant card
 function onPlantQuantityChange(plantId, value) {
-    const qty = Math.max(1, parseInt(value, 10) || 1);
+    const categoryData = getSourcePlantsByCategory();
+    const matchingPlant = Object.values(categoryData).flat().find(plant => plant.id === plantId);
+    const maxStock = matchingPlant ? Math.max(1, getAvailableStock(matchingPlant)) : 99;
+    const qty = Math.min(maxStock, Math.max(1, parseInt(value, 10) || 1));
     const selected = getSelectedPlant(plantId);
     if (selected) {
         selected.quantity = qty;
@@ -231,9 +259,10 @@ function selectPlant(plantId, category) {
     const currentScrollY = window.scrollY;
     const plantsList = document.querySelector('.plants-list');
     const currentListScrollTop = plantsList ? plantsList.scrollTop : 0;
-    const plants = plantsByCategory[category];
+    const plants = getSourcePlantsByCategory()[category] || [];
     const plant = plants.find(p => p.id === plantId);
     if (!plant) return;
+    if (!isPlantAvailable(plant)) return;
 
     const existing = getSelectedPlant(plantId);
     if (existing) {
@@ -243,7 +272,8 @@ function selectPlant(plantId, category) {
         // Add selected plant with current fields
         const qtyInput = document.getElementById(`qty-${plantId}`);
         const sizeInput = document.getElementById(`size-${plantId}`);
-        const qty = qtyInput ? Math.max(1, parseInt(qtyInput.value, 10) || 1) : 1;
+        const maxStock = Math.max(1, getAvailableStock(plant));
+        const qty = qtyInput ? Math.min(maxStock, Math.max(1, parseInt(qtyInput.value, 10) || 1)) : 1;
         const size = sizeInput ? sizeInput.value : '';
 
         selectedPlants.push({
@@ -274,12 +304,24 @@ function handleReserve() {
 
     // Validate each selected plant has size and valid quantity
     for (const plant of selectedPlants) {
+        const latestPlant = window.GHPlantData ? window.GHPlantData.getPlantById(plant.id) : plant;
+        const latestAvailable = isPlantAvailable(latestPlant || {});
+        const latestStock = getAvailableStock(latestPlant || {});
+
+        if (!latestAvailable) {
+            alert(`${plant.name} is out of stock.`);
+            return;
+        }
         if (!plant.size) {
             alert(`Please choose size for ${plant.name}.`);
             return;
         }
         if (!plant.quantity || plant.quantity < 1) {
             alert(`Please choose quantity 1 or more for ${plant.name}.`);
+            return;
+        }
+        if (plant.quantity > latestStock) {
+            alert(`${plant.name} only has ${latestStock} stock available.`);
             return;
         }
     }
@@ -312,6 +354,20 @@ function handleReserve() {
     });
 
     localStorage.setItem('reservations', JSON.stringify(existingReservations));
+
+    if (window.GHPlantData) {
+        const inventory = window.GHPlantData.getPlantInventory();
+        selectedPlants.forEach(selectedPlant => {
+            const item = inventory.find(plant => String(plant.id) === String(selectedPlant.id));
+            if (!item) return;
+            item.stock = Math.max(0, (Number(item.stock) || 0) - Number(selectedPlant.quantity || 0));
+            if (item.stock === 0) {
+                item.available = false;
+            }
+        });
+        window.GHPlantData.savePlantInventory(inventory);
+    }
+
     localStorage.removeItem('deliveryDetails');
 
     window.location.href = 'confirmation.html';
