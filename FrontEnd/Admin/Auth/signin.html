@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gabay Halaman Admin | Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="auth.css">
+</head>
+<body class="auth-body" data-page="signin">
+    <main class="auth-shell">
+        <section class="brand-panel reveal-delay-1">
+            <img src="../../logo.png" alt="Gabay Halaman Logo" class="brand-logo">
+            <p class="eyebrow">Admin Access</p>
+            <h1>Welcome back to Gabay Halaman</h1>
+            <p class="lead">Manage inventory, reservations, and deliveries from one focused dashboard.</p>
+            <ul class="feature-list">
+                <li>Plant stock visibility across shop and reservation pages</li>
+                <li>Reservation and order handling in one workflow</li>
+                <li>Delivery scheduling controls for admin team</li>
+            </ul>
+        </section>
+
+        <section class="auth-panel reveal-delay-2">
+            <div class="panel-header">
+                <p class="eyebrow">Sign In</p>
+                <h2>Admin Portal</h2>
+                <p>Use your admin account to continue.</p>
+            </div>
+
+            <form id="signInForm" class="auth-form" novalidate>
+                <label class="field-group">
+                    <span>Email</span>
+                    <input type="email" id="signinEmail" name="email" placeholder="admin@example.com" required>
+                </label>
+
+                <label class="field-group">
+                    <span>Password</span>
+                    <input type="password" id="signinPassword" name="password" placeholder="Enter your password" required minlength="8">
+                </label>
+
+                <div id="signInError" class="message error" aria-live="polite"></div>
+                <div id="signInSuccess" class="message success" aria-live="polite"></div>
+
+                <button type="submit" class="auth-btn">Sign In</button>
+            </form>
+
+            <p class="switch-link">No admin account yet? <a href="signup.html">Create one</a></p>
+        </section>
+    </main>
+
+    <script src="auth.js"></script>
+</body>
+</html>

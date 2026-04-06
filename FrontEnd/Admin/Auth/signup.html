@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gabay Halaman Admin | Sign Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="auth.css">
+</head>
+<body class="auth-body" data-page="signup">
+    <main class="auth-shell">
+        <section class="brand-panel reveal-delay-1">
+            <img src="../../logo.png" alt="Gabay Halaman Logo" class="brand-logo">
+            <p class="eyebrow">Admin Onboarding</p>
+            <h1>Create your admin account</h1>
+            <p class="lead">Set up secure access for managing plants, reservations, and order flow.</p>
+            <div class="notice-card">
+                <strong>Setup code for this demo:</strong>
+                <span>GH-ADMIN-2026</span>
+            </div>
+        </section>
+
+        <section class="auth-panel reveal-delay-2">
+            <div class="panel-header">
+                <p class="eyebrow">Sign Up</p>
+                <h2>New Admin Account</h2>
+                <p>Complete the form to register an admin user.</p>
+            </div>
+
+            <form id="signUpForm" class="auth-form" novalidate>
+                <label class="field-group">
+                    <span>Full Name</span>
+                    <input type="text" id="signupName" name="name" placeholder="Juan Dela Cruz" required>
+                </label>
+
+                <label class="field-group">
+                    <span>Email</span>
+                    <input type="email" id="signupEmail" name="email" placeholder="admin@example.com" required>
+                </label>
+
+                <label class="field-group">
+                    <span>Password</span>
+                    <input type="password" id="signupPassword" name="password" placeholder="At least 8 characters" required minlength="8">
+                </label>
+
+                <label class="field-group">
+                    <span>Confirm Password</span>
+                    <input type="password" id="signupConfirmPassword" name="confirmPassword" placeholder="Re-enter your password" required minlength="8">
+                </label>
+
+                <label class="field-group">
+                    <span>Admin Setup Code</span>
+                    <input type="text" id="signupCode" name="setupCode" placeholder="Enter setup code" required>
+                </label>
+
+                <div id="signUpError" class="message error" aria-live="polite"></div>
+                <div id="signUpSuccess" class="message success" aria-live="polite"></div>
+
+                <button type="submit" class="auth-btn">Create Account</button>
+            </form>
+
+            <p class="switch-link">Already have an account? <a href="signin.html">Sign in</a></p>
+        </section>
+    </main>
+
+    <script src="auth.js"></script>
+</body>
+</html>
