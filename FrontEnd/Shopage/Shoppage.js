@@ -119,19 +119,20 @@ function initProductImageCarousel() {
     const prevBtn = document.getElementById('prevImageBtn');
     const nextBtn = document.getElementById('nextImageBtn');
     
-    // Generate thumbnails
-    productImages.forEach((img, index) => {
-        const thumbDiv = document.createElement('div');
-        thumbDiv.className = `thumbnail ${index === state.currentImageIndex ? 'active' : ''}`;
-        thumbDiv.onclick = () => selectImage(index);
-        
-        const thumbImg = document.createElement('img');
-        thumbImg.src = img;
-        thumbImg.alt = `Thumbnail ${index + 1}`;
-        
-        thumbDiv.appendChild(thumbImg);
-        thumbnailsContainer.appendChild(thumbDiv);
-    });
+    if (thumbnailsContainer) {
+        productImages.forEach((img, index) => {
+            const thumbDiv = document.createElement('div');
+            thumbDiv.className = `thumbnail ${index === state.currentImageIndex ? 'active' : ''}`;
+            thumbDiv.onclick = () => selectImage(index);
+            
+            const thumbImg = document.createElement('img');
+            thumbImg.src = img;
+            thumbImg.alt = `Thumbnail ${index + 1}`;
+            
+            thumbDiv.appendChild(thumbImg);
+            thumbnailsContainer.appendChild(thumbDiv);
+        });
+    }
     
     // Navigation buttons
     prevBtn.onclick = () => {
