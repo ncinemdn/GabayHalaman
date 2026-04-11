@@ -352,11 +352,76 @@ function initTabs() {
 function initAddToCartToast() {
     const addToCartBtn = document.querySelector('.add-to-cart-btn');
     if (addToCartBtn) {
-        addToCartBtn.onclick = function(e) {
+        addToCartBtn.onclick = async function(e) {
             e.preventDefault();
+
+            if (addToCartBtn.dataset.busy === 'true') {
+                return;
+            }
+
+            addToCartBtn.dataset.busy = 'true';
+            await animateAddToCartToCartIcon();
             showAddToCartToast();
+            addToCartBtn.dataset.busy = 'false';
         };
     }
+}
+
+function animateAddToCartToCartIcon() {
+    const mainImage = document.getElementById('mainImage');
+    const cartButton = document.querySelector('.cart-dropdown .icon-btn');
+
+    if (!mainImage || !cartButton) {
+        return Promise.resolve();
+    }
+
+    const start = mainImage.getBoundingClientRect();
+    const end = cartButton.getBoundingClientRect();
+
+    const flyer = document.createElement('img');
+    flyer.className = 'fly-to-cart-image';
+    flyer.src = state.currentPlant?.image || mainImage.src;
+    flyer.alt = '';
+
+    const startX = start.left + (start.width / 2) - 36;
+    const startY = start.top + (start.height / 2) - 36;
+    const deltaX = (end.left + (end.width / 2)) - (startX + 36);
+    const deltaY = (end.top + (end.height / 2)) - (startY + 36);
+
+    flyer.style.left = `${startX}px`;
+    flyer.style.top = `${startY}px`;
+    document.body.appendChild(flyer);
+
+    return new Promise((resolve) => {
+        const animation = flyer.animate(
+            [
+                { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 0.95 },
+                { transform: `translate(${deltaX * 0.62}px, ${deltaY * 0.42 - 90}px) scale(0.75) rotate(8deg)`, opacity: 1, offset: 0.62 },
+                { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.2) rotate(16deg)`, opacity: 0.2 }
+            ],
+            {
+                duration: 680,
+                easing: 'cubic-bezier(0.22, 0.8, 0.2, 1)',
+                fill: 'forwards'
+            }
+        );
+
+        animation.onfinish = () => {
+            flyer.remove();
+
+            cartButton.classList.add('cart-bounce');
+            window.setTimeout(() => {
+                cartButton.classList.remove('cart-bounce');
+            }, 420);
+
+            resolve();
+        };
+
+        animation.oncancel = () => {
+            flyer.remove();
+            resolve();
+        };
+    });
 }
 
 function showAddToCartToast() {

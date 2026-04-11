@@ -736,6 +736,38 @@ body {
     cursor: pointer;
 }
 
+.fly-to-cart-image {
+    position: fixed;
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 14px;
+    pointer-events: none;
+    z-index: 3500;
+    box-shadow: 0 14px 30px rgba(20, 45, 10, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    will-change: transform, opacity;
+}
+
+.cart-dropdown .icon-btn.cart-bounce {
+    animation: cartBounce 0.42s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes cartBounce {
+    0% {
+        transform: scale(1);
+    }
+    45% {
+        transform: scale(1.24);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 /* Tabs Section */
 .tabs-section {
     margin-top: 64px;
@@ -1537,3 +1569,341 @@ body {
         gap: 24px;
     }
 }
+
+/* First redesign layout */
+.all-plants-section {
+    background: #f2f2f2;
+    padding: 20px 24px 36px;
+}
+
+.shop-layout {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+}
+
+.shop-sidebar {
+    background: transparent;
+}
+
+.shop-search-wrap {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0;
+    margin-bottom: 22px;
+}
+
+.shop-search-input {
+    height: 44px;
+    border: 1px solid #c7cfc8;
+    border-right: none;
+    padding: 0 14px;
+    font-size: 15px;
+    color: #2d2d2d;
+    background: #fafafa;
+}
+
+.shop-search-input:focus {
+    outline: none;
+    border-color: #6b9e7f;
+}
+
+.shop-search-btn {
+    height: 44px;
+    min-width: 82px;
+    border: 1px solid #5f9f8f;
+    background: #5f9f8f;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.shop-sidebar-block {
+    margin-bottom: 26px;
+}
+
+.shop-sidebar-title {
+    font-size: 34px;
+    line-height: 1.1;
+    margin-bottom: 14px;
+    font-family: 'Inria Serif', serif;
+    color: #202020;
+}
+
+.shop-category-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.shop-category-list .shop-category-chip {
+    border: none;
+    border-bottom: 1px solid #d2d8d3;
+    border-radius: 0;
+    background: transparent;
+    color: #222;
+    padding: 10px 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.shop-category-list .shop-category-chip:hover,
+.shop-category-list .shop-category-chip.active {
+    background: transparent;
+    color: #2f6d5e;
+    border-color: #c6cec9;
+}
+
+.shop-main {
+    min-width: 0;
+}
+
+.all-plants-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.all-plants-title {
+    font-size: 28px;
+    margin-bottom: 2px;
+}
+
+.all-plants-subtitle {
+    font-size: 13px;
+}
+
+.shop-sort-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.shop-sort-label {
+    font-size: 24px;
+    font-family: 'Inria Serif', serif;
+    color: #2a2a2a;
+}
+
+.shop-sort-select {
+    border: 1px solid #c9cfc9;
+    background: #fafafa;
+    height: 40px;
+    min-width: 160px;
+    font-size: 14px;
+    padding: 0 10px;
+    color: #2d2d2d;
+}
+
+.all-plants-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.all-plant-card {
+    border-radius: 0;
+    border: 1px solid #93a99b;
+    box-shadow: none;
+    background: #f2f2f2;
+    padding: 8px 8px 12px;
+}
+
+.all-plant-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #6b8f7d;
+}
+
+.all-plant-image {
+    height: 142px;
+    object-fit: contain;
+    background: #f2f2f2;
+}
+
+.all-plant-content {
+    text-align: center;
+    padding: 8px 4px 2px;
+}
+
+.all-plant-name {
+    font-size: 17px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    color: #212121;
+    min-height: 2.4em;
+}
+
+.all-plant-price {
+    font-size: 18px;
+    line-height: 1;
+    margin-bottom: 6px;
+    font-family: 'Inria Serif', serif;
+    color: #285d4d;
+    font-weight: 700;
+}
+
+.all-plant-category,
+.all-plant-stock {
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+@media (max-width: 1180px) {
+    .shop-layout {
+        grid-template-columns: 280px minmax(0, 1fr);
+    }
+
+    .all-plants-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .shop-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .all-plants-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .all-plants-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .all-plants-section {
+        padding: 14px 12px 24px;
+    }
+
+    .shop-search-input,
+    .shop-search-btn,
+    .shop-sort-select {
+        height: 38px;
+    }
+
+    .shop-sidebar-title,
+    .shop-sort-label {
+        font-size: 24px;
+    }
+
+    .all-plants-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Visual polish pass */
+.shop-title-section {
+    position: relative;
+    margin-top: 28px;
+    padding: 56px 16px;
+    background:
+        radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.22) 0, rgba(255, 255, 255, 0) 36%),
+        radial-gradient(circle at 82% 70%, rgba(255, 255, 255, 0.16) 0, rgba(255, 255, 255, 0) 34%),
+        linear-gradient(110deg, #9fbb7e 0%, #b4ca91 50%, #95b276 100%);
+    border-top: 1px solid rgba(60, 91, 42, 0.15);
+    border-bottom: 1px solid rgba(60, 91, 42, 0.18);
+    overflow: hidden;
+}
+
+.shop-title {
+    font-family: 'Inria Serif', serif;
+    font-size: clamp(42px, 6vw, 76px);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: capitalize;
+    color: #17210f;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35);
+}
+
+.shop-title::after {
+    content: '';
+    display: block;
+    width: 120px;
+    height: 4px;
+    margin: 12px auto 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #456330 0%, #6c8d4d 100%);
+}
+
+.all-plants-section {
+    background: linear-gradient(180deg, #eef2ea 0%, #f4f4f4 100%);
+    padding-top: 28px;
+}
+
+.shop-layout {
+    gap: 30px;
+}
+
+.shop-sidebar {
+    background: #f9fbf5;
+    border: 1px solid #dce6d4;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 10px 26px rgba(53, 87, 33, 0.08);
+}
+
+.shop-main {
+    background: #fbfbfb;
+    border: 1px solid #dee3dc;
+    border-radius: 14px;
+    padding: 14px;
+}
+
+.all-plant-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #d8e1d2;
+    box-shadow: 0 4px 14px rgba(39, 66, 24, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.all-plant-card:hover {
+    transform: translateY(-3px);
+    border-color: #99b485;
+    box-shadow: 0 10px 18px rgba(39, 66, 24, 0.14);
+}
+
+@media (max-width: 900px) {
+    .shop-title-section {
+        margin-top: 20px;
+        padding: 42px 14px;
+    }
+
+    .shop-sidebar,
+    .shop-main {
+        padding: 12px;
+    }
+}
+
+/* Search bar centering and responsiveness */
+.shop-search-wrap {
+    width: 100%;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 900px) {
+    .shop-search-wrap {
+        max-width: 560px;
+    }
+}
+
+@media (max-width: 560px) {
+    .shop-search-wrap {
+        max-width: 100%;
+    }
+
+    .shop-search-input {
+        min-width: 0;
+    }
+}
+
