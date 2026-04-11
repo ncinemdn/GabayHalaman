@@ -44,6 +44,11 @@ const categoryImageMap = {
 
 let allPlantsPool = [];
 let products = [];
+let currentBasePlants = [];
+let currentPlantsMeta = {
+    title: 'Preferred Plants',
+    subtitle: 'Showing random plants from our collection.'
+};
 
 function buildAllPlantsPool() {
     const inventory = window.GHPlantData ? window.GHPlantData.getPlantInventory() : [];
@@ -106,6 +111,52 @@ function getPreferredPlants(count) {
     return getRandomPlants(Math.min(count, allPlantsPool.length));
 }
 
+function formatPeso(value) {
+    const amount = Number(value || 0);
+    return `P${amount.toLocaleString('en-PH')}`;
+}
+
+function getShopControlsState() {
+    const searchInput = document.getElementById('shopSearchInput');
+    const sortSelect = document.getElementById('sortProductsSelect');
+
+    return {
+        query: (searchInput?.value || '').trim().toLowerCase(),
+        sortValue: sortSelect?.value || 'default'
+    };
+}
+
+function applyShopControls() {
+    const { query, sortValue } = getShopControlsState();
+
+    const sourcePlants = currentBasePlants.length ? currentBasePlants : getPreferredPlants(10);
+
+    const filtered = sourcePlants.filter((plant) => {
+        const nameMatch = plant.name.toLowerCase().includes(query);
+
+        return nameMatch;
+    });
+
+    if (sortValue === 'name-asc') {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortValue === 'price-asc') {
+        filtered.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+    } else if (sortValue === 'price-desc') {
+        filtered.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    }
+
+    const title = currentPlantsMeta.title || 'Preferred Plants';
+    const subtitle = currentPlantsMeta.subtitle || 'Showing our preferred picks.';
+
+    renderPlants(filtered, title, subtitle);
+}
+
+function setPlantsBase(list, title, subtitle) {
+    currentBasePlants = [...list];
+    currentPlantsMeta = { title, subtitle };
+    applyShopControls();
+}
+
 function renderPlants(plantList, title, subtitle) {
     const grid = document.getElementById('allPlantsGrid');
     const titleEl = document.querySelector('.all-plants-title');
@@ -134,6 +185,7 @@ function renderPlants(plantList, title, subtitle) {
                 <img src="${plant.image}" alt="${plant.name}" class="all-plant-image">
                 <div class="all-plant-content">
                     <h3 class="all-plant-name">${plant.name}</h3>
+                    <p class="all-plant-price">${formatPeso(plant.price)}</p>
                     <p class="all-plant-category">${plant.category}</p>
                     <p class="all-plant-stock ${plant.inStock ? 'in' : 'out'}">${plant.inStock ? `${plant.availableStock} available` : 'Out of Stock'}</p>
                 </div>
@@ -144,10 +196,18 @@ function renderPlants(plantList, title, subtitle) {
 
 function renderPreferredPlants() {
     const preferredPlants = getPreferredPlants(10);
-    renderPlants(
+    setPlantsBase(
         preferredPlants,
         'Preferred Plants',
         `Showing ${preferredPlants.length} random plants from our collection.`
+    );
+}
+
+function renderAllPlants() {
+    setPlantsBase(
+        [...allPlantsPool],
+        'All Plants',
+        'Showing all available plants.'
     );
 }
 
@@ -172,22 +232,44 @@ function renderPlantsByCategory(categoryKey) {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 
-    renderPlants(
+    setPlantsBase(
         plants,
         `${prettyLabel} Plants`,
         `Showing all plants under ${prettyLabel}.`
     );
 }
 
+function initShopControls() {
+    const searchInput = document.getElementById('shopSearchInput');
+    const searchBtn = document.getElementById('shopSearchBtn');
+    const sortSelect = document.getElementById('sortProductsSelect');
+
+    if (!searchInput || !searchBtn || !sortSelect) {
+        return;
+    }
+
+    searchBtn.addEventListener('click', applyShopControls);
+    searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            applyShopControls();
+        }
+    });
+
+    sortSelect.addEventListener('change', applyShopControls);
+}
+
 function initAllPlantsSection() {
     const categoryChips = document.querySelectorAll('.shop-category-chip[data-category]');
     const allPlantsSection = document.getElementById('allPlantsSection');
+
+    initShopControls();
 
     // Check for incoming category filter from URL (e.g. from landing page category cards)
     const urlParams = new URLSearchParams(window.location.search);
     const urlCategory = (urlParams.get('category') || '').trim();
 
-    if (urlCategory && urlCategory !== 'all') {
+    if (urlCategory && urlCategory !== 'all' && urlCategory !== 'all-plants') {
         // Activate matching chip visually
         categoryChips.forEach(chip => {
             chip.classList.toggle('active', chip.dataset.category === urlCategory);
@@ -197,6 +279,11 @@ function initAllPlantsSection() {
         setTimeout(function() {
             if (allPlantsSection) allPlantsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
+    } else if (urlCategory === 'all-plants') {
+        categoryChips.forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.category === 'all-plants');
+        });
+        renderAllPlants();
     } else {
         renderPreferredPlants();
     }
@@ -215,6 +302,8 @@ function initAllPlantsSection() {
             const selected = chip.dataset.category;
             if (selected === 'all') {
                 renderPreferredPlants();
+            } else if (selected === 'all-plants') {
+                renderAllPlants();
             } else {
                 renderPlantsByCategory(selected);
             }

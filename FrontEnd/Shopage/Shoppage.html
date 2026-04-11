@@ -61,29 +61,48 @@
             <h1 class="shop-title">Shop</h1>
         </section>
 
-        <section class="shop-categories-section" id="shop-categories">
-            <div class="shop-categories-wrap">
-                <p class="shop-categories-label">Pick a category</p>
-                <div class="shop-categories-list">
-                    <a class="shop-category-chip active" id="allPlantsChip" data-category="all" href="#allPlantsSection">Preferred Seedlings</a>
-                    <a class="shop-category-chip" data-category="coconut" href="#allPlantsSection">Coconut</a>
-                    <a class="shop-category-chip" data-category="mango" href="#allPlantsSection">Mango</a>
-                    <a class="shop-category-chip" data-category="guava" href="#allPlantsSection">Guava</a>
-                    <a class="shop-category-chip" data-category="citrus" href="#allPlantsSection">Citrus</a>
-                    <a class="shop-category-chip" data-category="fruit-bearing" href="#allPlantsSection">Fruit Bearing</a>
-                    <a class="shop-category-chip" data-category="forest" href="#allPlantsSection">Forest</a>
-                    <a class="shop-category-chip" data-category="flowering" href="#allPlantsSection">Flowering</a>
-                </div>
-            </div>
-        </section>
-
         <section class="all-plants-section" id="allPlantsSection">
-            <div class="product-container">
-                <div class="all-plants-header">
-                    <h2 class="all-plants-title">Preferred Seedlings</h2>
-                    <p class="all-plants-subtitle">Showing our preferred picks.</p>
+            <div class="product-container shop-layout">
+                <aside class="shop-sidebar" aria-label="Shop filters">
+                    <div class="shop-search-wrap">
+                        <input type="text" id="shopSearchInput" class="shop-search-input" placeholder="Search products..." aria-label="Search products">
+                        <button id="shopSearchBtn" class="shop-search-btn" type="button">Search</button>
+                    </div>
+
+                    <div class="shop-sidebar-block">
+                        <h3 class="shop-sidebar-title">Product categories</h3>
+                        <div class="shop-category-list">
+                            <a class="shop-category-chip active" id="allPlantsChip" data-category="all" href="#allPlantsSection">Preferred Seedlings</a>
+                            <a class="shop-category-chip" data-category="all-plants" href="#allPlantsSection">All Plants</a>
+                            <a class="shop-category-chip" data-category="coconut" href="#allPlantsSection">Coconut</a>
+                            <a class="shop-category-chip" data-category="mango" href="#allPlantsSection">Mango</a>
+                            <a class="shop-category-chip" data-category="guava" href="#allPlantsSection">Guava</a>
+                            <a class="shop-category-chip" data-category="citrus" href="#allPlantsSection">Citrus</a>
+                            <a class="shop-category-chip" data-category="fruit-bearing" href="#allPlantsSection">Fruit Bearing</a>
+                            <a class="shop-category-chip" data-category="forest" href="#allPlantsSection">Forest</a>
+                            <a class="shop-category-chip" data-category="flowering" href="#allPlantsSection">Flowering</a>
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="shop-main">
+                    <div class="all-plants-header">
+                        <div>
+                            <h2 class="all-plants-title">Preferred Plants</h2>
+                            <p class="all-plants-subtitle">Showing our preferred picks.</p>
+                        </div>
+                        <div class="shop-sort-wrap">
+                            <label class="shop-sort-label" for="sortProductsSelect">Sort by:</label>
+                            <select id="sortProductsSelect" class="shop-sort-select" aria-label="Sort products">
+                                <option value="default">Sort Products</option>
+                                <option value="name-asc">Name A-Z</option>
+                                <option value="price-asc">Price Low to High</option>
+                                <option value="price-desc">Price High to Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="all-plants-grid" id="allPlantsGrid"></div>
                 </div>
-                <div class="all-plants-grid" id="allPlantsGrid"></div>
             </div>
         </section>
 
