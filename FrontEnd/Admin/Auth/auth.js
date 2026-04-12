@@ -1,7 +1,6 @@
 (function () {
     const USERS_KEY = 'gh_admin_users_v1';
     const SESSION_KEY = 'gh_admin_session_v1';
-    const ADMIN_SETUP_CODE = 'GH-ADMIN-2026';
 
     function getUsers() {
         try {
@@ -49,9 +48,9 @@
 
             const name = String(document.getElementById('signupName').value || '').trim();
             const email = normalizeEmail(document.getElementById('signupEmail').value);
+            const contactNumber = String(document.getElementById('signupContact').value || '').trim();
             const password = String(document.getElementById('signupPassword').value || '');
             const confirmPassword = String(document.getElementById('signupConfirmPassword').value || '');
-            const setupCode = String(document.getElementById('signupCode').value || '').trim();
 
             if (!name) {
                 setMessage(errorElement, successElement, 'error', 'Please enter your full name.');
@@ -63,6 +62,11 @@
                 return;
             }
 
+            if (!/^(09\d{9}|\+639\d{9})$/.test(contactNumber)) {
+                setMessage(errorElement, successElement, 'error', 'Please enter a valid contact number (09XXXXXXXXX or +639XXXXXXXXX).');
+                return;
+            }
+
             if (password.length < 8) {
                 setMessage(errorElement, successElement, 'error', 'Password must be at least 8 characters long.');
                 return;
@@ -70,11 +74,6 @@
 
             if (password !== confirmPassword) {
                 setMessage(errorElement, successElement, 'error', 'Passwords do not match.');
-                return;
-            }
-
-            if (setupCode !== ADMIN_SETUP_CODE) {
-                setMessage(errorElement, successElement, 'error', 'Invalid admin setup code.');
                 return;
             }
 
@@ -92,6 +91,7 @@
                 id: String(Date.now()),
                 name: name,
                 email: email,
+                contactNumber: contactNumber,
                 password: password,
                 role: 'admin',
                 createdAt: new Date().toISOString()
