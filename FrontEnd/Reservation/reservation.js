@@ -331,10 +331,24 @@ function selectPlant(plantId, category) {
 
 // Handle reservation
 function handleReserve() {
+    const selectedCategory = document.getElementById('category').value;
     const deliveryDate = document.getElementById('deliveryDate').value;
+    const missingRequirements = [];
 
-    if (!deliveryDate || selectedPlants.length === 0) {
-        alert('Please select a delivery date and at least one plant.');
+    if (!selectedCategory) {
+        missingRequirements.push('Select a category of plant.');
+    }
+
+    if (!deliveryDate) {
+        missingRequirements.push('Select a delivery date.');
+    }
+
+    if (selectedPlants.length === 0) {
+        missingRequirements.push('Select at least one plant.');
+    }
+
+    if (missingRequirements.length > 0) {
+        alert('Please complete the following before reserving:\n• ' + missingRequirements.join('\n• '));
         return;
     }
 
