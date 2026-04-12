@@ -1,164 +1,39 @@
-(function () {
-    const USERS_KEY = 'gh_admin_users_v1';
-    const SESSION_KEY = 'gh_admin_session_v1';
+async function login(email, password) {
+    try {
+        const response = await fetch('http://localhost:5007/api/Admin');
+        const admins = await response.json();
 
-    function getUsers() {
-        try {
-            const raw = localStorage.getItem(USERS_KEY);
-            const parsed = raw ? JSON.parse(raw) : [];
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.error('Unable to read admin users from localStorage:', error);
-            return [];
-        }
-    }
+        const user = admins.find(a => a.email === email);
 
-    function saveUsers(users) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    }
-
-    function setMessage(errorElement, successElement, type, text) {
-        if (errorElement) {
-            errorElement.textContent = type === 'error' ? text : '';
-        }
-        if (successElement) {
-            successElement.textContent = type === 'success' ? text : '';
-        }
-    }
-
-    function isValidEmail(value) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-    }
-
-    function normalizeEmail(value) {
-        return String(value || '').trim().toLowerCase();
-    }
-
-    function handleSignUp() {
-        const form = document.getElementById('signUpForm');
-        if (!form) {
+        if (!user) {
+            document.getElementById("signInError").textContent = "User not found";
             return;
         }
 
-        const errorElement = document.getElementById('signUpError');
-        const successElement = document.getElementById('signUpSuccess');
-
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            const name = String(document.getElementById('signupName').value || '').trim();
-            const email = normalizeEmail(document.getElementById('signupEmail').value);
-            const contactNumber = String(document.getElementById('signupContact').value || '').trim();
-            const password = String(document.getElementById('signupPassword').value || '');
-            const confirmPassword = String(document.getElementById('signupConfirmPassword').value || '');
-
-            if (!name) {
-                setMessage(errorElement, successElement, 'error', 'Please enter your full name.');
-                return;
-            }
-
-            if (!isValidEmail(email)) {
-                setMessage(errorElement, successElement, 'error', 'Please enter a valid email address.');
-                return;
-            }
-
-            if (!/^(09\d{9}|\+639\d{9})$/.test(contactNumber)) {
-                setMessage(errorElement, successElement, 'error', 'Please enter a valid contact number (09XXXXXXXXX or +639XXXXXXXXX).');
-                return;
-            }
-
-            if (password.length < 8) {
-                setMessage(errorElement, successElement, 'error', 'Password must be at least 8 characters long.');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                setMessage(errorElement, successElement, 'error', 'Passwords do not match.');
-                return;
-            }
-
-            const users = getUsers();
-            const alreadyExists = users.some(function (user) {
-                return normalizeEmail(user.email) === email;
-            });
-
-            if (alreadyExists) {
-                setMessage(errorElement, successElement, 'error', 'An admin account with this email already exists.');
-                return;
-            }
-
-            users.push({
-                id: String(Date.now()),
-                name: name,
-                email: email,
-                contactNumber: contactNumber,
-                password: password,
-                role: 'admin',
-                createdAt: new Date().toISOString()
-            });
-
-            saveUsers(users);
-            setMessage(errorElement, successElement, 'success', 'Account created. Redirecting to sign in...');
-
-            setTimeout(function () {
-                window.location.href = 'signin.html';
-            }, 900);
-        });
-    }
-
-    function handleSignIn() {
-        const form = document.getElementById('signInForm');
-        if (!form) {
+        if (user.password_hash !== password) {
+            document.getElementById("signInError").textContent = "Incorrect password";
             return;
         }
 
-        const errorElement = document.getElementById('signInError');
-        const successElement = document.getElementById('signInSuccess');
+        // Clear error if success
+        document.getElementById("signInError").textContent = "";
 
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
+        // Save session
+        localStorage.setItem("admin", JSON.stringify(user));
 
-            const email = normalizeEmail(document.getElementById('signinEmail').value);
-            const password = String(document.getElementById('signinPassword').value || '');
+        window.location.href = "../Dashboard/dashboard.html";
 
-            if (!isValidEmail(email)) {
-                setMessage(errorElement, successElement, 'error', 'Please enter a valid email address.');
-                return;
-            }
-
-            if (!password) {
-                setMessage(errorElement, successElement, 'error', 'Please enter your password.');
-                return;
-            }
-
-            const users = getUsers();
-            const foundUser = users.find(function (user) {
-                return normalizeEmail(user.email) === email && String(user.password || '') === password;
-            });
-
-            if (!foundUser) {
-                setMessage(errorElement, successElement, 'error', 'Invalid email or password.');
-                return;
-            }
-
-            localStorage.setItem(SESSION_KEY, JSON.stringify({
-                id: foundUser.id,
-                name: foundUser.name,
-                email: foundUser.email,
-                role: foundUser.role,
-                signedInAt: new Date().toISOString()
-            }));
-
-            setMessage(errorElement, successElement, 'success', 'Sign in successful. Redirecting...');
-
-            setTimeout(function () {
-                window.location.href = '../Dashboard/dashboard.html';
-            }, 650);
-        });
+    } catch (error) {
+        console.error(error);
+        document.getElementById("signInError").textContent = "Server error";
     }
+}
 
-    document.addEventListener('DOMContentLoaded', function () {
-        handleSignUp();
-        handleSignIn();
-    });
-})();
+document.getElementById("signInForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const email = document.getElementById("signinEmail").value;
+    const password = document.getElementById("signinPassword").value;
+
+    await login(email, password);
+});
