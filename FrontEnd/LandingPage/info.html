@@ -3,37 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reserved Plants - Gabay Halaman</title>
-   
-    <!-- Google Fonts -->
+    <title>Users Manual & About Us - Gabay Halaman</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&family=Poppins:wght@400;500;600;700&family=Karla:wght@700&display=swap" rel="stylesheet">
-   
-    <!-- External CSS -->
-    <link rel="stylesheet" href="reserved-plants.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="info.css">
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="header-inner">
-            <a href="../LandingPage/landingpage.html" class="logo-section">
+            <a href="landingpage.html" class="logo-section">
                 <img src="../logo.png" alt="Logo" class="logo">
                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30'%3E%3Ctext x='0' y='20' font-family='Inria Serif' font-weight='700' font-size='18' fill='%23000000'%3EGabay Halaman%3C/text%3E%3C/svg%3E" alt="Gabay Halaman" class="brand-text">
             </a>
-           
+
             <nav class="nav">
-                <a href="../LandingPage/landingpage.html">Home</a>
+                <a href="landingpage.html">Home</a>
                 <a href="../Shopage/Shoppage.html">Shop</a>
                 <div class="nav-dropdown">
                     <button class="nav-dropdown-toggle" type="button">More</button>
                     <div class="nav-dropdown-menu">
-                        <a href="../LandingPage/info.html#about-us">About Us</a>
-                        <a href="../LandingPage/info.html#users-manual">Users Manual</a>
+                        <a href="#about-us">About Us</a>
+                        <a href="#users-manual">Users Manual</a>
                     </div>
                 </div>
             </nav>
-
 
             <div class="header-icons">
                 <button class="icon-btn" aria-label="Search">
@@ -41,7 +35,7 @@
                         <path d="M22.05 26.25L14.9625 18.375C14.4 18.875 13.7531 19.2708 13.0219 19.5625C12.2906 19.8542 11.5125 20 10.6875 20C8.64375 20 6.91406 19.2135 5.49844 17.6406C4.08281 16.0677 3.375 14.1458 3.375 11.875C3.375 9.60417 4.08281 7.68229 5.49844 6.10937C6.91406 4.53646 8.64375 3.75 10.6875 3.75C12.7312 3.75 14.4609 4.53646 15.8766 6.10937C17.2922 7.68229 18 9.60417 18 11.875C18 12.7917 17.8687 13.6562 17.6062 14.4687C17.3437 15.2812 16.9875 16 16.5375 16.625L23.625 24.5L22.05 26.25ZM10.6875 17.5C12.0937 17.5 13.2891 16.9531 14.2734 15.8594C15.2578 14.7656 15.75 13.4375 15.75 11.875C15.75 10.3125 15.2578 8.98437 14.2734 7.89062C13.2891 6.79687 12.0937 6.25 10.6875 6.25C9.28125 6.25 8.08594 6.79687 7.10156 7.89062C6.11719 8.98437 5.625 10.3125 5.625 11.875C5.625 13.4375 6.11719 14.7656 7.10156 15.8594C8.08594 16.9531 9.28125 17.5 10.6875 17.5Z" fill="black"/>
                     </svg>
                 </button>
-               
+
                 <div class="nav-dropdown cart-dropdown">
                     <button class="icon-btn" aria-label="Open cart menu" type="button">
                         <svg width="31" height="33" fill="none" viewBox="0 0 31 33">
@@ -50,30 +44,81 @@
                     </button>
                     <div class="nav-dropdown-menu cart-dropdown-menu">
                         <a href="../CartPage/cart.html">View Cart</a>
-                        <a href="reserved-plants.html">Reserve Plants</a>
+                        <a href="../Reservation/reserved-plants.html">Reserve Plants</a>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
+    <main class="info-page">
+        <section class="hero-panel">
+            <p class="hero-kicker">Guides & Story</p>
+            <h1>Users Manual and About Us</h1>
+            <p>Simple guide so you can browse, reserve, and contact us with ease.</p>
+        </section>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">RESERVED PLANTS</h1>
-        </div>
+        <section class="info-section" id="users-manual">
+            <h2>Users Manual</h2>
+            <p class="section-intro">Follow these steps to use the website:</p>
+            <div class="steps-grid">
+                <article class="step-card">
+                    <h3>1. Explore Plants</h3>
+                    <p>Go to Shop and pick a category like Mango, Coconut, or Citrus.</p>
+                </article>
+                <article class="step-card">
+                    <h3>2. Check Details</h3>
+                    <p>Open a plant card to view photo, stock, price, and plant size options.</p>
+                </article>
+                <article class="step-card">
+                    <h3>3. Add or Reserve</h3>
+                    <p>Select quantity and size, then choose Add to Cart or Reserve Now.</p>
+                </article>
+                <article class="step-card">
+                    <h3>4. Set Reservation Info</h3>
+                    <p>In reservation page, choose category, delivery date, and plants.</p>
+                </article>
+                <article class="step-card">
+                    <h3>5. Contact Owner</h3>
+                    <p>Use Email, Viber, or Messenger to negotiate and confirm your request.</p>
+                </article>
+                <article class="step-card">
+                    <h3>6. Continue Reservation</h3>
+                    <p>After negotiation, return to the site and continue to your reserved plants.</p>
+                </article>
+            </div>
+        </section>
 
+        <section class="info-section about-section" id="about-us">
+            <h2>About Us</h2>
+            <p class="section-intro">
+                Gabay Halaman is a local plant nursery website focused on healthy plants, fair prices, and safe delivery.
+            </p>
+            <div class="about-grid">
+                <article class="about-card">
+                    <h3>Our Mission</h3>
+                    <p>To make plant shopping easier for everyone, from first-time buyers to experienced plant lovers.</p>
+                </article>
+                <article class="about-card">
+                    <h3>What We Offer</h3>
+                    <p>Fruit-bearing trees, flowering plants, forest trees, and more with updated stock and clear prices.</p>
+                </article>
+                <article class="about-card">
+                    <h3>How We Support You</h3>
+                    <p>We assist with reservation, answer care questions, and guide you in selecting the right plants.</p>
+                </article>
+                <article class="about-card">
+                    <h3>Delivery Commitment</h3>
+                    <p>We handle deliveries with care so plants arrive healthy and ready for your home or farm.</p>
+                </article>
+            </div>
+        </section>
+    </main>
 
-        <div class="content-box" id="reservationsContainer">
-            <!-- Content will be loaded here by JavaScript -->
-        </div>
-    </div>
+    <footer class="site-footer">
+        <p>© 2026 GabayHalaman. All rights reserved.</p>
+    </footer>
 
-
-    <!-- External JavaScript -->
-    <script src="../search-plants.js"></script>
     <script src="../shared/navbar-dropdown.js"></script>
-    <script src="reserved-plants.js"></script>
 </body>
 </html>

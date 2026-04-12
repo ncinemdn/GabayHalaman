@@ -256,9 +256,8 @@ function updatePlantDisplay() {
                         <label for="size-${plant.id}" class="plant-size-label">Size:</label>
                         <select id="size-${plant.id}" class="plant-size" ${isAvailable ? '' : 'disabled'} onchange="onPlantSizeChange(${plant.id}, this.value)">
                             <option value="">Select</option>
-                            <option value="Small" ${plantSize === 'Small' ? 'selected' : ''}>Small</option>
-                            <option value="Large" ${plantSize === 'Large' ? 'selected' : ''}>Large</option>
-                            <option value="Extra Large" ${plantSize === 'Extra Large' ? 'selected' : ''}>Extra Large</option>
+                            <option value="Medium" ${plantSize === 'Medium' ? 'selected' : ''}>Medium</option>
+                            <option value="XL" ${(plantSize === 'XL' || plantSize === 'Extra Large') ? 'selected' : ''}>Extra Large (XL)</option>
                         </select>
                     </div>
                 </div>

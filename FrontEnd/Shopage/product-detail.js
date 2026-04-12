@@ -95,7 +95,7 @@ const plantDescriptions = {
 const state = {
     currentImageIndex: 0,
     quantity: 1,
-    selectedSize: 'small',
+    selectedSize: 'medium',
     selectedTab: 'additional',
     currentMoreProductIndex: 0,
     currentPlant: null
@@ -456,7 +456,7 @@ function showAddToCartToast() {
         existingToast.remove();
     }
     
-    const selectedSizeLabel = state.selectedSize.charAt(0).toUpperCase() + state.selectedSize.slice(1);
+    const selectedSizeLabel = state.selectedSize === 'xl' ? 'Extra Large (XL)' : 'Medium';
     
     const toast = document.createElement('aside');
     toast.className = 'cart-toast';

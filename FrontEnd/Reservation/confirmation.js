@@ -1,34 +1,76 @@
+const CONTACT_DETAILS = {
+    email: 'christinelumban025@gmail.com',
+    viberLocal: '09937590358',
+    viberInternational: '+639937590358',
+    facebookMessenger: 'https://www.facebook.com/share/1Dbsh6mBu1/?mibextid=wwXIfr'
+};
+
+let isContinuePromptOpen = false;
+let lastContinuePromptAt = 0;
+
 function selectPlatform(platform) {
-    let contactInfo = '';
     let platformName = '';
-   
-    switch(platform) {
+    let targetUrl = '';
+
+    switch (platform) {
         case 'gmail':
-            platformName = 'Gmail';
-            contactInfo = 'christinelumban025@gmail.com';
-            // Open Gmail compose
-            window.open('mailto:christinelumban025@gmail.com?subject=Plant Reservation Inquiry', '_blank');
+            platformName = 'Email';
+            targetUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(CONTACT_DETAILS.email)}&su=${encodeURIComponent('Plant Reservation Inquiry')}`;
             break;
         case 'viber':
             platformName = 'Viber';
-            contactInfo = '+63 XXX XXX XXXX';
-            alert('Please contact us via Viber at: ' + contactInfo);
+            targetUrl = `viber://chat?number=${encodeURIComponent(CONTACT_DETAILS.viberInternational)}`;
             break;
         case 'messenger':
-            platformName = 'Messenger';
-            contactInfo = 'https://www.facebook.com/share/1Dbsh6mBu1/?mibextid=wwXIfr';
-            // Open Messenger
-            window.open('https://www.facebook.com/share/1Dbsh6mBu1/?mibextid=wwXIfr', '_blank');
+            platformName = 'Facebook/Messenger';
+            targetUrl = CONTACT_DETAILS.facebookMessenger;
             break;
+        default:
+            return;
     }
-   
-    // Store the selected platform
+
     localStorage.setItem('selectedPlatform', platform);
-   
-    // After user selects platform, navigate to reserved plants page after a short delay
-    setTimeout(() => {
-        if (confirm('Your reservation has been recorded! Click OK to view all your reserved plants.')) {
-            window.location.href = 'reserved-plants.html';
-        }
-    }, 1000);
+    localStorage.setItem('pendingContactPlatform', platformName);
+
+    if (platform === 'viber') {
+        alert(`Opening Viber for ${CONTACT_DETAILS.viberLocal}`);
+    }
+
+    window.open(targetUrl, '_blank');
 }
+
+function continueReservationFlow() {
+    const pendingPlatform = localStorage.getItem('pendingContactPlatform');
+    if (!pendingPlatform) {
+        return;
+    }
+
+    const now = Date.now();
+    if (isContinuePromptOpen || now - lastContinuePromptAt < 800) {
+        return;
+    }
+
+    isContinuePromptOpen = true;
+    lastContinuePromptAt = now;
+
+    const shouldContinue = confirm(
+        `Finished negotiating via ${pendingPlatform}? Click OK to continue your reservation steps.`
+    );
+
+    isContinuePromptOpen = false;
+
+    if (shouldContinue) {
+        localStorage.removeItem('pendingContactPlatform');
+        window.location.href = 'reserved-plants.html';
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        continueReservationFlow();
+    }
+});
+
+window.addEventListener('focus', continueReservationFlow);
+
+document.addEventListener('DOMContentLoaded', continueReservationFlow);
