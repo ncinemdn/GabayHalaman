@@ -16,10 +16,6 @@
             <p class="eyebrow">Admin Onboarding</p>
             <h1>Create your admin account</h1>
             <p class="lead">Set up secure access for managing plants, reservations, and order flow.</p>
-            <div class="notice-card">
-                <strong>Setup code for this demo:</strong>
-                <span>GH-ADMIN-2026</span>
-            </div>
         </section>
 
         <section class="auth-panel reveal-delay-2">
@@ -41,6 +37,11 @@
                 </label>
 
                 <label class="field-group">
+                    <span>Contact Number</span>
+                    <input type="tel" id="signupContact" name="contactNumber" placeholder="09XXXXXXXXX" required>
+                </label>
+
+                <label class="field-group">
                     <span>Password</span>
                     <input type="password" id="signupPassword" name="password" placeholder="At least 8 characters" required minlength="8">
                 </label>
@@ -48,11 +49,6 @@
                 <label class="field-group">
                     <span>Confirm Password</span>
                     <input type="password" id="signupConfirmPassword" name="confirmPassword" placeholder="Re-enter your password" required minlength="8">
-                </label>
-
-                <label class="field-group">
-                    <span>Admin Setup Code</span>
-                    <input type="text" id="signupCode" name="setupCode" placeholder="Enter setup code" required>
                 </label>
 
                 <div id="signUpError" class="message error" aria-live="polite"></div>

@@ -45,32 +45,32 @@ body {
     left: 0;
     top: 0;
     height: 100vh;
-    width: 94px;
+    width: 260px;
     background-color: white;
     border-right: 1px solid #6e6b6b;
-    transition: width 0.3s ease-in-out;
     z-index: 1000;
     overflow: hidden;
 }
 
-.sidebar:hover {
-    width: 309px;
+.sidebar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 0 9px;
+    height: 85px;
 }
 
 .sidebar-logo {
-    height: 60px;
-    margin-top: 10px;
-    padding: 0 5px;
     display: flex;
     align-items: center;
-    position: absolute;
-    left: 0;
-    top: 0;
+    flex-shrink: 0;
 }
 
 .sidebar-logo img {
     width: 50px;
     height: 50px;
+    flex-shrink: 0;
     object-fit: contain;
     border-radius: 50%;
     background-color: #fff;
@@ -78,35 +78,22 @@ body {
 }
 
 .brand-name {
-    transition: opacity 0.3s ease;
-    opacity: 0;
-    height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    white-space: nowrap;
     overflow: hidden;
-    position: absolute;
-    left: 50px;
-    top: 0;
-    width: calc(100% - 50px);
-}
-
-.sidebar:hover .brand-name {
-    opacity: 1;
-    height: 60px;
 }
 
 .brand-container {
-    padding: 0 10px;
-    margin-top: 0;
-    height: 100%;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
 }
 
 .brand-text {
     font-size: 14px;
     font-weight: bold;
     color: black;
-    text-align: left;
     white-space: nowrap;
 }
 
@@ -114,16 +101,14 @@ body {
     font-size: 11px;
     color: black;
     opacity: 0.6;
-    text-align: left;
-    margin-top: 0;
     white-space: nowrap;
 }
 
 .sidebar-divider {
-    margin: 70px 0 20px 0;
+    margin: 0;
     border-bottom: 0;
-    height: 3px;
-    background-color: #CFCECD;
+    height: 1px;
+    background-color: rgba(122, 122, 122, 0.8);
     margin-left: 0;
     margin-right: 0;
     width: 100%;
@@ -133,7 +118,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 0;
+    padding: 20px 0 0 0;
     width: 100%;
 }
 
@@ -147,19 +132,13 @@ body {
     background: transparent;
     cursor: pointer;
     transition: all 0.2s ease;
-    justify-content: center;
-    padding: 0;
+    justify-content: flex-start;
+    padding: 0 16px;
     text-decoration: none;
     color: inherit;
     width: 100%;
     min-width: 0;
     overflow: hidden;
-}
-
-.sidebar:hover .nav-item {
-    justify-content: flex-start;
-    padding-left: 16px;
-    padding-right: 16px;
 }
 
 .nav-item:hover {
@@ -192,16 +171,6 @@ body {
     font-size: 15px;
     font-weight: bold;
     white-space: nowrap;
-    transition: opacity 0.3s ease, width 0.3s ease;
-    opacity: 0;
-    width: 0;
-    min-width: 0;
-    overflow: hidden;
-}
-
-.sidebar:hover .nav-label {
-    opacity: 1;
-    width: auto;
 }
 
 .nav-item.active .nav-label {
@@ -239,20 +208,14 @@ body {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 10px 0;
+    padding: 10px 16px;
     border-radius: 8px;
     transition: background-color 0.2s ease;
-    justify-content: center;
+    justify-content: flex-start;
     height: auto;
     min-height: 44px;
     width: 100%;
     overflow: hidden;
-}
-
-.sidebar:hover .bottom-action {
-    justify-content: flex-start;
-    padding-left: 16px;
-    padding-right: 16px;
 }
 
 .bottom-action:hover {
@@ -265,43 +228,27 @@ body {
 
 /* Main Content */
 .main-content {
-    margin-left: 94px;
-    width: calc(100% - 94px);
-    transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
+    margin-left: 260px;
+    width: calc(100% - 260px);
     background-color: #f8f7f4;
     min-height: 100vh;
 }
 
-.sidebar:hover ~ .main-content {
-    margin-left: 309px;
-    width: calc(100% - 309px);
-}
-
 @media (max-width: 1024px) {
     .sidebar {
-        width: 80px;
+        width: 260px;
         position: fixed;
         height: 100vh;
     }
 
-    .sidebar:hover {
-        width: 260px;
-    }
-
     .main-content {
-        margin-left: 80px;
-        width: calc(100% - 80px);
-    }
-
-    .sidebar:hover ~ .main-content {
         margin-left: 260px;
         width: calc(100% - 260px);
     }
 }
 
 @media (max-width: 768px) {
-    .sidebar,
-    .sidebar:hover {
+    .sidebar {
         width: 100%;
         height: auto;
         position: relative;
