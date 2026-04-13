@@ -575,7 +575,7 @@ function showAddToCartToast() {
     const productImage = productImages[state.currentImageIndex];
 
     // Save to cart in localStorage
-    const cart = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
     const existingItem = cart.find(item => item.name === productTitle);
     
     if (existingItem) {
@@ -595,7 +595,7 @@ function showAddToCartToast() {
         });
     }
     
-    localStorage.setItem('reservations', JSON.stringify(cart));
+    localStorage.setItem('cartItems', JSON.stringify(cart));
 
     const toast = document.createElement('aside');
     toast.className = 'cart-toast';

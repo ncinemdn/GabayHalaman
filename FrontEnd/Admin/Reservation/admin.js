@@ -1,49 +1,38 @@
-const SAMPLE_PURCHASE_ORDERS = [
-    {
-        id: 'sample-1',
-        orderId: '#ORD-1001',
-        customerName: 'Jake Clarence',
-        items: [{ name: 'Coconut Variety', qty: 1, price: 121.197 }],
-        totalAmount: 121.197,
-        paymentStatus: 'paid',
-        orderStatus: 'pending'
-    },
-    {
-        id: 'sample-2',
-        orderId: '#ORD-1002',
-        customerName: 'Trisha Timog',
-        items: [{ name: 'Mango Tree', qty: 1, price: 55.99 }],
-        totalAmount: 55.99,
-        paymentStatus: 'unpaid',
-        orderStatus: 'pending'
-    }
-];
-
-const reservationOrders = [
-    {
-        id: '3',
-        orderId: '#ORD-2001',
-        customerName: 'Ken Narvaez',
-        plantOrdered: 'Coconut Variety',
-        quantity: 1,
-        totalAmount: '$121.197',
-        paymentStatus: 'unpaid',
-        orderStatus: 'pending',
-    },
-    {
-        id: '4',
-        orderId: '#ORD-2002',
-        customerName: 'Charizze Landicho',
-        plantOrdered: 'Mango Variety',
-        quantity: 3,
-        totalAmount: '$55.99',
-        paymentStatus: 'unpaid',
-        orderStatus: 'pending',
-    },
-];
-
 let purchaseOrders = [];
+let reservationOrders = [];
 let expandedTable = null;
+const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
+let activeSearchQuery = '';
+let activeStatusFilter = 'all';
+let activeTypeFilter = 'all';
+
+function normalizePaymentStatus(status) {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'paid') {
+        return 'paid';
+    }
+
+    if (value === 'partially paid' || value === 'partial' || value === 'partially_paid') {
+        return 'partially_paid';
+    }
+
+    return 'unpaid';
+}
+
+function formatPaymentStatusLabel(status) {
+    const value = normalizePaymentStatus(status);
+
+    if (value === 'paid') {
+        return 'Paid';
+    }
+
+    if (value === 'partially_paid') {
+        return 'Partially Paid';
+    }
+
+    return 'Unpaid';
+}
 
 function normalizeStatus(status) {
     const value = String(status || '').toLowerCase();
@@ -57,40 +46,6 @@ function normalizeStatus(status) {
     }
 
     return 'pending';
-}
-
-function normalizeTrackingStatus(status) {
-    const value = String(status || '').toLowerCase();
-
-    if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
-        return 'prepared';
-    }
-
-    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
-        return 'out_for_delivery';
-    }
-
-    if (value === 'delivered') {
-        return 'delivered';
-    }
-
-    return 'confirmed';
-}
-
-function formatTrackingLabel(status) {
-    if (status === 'prepared') {
-        return 'Prepared by Seller';
-    }
-
-    if (status === 'out_for_delivery') {
-        return 'Out for Delivery';
-    }
-
-    if (status === 'delivered') {
-        return 'Delivered';
-    }
-
-    return 'Confirmed';
 }
 
 function formatPeso(value) {
@@ -133,30 +88,109 @@ function getTotalAmount(order) {
     return formatPeso(order.totalAmount);
 }
 
-function loadPurchaseOrders() {
-    const stored = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
-    if (!stored.length) {
-        purchaseOrders = SAMPLE_PURCHASE_ORDERS.map(order => ({
-            ...order,
-            trackingStatus: 'confirmed'
-        }));
-        return;
+function isLegacyDemoPurchase(order) {
+    if (!order || typeof order !== 'object') {
+        return false;
     }
 
-    purchaseOrders = stored.map(order => ({
+    const id = String(order.id || '');
+    if (id.indexOf('sample-') === 0) {
+        return true;
+    }
+
+    return false;
+}
+
+function loadPurchaseOrders() {
+    const stored = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    purchaseOrders = stored.filter(order => !isLegacyDemoPurchase(order)).map(order => ({
         ...order,
-        orderStatus: normalizeStatus(order.orderStatus),
-        trackingStatus: normalizeTrackingStatus(order.trackingStatus)
+        paymentStatus: normalizePaymentStatus(order.paymentStatus),
+        orderStatus: normalizeStatus(order.orderStatus)
     }));
+
+    if (purchaseOrders.length !== stored.length) {
+        persistPurchaseOrders();
+    }
+}
+
+function loadReservationOrders() {
+    const stored = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const reservationRecords = stored.filter((order) => {
+        if (!order || typeof order !== 'object') {
+            return false;
+        }
+
+        if (order.isPlacedOrder === true) {
+            return true;
+        }
+
+        const hasAdminReservationId = String(order.adminReservationId || '').trim().length > 0;
+        const hasReservationOrderId = String(order.orderId || '').trim().indexOf('#RES-') === 0;
+        return hasAdminReservationId || hasReservationOrderId;
+    });
+
+    reservationOrders = reservationRecords.map((order, index) => {
+        const computedQuantity = getQuantity(order) || Number(order.quantity || 0);
+        const computedItemsTotal = Array.isArray(order.items)
+            ? order.items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0)
+            : 0;
+        const computedTotalAmount = Number.isFinite(Number(order.totalAmount))
+            ? Number(order.totalAmount)
+            : (computedItemsTotal || ((Number(order.price) || 0) * computedQuantity));
+
+        let computedPlantOrdered = order.plantOrdered || order.name || '';
+        if (!computedPlantOrdered && Array.isArray(order.items) && order.items.length) {
+            computedPlantOrdered = order.items.length === 1
+                ? String(order.items[0].name || 'N/A')
+                : String(order.items[0].name || 'N/A') + ' +' + (order.items.length - 1) + ' more';
+        }
+
+        return {
+            ...order,
+            id: String(order.adminReservationId || order.id || ('reservation-' + index)),
+            adminReservationId: String(order.adminReservationId || order.id || ('reservation-' + index)),
+            orderId: order.orderId || ('#RES-' + String(index + 1).padStart(4, '0')),
+            customerName: order.customerName || 'Reservation Customer',
+            plantOrdered: computedPlantOrdered || 'N/A',
+            quantity: computedQuantity,
+            totalAmount: computedTotalAmount,
+            paymentStatus: normalizePaymentStatus(order.paymentStatus),
+            orderStatus: normalizeStatus(order.orderStatus)
+        };
+    });
 }
 
 function persistPurchaseOrders() {
     localStorage.setItem('purchaseOrders', JSON.stringify(purchaseOrders));
 }
 
+function persistReservationOrders() {
+    const stored = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const keepNonOrderReservations = Array.isArray(stored)
+        ? stored.filter((order) => {
+            if (!order || typeof order !== 'object') {
+                return false;
+            }
+
+            if (order.isPlacedOrder === true) {
+                return false;
+            }
+
+            const hasAdminReservationId = String(order.adminReservationId || '').trim().length > 0;
+            const hasReservationOrderId = String(order.orderId || '').trim().indexOf('#RES-') === 0;
+
+            return !(hasAdminReservationId || hasReservationOrderId);
+        })
+        : [];
+
+    localStorage.setItem('reservations', JSON.stringify(keepNonOrderReservations.concat(reservationOrders)));
+}
+
 // Initialize the page
 function init() {
     loadPurchaseOrders();
+    loadReservationOrders();
     updateStats();
     renderMiniTables();
     setupEventListeners();
@@ -174,10 +208,51 @@ function updateStats() {
     document.getElementById('completedCount').textContent = completedCount;
 }
 
+function getFilteredOrders(orders) {
+    const query = activeSearchQuery;
+
+    return orders.filter(order => {
+        const matchesSearch = !query || (
+            String(order.customerName || '').toLowerCase().includes(query) ||
+            getPlantOrdered(order).toLowerCase().includes(query) ||
+            String(order.orderId || '').toLowerCase().includes(query)
+        );
+
+        const matchesStatus = activeStatusFilter === 'all' || normalizeStatus(order.orderStatus) === activeStatusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
+}
+
+function getFilteredPurchaseOrders() {
+    if (activeTypeFilter === 'reservation') {
+        return [];
+    }
+
+    return getFilteredOrders(purchaseOrders);
+}
+
+function getFilteredReservationOrders() {
+    if (activeTypeFilter === 'purchase') {
+        return [];
+    }
+
+    return getFilteredOrders(reservationOrders);
+}
+
+function applyFiltersAndRender() {
+    if (expandedTable) {
+        expandTable(expandedTable);
+        return;
+    }
+
+    renderMiniTables();
+}
+
 // Render mini tables (side by side)
 function renderMiniTables() {
-    renderMiniTable('purchaseTable', purchaseOrders);
-    renderMiniTable('reservationTable', reservationOrders);
+    renderMiniTable('purchaseTable', getFilteredPurchaseOrders());
+    renderMiniTable('reservationTable', getFilteredReservationOrders());
 }
 
 // Render individual mini table
@@ -197,8 +272,6 @@ function renderMiniTable(containerId, orders) {
                     <th>Plant</th>
                     <th>Payment</th>
                     <th>Status</th>
-                    <th>Tracking</th>
-                    <th>Tracking</th>
                 </tr>
             </thead>
             <tbody>
@@ -206,10 +279,8 @@ function renderMiniTable(containerId, orders) {
                     <tr>
                         <td><strong>${order.customerName}</strong></td>
                         <td>${getPlantOrdered(order)}</td>
-                        <td><span class="status-badge ${order.paymentStatus}">${capitalizeFirst(order.paymentStatus)}</span></td>
+                        <td><span class="status-badge ${normalizePaymentStatus(order.paymentStatus)}">${formatPaymentStatusLabel(order.paymentStatus)}</span></td>
                         <td><span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span></td>
-                        <td><span class="status-badge ${normalizeTrackingStatus(order.trackingStatus)}">${formatTrackingLabel(normalizeTrackingStatus(order.trackingStatus))}</span></td>
-                        <td><span class="status-badge ${normalizeTrackingStatus(order.trackingStatus)}">${formatTrackingLabel(normalizeTrackingStatus(order.trackingStatus))}</span></td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -222,7 +293,7 @@ function renderMiniTable(containerId, orders) {
 // Expand table to full view
 function expandTable(type) {
     expandedTable = type;
-    const orders = type === 'purchase' ? purchaseOrders : reservationOrders;
+    const orders = type === 'purchase' ? getFilteredPurchaseOrders() : getFilteredReservationOrders();
 
     document.getElementById('normalView').style.display = 'none';
 
@@ -239,8 +310,6 @@ function expandTable(type) {
                 <div class="expanded-header-cell">TOTAL<br>AMOUNT</div>
                 <div class="expanded-header-cell">PAYMENT<br>STATUS</div>
                 <div class="expanded-header-cell">STATUS</div>
-                <div class="expanded-header-cell">TRACKING<br>STATUS</div>
-                <div class="expanded-header-cell">Actions</div>
             </div>
         </div>
         <div class="expanded-body">
@@ -252,28 +321,18 @@ function expandTable(type) {
                     <div class="expanded-cell bold">${getQuantity(order)}</div>
                     <div class="expanded-cell bold">${getTotalAmount(order)}</div>
                     <div class="expanded-cell">
-                        <span class="status-badge ${order.paymentStatus}">${capitalizeFirst(order.paymentStatus || 'unpaid')}</span>
+                        <select class="status-select" onchange="setPaymentStatusByType('${type}', '${order.id}', this.value)">
+                            <option value="unpaid" ${normalizePaymentStatus(order.paymentStatus) === 'unpaid' ? 'selected' : ''}>Unpaid</option>
+                            <option value="partially_paid" ${normalizePaymentStatus(order.paymentStatus) === 'partially_paid' ? 'selected' : ''}>Partially Paid</option>
+                            <option value="paid" ${normalizePaymentStatus(order.paymentStatus) === 'paid' ? 'selected' : ''}>Paid</option>
+                        </select>
                     </div>
                     <div class="expanded-cell">
-                        <span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span>
-                    </div>
-                    <div class="expanded-cell">
-                        <span class="status-badge ${normalizeTrackingStatus(order.trackingStatus)}">${formatTrackingLabel(normalizeTrackingStatus(order.trackingStatus))}</span>
-                    </div>
-                    <div class="expanded-cell expanded-actions">
-                        ${type === 'purchase' ? `
-                            <button class="status-btn" onclick="setOrderStatus('${order.id}', 'pending')">Pending</button>
-                            <button class="status-btn" onclick="setOrderStatus('${order.id}', 'cancel')">Cancel</button>
-                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'confirmed')">Confirmed</button>
-                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'prepared')">Prepared by Seller</button>
-                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'out_for_delivery')">Out for Delivery</button>
-                            <button class="status-btn" onclick="setTrackingStatus('${order.id}', 'delivered')">Delivered</button>
-                        ` : ''}
-                        <button class="delete-btn" onclick="deleteOrder('${type}', '${order.id}')" title="Delete order">
-                            <svg width="16" height="19" viewBox="0 0 16 19" fill="currentColor">
-                                <path d="M3.45775 18.6345C2.75908 18.6345 2.17475 18.3996 1.70475 17.9298C1.23492 17.4598 1 16.8754 1 16.1768V3.2345H0V1.0845H5.2V0H11.35V1.0845H16.55V3.2345H15.55V16.1768C15.55 16.8606 15.3113 17.4412 14.834 17.9185C14.3567 18.3958 13.7761 18.6345 13.0923 18.6345H3.45775ZM13.4 3.2345H3.15V16.1768C3.15 16.2666 3.17883 16.3403 3.2365 16.398C3.29417 16.4557 3.36792 16.4845 3.45775 16.4845H13.0923C13.1693 16.4845 13.2398 16.4524 13.3038 16.3883C13.3679 16.3243 13.4 16.2538 13.4 16.1768V3.2345ZM5.129 14.4595H7.27875V5.2595H5.129V14.4595ZM9.27125 14.4595H11.421V5.2595H9.27125V14.4595Z"/>
-                            </svg>
-                        </button>
+                        <select class="status-select" onchange="setOrderStatusByType('${type}', '${order.id}', this.value)">
+                            <option value="pending" ${normalizeStatus(order.orderStatus) === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="cancel" ${normalizeStatus(order.orderStatus) === 'cancel' ? 'selected' : ''}>Cancel</option>
+                            <option value="delivered" ${normalizeStatus(order.orderStatus) === 'delivered' ? 'selected' : ''}>Delivered</option>
+                        </select>
                     </div>
                 </div>
             `).join('')}
@@ -304,14 +363,55 @@ function setOrderStatus(orderId, status) {
     }
 }
 
-function setTrackingStatus(orderId, status) {
+function setPaymentStatus(orderId, status) {
     const order = purchaseOrders.find(item => item.id === orderId);
     if (!order) {
         return;
     }
 
-    order.trackingStatus = normalizeTrackingStatus(status);
+    order.paymentStatus = normalizePaymentStatus(status);
     persistPurchaseOrders();
+    if (expandedTable) {
+        expandTable(expandedTable);
+    } else {
+        renderMiniTables();
+    }
+}
+
+function setOrderStatusByType(type, orderId, status) {
+    if (type === 'purchase') {
+        setOrderStatus(orderId, status);
+        return;
+    }
+
+    const order = reservationOrders.find(item => item.id === orderId);
+    if (!order) {
+        return;
+    }
+
+    order.orderStatus = normalizeStatus(status);
+    persistReservationOrders();
+    updateStats();
+    if (expandedTable) {
+        expandTable(expandedTable);
+    } else {
+        renderMiniTables();
+    }
+}
+
+function setPaymentStatusByType(type, orderId, status) {
+    if (type === 'purchase') {
+        setPaymentStatus(orderId, status);
+        return;
+    }
+
+    const order = reservationOrders.find(item => item.id === orderId);
+    if (!order) {
+        return;
+    }
+
+    order.paymentStatus = normalizePaymentStatus(status);
+    persistReservationOrders();
     if (expandedTable) {
         expandTable(expandedTable);
     } else {
@@ -332,14 +432,25 @@ function deleteOrder(type, orderId) {
         return;
     }
 
+    let deletedOrderRecord = null;
+
     if (type === 'purchase') {
+        deletedOrderRecord = purchaseOrders.find(o => o.id === orderId) || null;
         purchaseOrders = purchaseOrders.filter(o => o.id !== orderId);
         persistPurchaseOrders();
     } else {
-        const index = reservationOrders.findIndex(o => o.id === orderId);
-        if (index !== -1) {
-            reservationOrders.splice(index, 1);
-        }
+        deletedOrderRecord = reservationOrders.find(o => o.id === orderId) || null;
+        reservationOrders = reservationOrders.filter(o => o.id !== orderId);
+        persistReservationOrders();
+    }
+
+    const deletedOrderId = String(deletedOrderRecord && deletedOrderRecord.orderId || '').trim();
+    if (deletedOrderId) {
+        const storedDeliveries = JSON.parse(localStorage.getItem(DELIVERY_STORAGE_KEY) || '[]');
+        const nextDeliveries = Array.isArray(storedDeliveries)
+            ? storedDeliveries.filter(delivery => String(delivery && delivery.orderId || '').trim() !== deletedOrderId)
+            : [];
+        localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(nextDeliveries));
     }
 
     if (expandedTable) {
@@ -356,41 +467,91 @@ function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', handleSearch);
 
+    setupFilterDropdowns();
+}
+
+function setupFilterDropdowns() {
     const statusBtn = document.getElementById('statusBtn');
     const typesBtn = document.getElementById('typesBtn');
+    const statusDropdown = document.getElementById('statusFilterDropdown');
+    const typesDropdown = document.getElementById('typesFilterDropdown');
+    const statusBtnLabel = document.getElementById('statusBtnLabel');
+    const typesBtnLabel = document.getElementById('typesBtnLabel');
 
-    statusBtn.addEventListener('click', () => {
-        alert('Status filter functionality can be implemented here');
+    const closeDropdowns = () => {
+        statusDropdown.classList.remove('is-open');
+        typesDropdown.classList.remove('is-open');
+        statusBtn.setAttribute('aria-expanded', 'false');
+        typesBtn.setAttribute('aria-expanded', 'false');
+    };
+
+    const openDropdown = (dropdown, button) => {
+        closeDropdowns();
+        dropdown.classList.add('is-open');
+        button.setAttribute('aria-expanded', 'true');
+    };
+
+    statusBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = statusDropdown.classList.contains('is-open');
+        if (isOpen) {
+            closeDropdowns();
+            return;
+        }
+        openDropdown(statusDropdown, statusBtn);
     });
 
-    typesBtn.addEventListener('click', () => {
-        alert('Types filter functionality can be implemented here');
+    typesBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = typesDropdown.classList.contains('is-open');
+        if (isOpen) {
+            closeDropdowns();
+            return;
+        }
+        openDropdown(typesDropdown, typesBtn);
+    });
+
+    const statusOptions = document.querySelectorAll('.filter-option[data-filter="status"]');
+    statusOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            activeStatusFilter = option.getAttribute('data-value') || 'all';
+            statusOptions.forEach(item => item.classList.remove('active'));
+            option.classList.add('active');
+            statusBtnLabel.textContent = 'Status: ' + capitalizeFirst(activeStatusFilter === 'all' ? 'all' : activeStatusFilter);
+            closeDropdowns();
+            applyFiltersAndRender();
+        });
+    });
+
+    const typeOptions = document.querySelectorAll('.filter-option[data-filter="type"]');
+    typeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            activeTypeFilter = option.getAttribute('data-value') || 'all';
+            typeOptions.forEach(item => item.classList.remove('active'));
+            option.classList.add('active');
+            typesBtnLabel.textContent = 'Types: ' + capitalizeFirst(activeTypeFilter === 'all' ? 'all' : activeTypeFilter);
+            closeDropdowns();
+            applyFiltersAndRender();
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('.filter-dropdown')) {
+            closeDropdowns();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeDropdowns();
+        }
     });
 }
 
 // Handle search
 function handleSearch(event) {
-    const query = event.target.value.toLowerCase();
-
-    if (!query) {
-        renderMiniTables();
-        return;
-    }
-
-    const filteredPurchase = purchaseOrders.filter(order =>
-        String(order.customerName || '').toLowerCase().includes(query) ||
-        getPlantOrdered(order).toLowerCase().includes(query) ||
-        String(order.orderId || '').toLowerCase().includes(query)
-    );
-
-    const filteredReservation = reservationOrders.filter(order =>
-        String(order.customerName || '').toLowerCase().includes(query) ||
-        String(order.plantOrdered || '').toLowerCase().includes(query) ||
-        String(order.orderId || '').toLowerCase().includes(query)
-    );
-
-    renderMiniTable('purchaseTable', filteredPurchase);
-    renderMiniTable('reservationTable', filteredReservation);
+    activeSearchQuery = String(event.target.value || '').toLowerCase().trim();
+    applyFiltersAndRender();
 }
 
 // Utility: Capitalize first letter

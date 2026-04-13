@@ -134,7 +134,7 @@
 
     const getCartTotalCount = () => {
         try {
-            const cart = JSON.parse(localStorage.getItem('reservations') || '[]');
+            const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
             if (!Array.isArray(cart)) {
                 return 0;
             }
@@ -183,7 +183,7 @@
         Storage.prototype.setItem = function (key, value) {
             originalSetItem.call(this, key, value);
 
-            if (this === window.localStorage && key === 'reservations') {
+            if (this === window.localStorage && key === 'cartItems') {
                 window.dispatchEvent(new Event('gh-cart-updated'));
             }
         };
@@ -265,7 +265,7 @@
 
     window.addEventListener('gh-cart-updated', updateCartBadges);
     window.addEventListener('storage', (event) => {
-        if (!event.key || event.key === 'reservations') {
+        if (!event.key || event.key === 'cartItems') {
             updateCartBadges();
         }
     });

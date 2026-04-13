@@ -196,12 +196,20 @@
                             </div>
                             <div class="filter-wrapper">
                                 <span class="filter-label">Filter by status:</span>
-                                <button class="filter-dropdown" id="filterDropdown">
-                                    <span>All Deliveries</span>
-                                    <svg class="chevron-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                                        <path d="M6 8L0 1.51351L1.4 0L6 4.97297L10.6 0L12 1.51351L6 8Z" fill="black"/>
-                                    </svg>
-                                </button>
+                                <div class="filter-dropdown-container" id="statusFilterDropdown">
+                                    <button class="filter-dropdown" id="filterDropdown" type="button" aria-haspopup="true" aria-expanded="false">
+                                        <span id="filterDropdownLabel">All Deliveries</span>
+                                        <svg class="chevron-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                            <path d="M6 8L0 1.51351L1.4 0L6 4.97297L10.6 0L12 1.51351L6 8Z" fill="black"/>
+                                        </svg>
+                                    </button>
+                                    <div class="filter-menu" id="statusFilterMenu" role="menu" aria-label="Delivery status filter">
+                                        <button type="button" class="filter-option active" data-status="all">All Deliveries</button>
+                                        <button type="button" class="filter-option" data-status="pending">Pending</button>
+                                        <button type="button" class="filter-option" data-status="out-for-delivery">Out for Delivery</button>
+                                        <button type="button" class="filter-option" data-status="delivered">Delivered</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

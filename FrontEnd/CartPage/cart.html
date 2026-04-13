@@ -210,6 +210,82 @@ body {
     font-weight: bold;
 }
 
+.cart-empty-shell {
+    background: linear-gradient(135deg, #f3f9e9 0%, #f8f3fb 100%);
+    border: 1px solid rgba(126, 163, 61, 0.35);
+    border-radius: 24px;
+    padding: 2.2rem 1.4rem;
+    text-align: center;
+    box-shadow: 0 14px 26px rgba(70, 98, 34, 0.12);
+}
+
+.cart-empty-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 0.9rem;
+    border-radius: 18px;
+    border: 1px solid rgba(126, 163, 61, 0.4);
+    background: #ffffff;
+    color: #5d7c2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-empty-icon svg {
+    width: 38px;
+    height: 38px;
+}
+
+.cart-empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+    color: #273817;
+}
+
+.cart-empty-desc {
+    font-size: 15px;
+    color: #556b47;
+    margin-bottom: 1rem;
+}
+
+.cart-empty-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.cart-empty-btn {
+    display: inline-block;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 0.62rem 1.2rem;
+    font-weight: 600;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.cart-empty-btn:hover {
+    transform: translateY(-1px);
+}
+
+.cart-empty-btn.primary {
+    background: #7ea33d;
+    color: #fff;
+}
+
+.cart-empty-btn.primary:hover {
+    background: #6f9335;
+}
+
+.cart-empty-btn.secondary {
+    background: #fff;
+    color: #416025;
+    border: 1px solid rgba(126, 163, 61, 0.45);
+}
+
 @media (max-width: 1024px) {
     .nav {
         display: none;
@@ -273,6 +349,11 @@ body {
                 </svg>
             </button>
            
+            <a href="../OrderPage/orderpage.html" class="icon-btn" aria-label="My Purchases">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path d="M14 2H6C4.9 2 4.01 2.9 4.01 4L4 20L6 19L8 20L10 19L12 20L14 19L16 20L18 19L20 20V8L14 2ZM14 4.5L17.5 8H14V4.5ZM16 19.15L14 18.15L12 19.15L10 18.15L8 19.15L6 18.15V4H12V10H18V18.15L16 19.15ZM8 13H16V15H8V13ZM8 9H13V11H8V9ZM8 17H16V19H8V17Z" fill="black"/>
+                </svg>
+            </a>
             <div class="nav-dropdown cart-dropdown">
                 <button class="icon-btn" aria-label="Open cart menu" type="button">
                     <svg width="31" height="33" fill="none" viewBox="0 0 31 33">
@@ -299,8 +380,8 @@ body {
 <div id="cart" class="lg:w-[60%] space-y-5"></div>
 
 <!-- RIGHT -->
-<div class="lg:w-[40%]">
-<div class="bg-white rounded-[20px] p-8 card-shadow sticky top-20">
+<div id="summaryColumn" class="lg:w-[40%]">
+<div id="orderSummaryPanel" class="bg-white rounded-[20px] p-8 card-shadow sticky top-20">
 
 <h2 class="serif text-[24px] font-bold mb-8">Order Summary</h2>
 
@@ -390,30 +471,107 @@ function getPlantImage(plantName) {
 
 let data = [];
 let isPlacingOrder = false;
+let checkoutMode = 'purchase';
+
+const CART_ITEMS_KEY = 'cartItems';
+const RESERVATIONS_KEY = 'reservations';
+const CHECKOUT_SOURCE_KEY = 'checkoutSource';
+const SELECTED_RESERVATIONS_KEY = 'selectedReservations';
+
+function getCartItems() {
+    const stored = JSON.parse(localStorage.getItem(CART_ITEMS_KEY) || '[]');
+    return Array.isArray(stored) ? stored : [];
+}
+
+function saveCartItems(items) {
+    localStorage.setItem(CART_ITEMS_KEY, JSON.stringify(Array.isArray(items) ? items : []));
+}
 
 function loadReservationsToCart() {
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-    data = reservations.map((res, index) => ({
+    const selectedReservations = JSON.parse(localStorage.getItem(SELECTED_RESERVATIONS_KEY) || '[]');
+    const records = Array.isArray(selectedReservations) ? selectedReservations : [];
+
+    data = records.map((res, index) => ({
+        sourceIndex: index,
         id: index + 1,
+        reservationKey: [res.id, res.deliveryDate, res.plantSize, res.name].join('|'),
         name: res.name,
-        price: res.price,
-        qty: res.quantity,
+        price: Number(res.price || 0),
+        qty: Number(res.quantity || 1),
         img: getPlantImage(res.name),
-        selected: true // All items selected by default
+        selected: true
     }));
+}
+
+function loadPurchaseCart() {
+    const cartItems = getCartItems();
+    data = cartItems.map((item, index) => ({
+        sourceIndex: index,
+        id: index + 1,
+        name: item.name,
+        price: Number(item.price || 0),
+        qty: Number(item.quantity || 1),
+        img: item.image || getPlantImage(item.name),
+        selected: true
+    }));
+}
+
+function loadCheckoutData() {
+    checkoutMode = localStorage.getItem(CHECKOUT_SOURCE_KEY) === 'reservation' ? 'reservation' : 'purchase';
+
+    if (checkoutMode === 'reservation') {
+        loadReservationsToCart();
+        if (!data.length) {
+            checkoutMode = 'purchase';
+            localStorage.removeItem(CHECKOUT_SOURCE_KEY);
+            loadPurchaseCart();
+        }
+    } else {
+        loadPurchaseCart();
+    }
+
     render();
+}
+
+function syncCartLayout(hasItems) {
+    const summaryColumn = document.getElementById('summaryColumn');
+    const cartColumn = document.getElementById('cart');
+
+    if (summaryColumn) {
+        summaryColumn.style.display = hasItems ? '' : 'none';
+    }
+
+    if (cartColumn) {
+        cartColumn.classList.toggle('lg:w-[60%]', hasItems);
+        cartColumn.classList.toggle('lg:w-full', !hasItems);
+    }
 }
 
 function render(){
     const container = document.getElementById("cart");
+    const hasItems = data.length > 0;
 
-    if (data.length === 0) {
+    syncCartLayout(hasItems);
+
+    if (!hasItems) {
         container.innerHTML = `
-            <div class="text-center py-12">
-                <p class="text-gray-500 mb-4">Your cart is empty</p>
-                <a href="../../LandingPage/landingpage.html" class="text-[#7ea33d] font-semibold">Continue Shopping</a>
-            </div>
+            <section class="cart-empty-shell">
+                <div class="cart-empty-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M3 4H5L7 15H17L20 7H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="10" cy="19" r="1.5" fill="currentColor"/>
+                        <circle cx="17" cy="19" r="1.5" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2 class="cart-empty-title">Your cart is empty</h2>
+                <p class="cart-empty-desc">Add plants from the shop or reserve a date-based order to continue.</p>
+                <div class="cart-empty-actions">
+                    <a href="../Shopage/Shoppage.html" class="cart-empty-btn primary">Browse Shop</a>
+                    <a href="../Reservation/reservation.html" class="cart-empty-btn secondary">Reserve Plants</a>
+                </div>
+            </section>
         `;
+        updateButtonStates();
         return;
     }
 
@@ -445,16 +603,35 @@ function render(){
     `).join("");
 
     update();
+    updateButtonStates();
 }
 
 function qty(id,change){
     let item = data.find(i=>i.id===id);
     item.qty = Math.max(1, item.qty + change);
+
+    if (checkoutMode === 'purchase') {
+        const cartItems = getCartItems();
+        if (cartItems[item.sourceIndex]) {
+            cartItems[item.sourceIndex].quantity = item.qty;
+            saveCartItems(cartItems);
+        }
+    }
+
     render();
 }
 
 function del(id){
+    const item = data.find(i => i.id === id);
+
+    if (item && checkoutMode === 'purchase') {
+        const cartItems = getCartItems();
+        const nextItems = cartItems.filter((_, index) => index !== item.sourceIndex);
+        saveCartItems(nextItems);
+    }
+
     data = data.filter(i=>i.id!==id);
+    data = data.map((entry, index) => ({ ...entry, id: index + 1 }));
     render();
 }
 
@@ -479,6 +656,19 @@ function update(){
     document.getElementById("total").innerText = price;
 }
 
+function generateReservationOrderId(existingOrders) {
+    const fallbackNumber = 1;
+    const maxExisting = existingOrders.reduce((maxValue, order) => {
+        const parsed = Number(String(order.orderId || '').replace(/[^0-9]/g, ''));
+        if (!Number.isFinite(parsed)) {
+            return maxValue;
+        }
+        return Math.max(maxValue, parsed);
+    }, 0);
+
+    return '#RES-' + String(Math.max(fallbackNumber, maxExisting + 1)).padStart(4, '0');
+}
+
 function generatePurchaseOrderId(existingOrders) {
     const fallbackNumber = 1001;
     const maxExisting = existingOrders.reduce((maxValue, order) => {
@@ -492,22 +682,21 @@ function generatePurchaseOrderId(existingOrders) {
     return '#ORD-' + String(Math.max(fallbackNumber, maxExisting + 1));
 }
 
-function createPurchaseFromCartItems(items) {
+function createPurchaseOrderFromCartItems(items) {
     const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
     const existingPurchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
-    const purchaseOrderId = generatePurchaseOrderId(existingPurchases);
 
     const purchaseEntry = {
         id: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
-        orderId: purchaseOrderId,
+        orderId: generatePurchaseOrderId(existingPurchases),
         customerName: deliveryDetails.fullName || 'Guest Customer',
         items: items.map(item => ({
             name: item.name,
-            qty: item.qty,
-            price: item.price,
+            qty: Number(item.qty || 1),
+            price: Number(item.price || 0),
             image: item.img
         })),
-        totalAmount: items.reduce((sum, item) => sum + (item.price * item.qty), 0),
+        totalAmount: items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 1)), 0),
         paymentStatus: 'paid',
         orderStatus: 'pending',
         createdAt: new Date().toISOString(),
@@ -516,6 +705,52 @@ function createPurchaseFromCartItems(items) {
 
     existingPurchases.unshift(purchaseEntry);
     localStorage.setItem('purchaseOrders', JSON.stringify(existingPurchases));
+
+    const selectedIndexes = new Set(items.map(item => Number(item.sourceIndex)));
+    const existingCartItems = getCartItems();
+    const remainingItems = existingCartItems.filter((_, index) => !selectedIndexes.has(index));
+    saveCartItems(remainingItems);
+}
+
+function createReservationOrderFromCartItems(items) {
+    const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
+    const existingReservations = JSON.parse(localStorage.getItem(RESERVATIONS_KEY) || '[]');
+    const existingReservationOrders = existingReservations.filter(order => order && (order.isPlacedOrder === true || String(order.orderId || '').indexOf('#RES-') === 0));
+    const reservationOrderId = generateReservationOrderId(existingReservationOrders);
+    const selectedReservationKeys = new Set(items.map(item => String(item.reservationKey || '')));
+
+    const reservationEntry = {
+        id: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
+        adminReservationId: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
+        orderId: reservationOrderId,
+        customerName: deliveryDetails.fullName || 'Guest Customer',
+        items: items.map(item => ({
+            name: item.name,
+            qty: item.qty,
+            price: item.price,
+            image: item.img
+        })),
+        quantity: items.reduce((sum, item) => sum + Number(item.qty || 0), 0),
+        totalAmount: items.reduce((sum, item) => sum + (item.price * item.qty), 0),
+        paymentStatus: 'paid',
+        orderStatus: 'pending',
+        isPlacedOrder: true,
+        createdAt: new Date().toISOString(),
+        deliveryDetails: deliveryDetails
+    };
+
+    const remainingReservations = existingReservations.filter((reservation) => {
+        if (reservation && reservation.isPlacedOrder === true) {
+            return true;
+        }
+
+        const reservationKey = [reservation.id, reservation.deliveryDate, reservation.plantSize, reservation.name].join('|');
+        return !selectedReservationKeys.has(reservationKey);
+    });
+
+    remainingReservations.unshift(reservationEntry);
+    localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(remainingReservations));
+    localStorage.removeItem(SELECTED_RESERVATIONS_KEY);
 }
 
 function placeOrder(){
@@ -532,10 +767,14 @@ function placeOrder(){
 
     isPlacingOrder = true;
 
-    createPurchaseFromCartItems(selectedItems);
+    if (checkoutMode === 'reservation') {
+        createReservationOrderFromCartItems(selectedItems);
+    } else {
+        createPurchaseOrderFromCartItems(selectedItems);
+    }
 
-    data = [];
-    localStorage.setItem('reservations', JSON.stringify([]));
+    data = data.filter(item => !item.selected).map((entry, index) => ({ ...entry, id: index + 1 }));
+    localStorage.removeItem(CHECKOUT_SOURCE_KEY);
 
     render();
     window.location.href = '../OrderPage/orderpage.html';
@@ -574,7 +813,7 @@ function updateButtonStates() {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
-    loadReservationsToCart();
+    loadCheckoutData();
     updateButtonStates();
 });
 </script>

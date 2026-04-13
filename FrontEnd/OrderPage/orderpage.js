@@ -1,5 +1,7 @@
 let historyStack = [];
 let futureStack = [];
+const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
+let selectedOrderId = null;
 
 // Plant image mapping
 const plantImages = {
@@ -32,32 +34,74 @@ function getPlantImage(plantName) {
     return plantImages[plantName] || DEFAULT_PLANT_IMAGE;
 }
 
+function getSelectedOrLatestOrder(orders) {
+  if (!Array.isArray(orders) || !orders.length) {
+    return null;
+  }
+
+  if (selectedOrderId) {
+    const selected = orders.find(order => String(order.id || '') === String(selectedOrderId));
+    if (selected) {
+      return selected;
+    }
+  }
+
+  selectedOrderId = orders[0].id;
+  return orders[0];
+}
+
+function openOrderDetails(orderId) {
+  selectedOrderId = orderId;
+  navigateTo('order-details');
+}
+
+function openTrackOrder(orderId) {
+  selectedOrderId = orderId;
+  navigateTo('track-order');
+}
+
 function loadCurrentOrder() {
     const purchases = getPurchaseOrders();
-    const latestOrder = purchases[0];
 
     const container = document.getElementById('currentOrderContainer');
     if (!container) return;
 
-    if (!latestOrder || !latestOrder.items || latestOrder.items.length === 0) {
-        container.innerHTML = '<p style="padding:24px;color:#888;">No orders placed yet.</p>';
+  const orders = purchases.filter(order => Array.isArray(order.items) && order.items.length > 0);
+
+  if (!orders.length) {
+    container.innerHTML = `
+      <section class="orders-empty-state" aria-live="polite">
+        <div class="orders-empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M6 3.5H15L19 7.5V20L16.5 18.7L14 20L11.5 18.7L9 20L6.5 18.7L4 20V5.5C4 4.4 4.9 3.5 6 3.5Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M15 3.5V7.5H19" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8 10.5H15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M8 14H15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2>No orders yet</h2>
+        <p>Your purchases will appear here after checkout.</p>
+        <div class="orders-empty-actions">
+          <a href="../Shopage/Shoppage.html" class="orders-empty-btn primary">Start Shopping</a>
+          <a href="../Reservation/reservation.html" class="orders-empty-btn secondary">Reserve Plants</a>
+        </div>
+      </section>
+    `;
         return;
     }
 
-    let itemsHTML = '';
-    let totalQty = 0;
-
-    latestOrder.items.forEach(item => {
-        totalQty += item.qty;
-        itemsHTML += `<p>${item.name} (${item.qty} pcs)</p>`;
-    });
-
-    const firstItem = latestOrder.items[0];
+  container.innerHTML = orders.map(order => {
+    const itemsHTML = order.items.map(item => `<p>${item.name} (${item.qty} pcs)</p>`).join('');
+    const firstItem = order.items[0];
     const firstItemImage = firstItem.image || getPlantImage(firstItem.name);
-    const totalPrice = latestOrder.totalAmount || 0;
-    const orderId = latestOrder.orderId || '';
+    const totalPrice = Number(order.totalAmount || 0);
+    const orderId = order.orderId || '';
+    const trackingStatus = getResolvedTrackingStatus(order);
+    const trackingLabel = formatTrackingLabel(trackingStatus);
+    const orderStatusClass = normalizeOrderStatus(order.orderStatus);
+    const orderStatusLabel = formatOrderStatusLabel(order.orderStatus);
 
-    const currentOrderHTML = `
+    return `
         <div class="order-card">
             <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
                 <div class="product-image">
@@ -70,11 +114,11 @@ function loadCurrentOrder() {
                     </div>
                     <p style="margin-top:6px;font-size:13px;color:#555;">Total: \u20B1${totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2})}</p>
                 </div>
-                <p class="order-status pending">Confirmed</p>
+                <p class="order-status ${orderStatusClass}">${orderStatusLabel}</p>
             </div>
             
             <div class="delivery-banner">
-                <p class="delivery-text">Order Confirmed Today</p>
+                <p class="delivery-text">Status: ${trackingLabel}</p>
                 <div class="delivery-chevron">
                     <svg fill="none" preserveAspectRatio="none" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
                         <path d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z" fill="#359C4D" />
@@ -84,21 +128,27 @@ function loadCurrentOrder() {
 
             <div class="button-container">
                 <button class="order-btn disabled">Order Received</button>
-                <button class="order-btn primary" onclick="navigateTo('order-details')">Order Details</button>
+        <button class="order-btn primary" onclick="openOrderDetails('${order.id}')">Order Details</button>
             </div>
         </div>
-    `;
-
-    container.innerHTML = currentOrderHTML;
+  `;
+  }).join('');
 }
 
 function trackCurrentOrder() {
-    navigateTo('track-order');
+  const purchases = getPurchaseOrders();
+  const selected = getSelectedOrLatestOrder(purchases);
+  if (!selected) {
+    return;
+  }
+
+  selectedOrderId = selected.id;
+  navigateTo('track-order');
 }
 
 function loadOrderDetails() {
     const purchases = getPurchaseOrders();
-    const latestOrder = purchases[0];
+  const latestOrder = getSelectedOrLatestOrder(purchases);
 
     if (!latestOrder || !latestOrder.items || latestOrder.items.length === 0) {
         document.getElementById('detailsFullName').textContent = 'No Data';
@@ -121,6 +171,13 @@ function loadOrderDetails() {
 
     // Set address
     document.getElementById('detailsAddress').textContent = deliveryDetails.address || 'N/A';
+
+    const paymentStatusElement = document.getElementById('detailsPaymentStatus');
+    if (paymentStatusElement) {
+      const paymentStatus = normalizePaymentStatus(latestOrder.paymentStatus);
+      paymentStatusElement.textContent = formatPaymentStatusLabel(paymentStatus);
+      paymentStatusElement.className = 'payment-status-tag ' + paymentStatus;
+    }
 
     // Set items
     let itemsHTML = '';
@@ -163,7 +220,7 @@ function navigateTo(pageId, fromHistory = false) {
     if (pageId === 'order-details') {
       loadOrderDetails();
     } else if (pageId === 'track-order') {
-      loadTrackOrder('123456');
+      loadTrackOrder(selectedOrderId);
     }
   }
 
@@ -193,7 +250,46 @@ function goForward() {
 }
 
 function getPurchaseOrders() {
-  return JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+  const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+  const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+
+  const reservationOrders = Array.isArray(reservations)
+    ? reservations
+        .filter(order => order && (order.isPlacedOrder === true || String(order.orderId || '').indexOf('#RES-') === 0))
+        .map(order => {
+          const items = Array.isArray(order.items)
+            ? order.items
+            : [{
+                name: order.name || order.plantOrdered || 'Plant',
+                qty: Number(order.quantity || 1),
+                price: Number(order.price || 0),
+                image: getPlantImage(order.name || order.plantOrdered || '')
+              }];
+
+          return {
+            ...order,
+            items,
+            totalAmount: Number(order.totalAmount || 0),
+            createdAt: order.createdAt || new Date(0).toISOString()
+          };
+        })
+    : [];
+
+  const allOrders = ([])
+    .concat(Array.isArray(purchases) ? purchases : [])
+    .concat(reservationOrders);
+
+  return allOrders.sort((a, b) => {
+    const first = new Date(a && a.createdAt ? a.createdAt : 0).getTime();
+    const second = new Date(b && b.createdAt ? b.createdAt : 0).getTime();
+    return second - first;
+  });
+}
+
+function getDeliverySchedule() {
+  const raw = localStorage.getItem(DELIVERY_STORAGE_KEY);
+  const parsed = raw ? JSON.parse(raw) : [];
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function normalizeTrackingStatus(status) {
@@ -214,9 +310,96 @@ function normalizeTrackingStatus(status) {
   return 'confirmed';
 }
 
+function normalizeOrderStatus(status) {
+  const value = String(status || '').toLowerCase();
+
+  if (value === 'delivered' || value === 'completed' || value === 'reserved') {
+    return 'delivered';
+  }
+
+  if (value === 'cancel' || value === 'cancelled' || value === 'canceled') {
+    return 'cancel';
+  }
+
+  return 'pending';
+}
+
+function normalizePaymentStatus(status) {
+  const value = String(status || '').toLowerCase();
+
+  if (value === 'paid') {
+    return 'paid';
+  }
+
+  if (value === 'partially paid' || value === 'partial' || value === 'partially_paid') {
+    return 'partially_paid';
+  }
+
+  return 'unpaid';
+}
+
+function formatOrderStatusLabel(status) {
+  const value = normalizeOrderStatus(status);
+
+  if (value === 'delivered') {
+    return 'Delivered';
+  }
+
+  if (value === 'cancel') {
+    return 'Cancel';
+  }
+
+  return 'Pending';
+}
+
+function formatPaymentStatusLabel(status) {
+  const value = normalizePaymentStatus(status);
+
+  if (value === 'paid') {
+    return 'Paid';
+  }
+
+  if (value === 'partially_paid') {
+    return 'Partially Paid';
+  }
+
+  return 'Unpaid';
+}
+
+function getResolvedTrackingStatus(order) {
+  if (!order) {
+    return 'confirmed';
+  }
+
+  const schedule = getDeliverySchedule();
+  const matchedDelivery = schedule.find(item => String(item.orderId || '') === String(order.orderId || ''));
+
+  if (matchedDelivery) {
+    return normalizeTrackingStatus(matchedDelivery.trackingStatus);
+  }
+
+  return normalizeTrackingStatus(order.trackingStatus);
+}
+
+function formatTrackingLabel(status) {
+  if (status === 'prepared') {
+    return 'Prepared by Seller';
+  }
+
+  if (status === 'out_for_delivery') {
+    return 'Out for Delivery';
+  }
+
+  if (status === 'delivered') {
+    return 'Delivered';
+  }
+
+  return 'Confirmed';
+}
+
 function getTrackingPayload(order) {
   const states = ['Order Confirmed', 'Prepared by Seller', 'Out for Delivery', 'Delivered'];
-  const normalized = normalizeTrackingStatus(order ? order.trackingStatus : 'confirmed');
+  const normalized = getResolvedTrackingStatus(order);
 
   const currentIndex = {
     confirmed: 0,
@@ -305,7 +488,7 @@ function renderTrackInfo(data) {
 
 function loadTrackOrder(orderId) {
   const purchases = getPurchaseOrders();
-  const order = purchases.find(item => item.id === orderId) || purchases[0] || null;
+  const order = purchases.find(item => String(item.id || '') === String(orderId || '')) || getSelectedOrLatestOrder(purchases);
 
   if (!order) {
     document.getElementById('status-text').textContent = 'No tracking available';

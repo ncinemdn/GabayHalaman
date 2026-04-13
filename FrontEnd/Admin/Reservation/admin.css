@@ -449,6 +449,10 @@ body {
     gap: 1rem;
 }
 
+.filter-dropdown {
+    position: relative;
+}
+
 .filter-btn {
     display: flex;
     align-items: center;
@@ -469,6 +473,51 @@ body {
 
 .filter-btn:hover {
     background-color: #e5e5e5;
+}
+
+.filter-btn[aria-expanded="true"] {
+    background-color: #e6efe0;
+    border-color: #78a240;
+}
+
+.filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 180px;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-radius: 12px;
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.18);
+    padding: 0.35rem;
+    z-index: 50;
+    display: none;
+}
+
+.filter-dropdown.is-open .filter-menu {
+    display: block;
+}
+
+.filter-option {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    font-family: 'Inria Serif', serif;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.filter-option:hover {
+    background: #f3f5ef;
+}
+
+.filter-option.active {
+    background: #e6efe0;
+    color: #2e7d32;
+    font-weight: 700;
 }
 
 .chevron-icon {
@@ -581,6 +630,12 @@ body {
     border: 1px solid #cac33c;
 }
 
+.status-badge.partially_paid {
+    background-color: #fff4db;
+    color: #b66a00;
+    border: 1px solid #e0a43a;
+}
+
 .status-badge.pending {
     background-color: #fef9c2;
     color: #AA6608;
@@ -642,7 +697,7 @@ body {
 
 .expanded-header-grid {
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr 1.6fr;
+    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.7fr;
     gap: 1rem;
 }
 
@@ -660,7 +715,7 @@ body {
 
 .expanded-row {
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.5fr 1.5fr 1.6fr;
+    grid-template-columns: 1fr 2fr 2fr 1fr 1.5fr 1.5fr 1.7fr;
     gap: 1rem;
     align-items: center;
     margin-bottom: 1rem;
@@ -682,6 +737,26 @@ body {
 
 .expanded-cell.bold {
     font-weight: 600;
+}
+
+.status-select {
+    width: 100%;
+    min-width: 120px;
+    height: 36px;
+    border: 1px solid #d5d5d5;
+    border-radius: 10px;
+    background: #fff;
+    color: #1f2937;
+    font-family: 'Inria Serif', serif;
+    font-size: 14px;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: #78a240;
+    box-shadow: 0 0 0 2px rgba(120, 162, 64, 0.2);
 }
 
 .expanded-actions {

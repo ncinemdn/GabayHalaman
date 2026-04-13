@@ -54,20 +54,34 @@ function formatDate(dateString) {
 
 
 function loadReservations() {
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]').filter(item => !item.isPlacedOrder);
     const container = document.getElementById('reservationsContainer');
 
 
     if (reservations.length === 0) {
+        container.classList.add('is-empty');
         container.innerHTML = `
             <div class="empty-state">
-                <h2>No reservations yet</h2>
-                <p>You haven't made any plant reservations. Start browsing our collection!</p>
-                <a href="reservation.html" class="btn-reserve">Reserve Plants</a>
+                <div class="empty-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7 4H16L20 8V20L17.5 18.7L15 20L12.5 18.7L10 20L7.5 18.7L5 20V6C5 4.9 5.9 4 7 4Z" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M8.5 11H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M8.5 14.5H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h2>No reserved plants yet</h2>
+                <p>Your date-based plant reservations will appear here after you reserve from the catalog.</p>
+                <div class="empty-actions">
+                    <a href="reservation.html" class="btn-reserve">Reserve Plants</a>
+                    <a href="../Shopage/Shoppage.html" class="btn-shop">Browse Shop</a>
+                </div>
             </div>
         `;
         return;
     }
+
+    container.classList.remove('is-empty');
 
 
     // Group reservations by delivery date
@@ -139,12 +153,13 @@ function loadReservations() {
 
 
 function goToDeliveryDetails(deliveryDate) {
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]').filter(item => !item.isPlacedOrder);
     const selectedReservations = reservations.filter(reservation => reservation.deliveryDate === deliveryDate);
 
     if (selectedReservations.length > 0) {
         localStorage.setItem('selectedReservation', JSON.stringify(selectedReservations[0]));
         localStorage.setItem('selectedReservations', JSON.stringify(selectedReservations));
+        localStorage.setItem('checkoutSource', 'reservation');
     }
 
     window.location.href = '../CartPage/details.html';

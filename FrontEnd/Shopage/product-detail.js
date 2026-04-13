@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initMorePlantsToggle();
     initAddToCartToast();
     initBuyNowButton();
+    initReserveNowButton();
 });
 
 function getRandomPlants(count, excludedPlantId) {
@@ -430,7 +431,7 @@ function showAddToCartToast() {
     if (!stockState.inStock) return;
     
     // Save to cart in localStorage
-    const cart = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
     const existingItem = cart.find(item => item.id === state.currentPlant.id);
     
     if (existingItem) {
@@ -449,7 +450,7 @@ function showAddToCartToast() {
         });
     }
     
-    localStorage.setItem('reservations', JSON.stringify(cart));
+    localStorage.setItem('cartItems', JSON.stringify(cart));
     
     const existingToast = document.querySelector('.cart-toast');
     if (existingToast) {
@@ -532,6 +533,38 @@ function initBuyNowButton() {
 
         localStorage.setItem('orderNowItem', JSON.stringify(orderNowItem));
         window.location.href = '../CartPage/order-now.html';
+    });
+}
+
+function initReserveNowButton() {
+    const reserveBtn = document.querySelector('.reserve-btn');
+    if (!reserveBtn) {
+        return;
+    }
+
+    reserveBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        if (!state.currentPlant) {
+            return;
+        }
+
+        const stockState = getPlantStockState(state.currentPlant);
+        if (!stockState.inStock) {
+            return;
+        }
+
+        const sizeForReservation = state.selectedSize === 'xl' ? 'XL' : 'Medium';
+        const prefillReservationPlant = {
+            id: state.currentPlant.id,
+            name: state.currentPlant.name,
+            category: state.currentPlant.category,
+            quantity: Number(state.quantity || 1),
+            size: sizeForReservation
+        };
+
+        localStorage.setItem('reservationPrefillPlant', JSON.stringify(prefillReservationPlant));
+        window.location.href = '../Reservation/reservation.html';
     });
 }
 

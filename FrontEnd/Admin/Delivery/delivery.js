@@ -1,42 +1,46 @@
-// Delivery Data
-const deliveries = [
-    {
-        id: '1',
-        deliveryId: '#DEL-2001',
-        orderId: '#ORD-1001',
-        customerName: 'Jake Clarence',
-        deliveryAddress: '234 San Vicente\nSto. Tomas Batangas',
-        scheduledDate: '2026-02-18',
-        status: 'out-for-delivery',
-    },
-    {
-        id: '2',
-        deliveryId: '#DEL-2002',
-        orderId: '#ORD-1002',
-        customerName: 'Charizze Landicho',
-        deliveryAddress: '67 Maharlika St.\nQuezon City',
-        scheduledDate: '2026-02-28',
-        status: 'pending',
-    },
-    {
-        id: '3',
-        deliveryId: '#DEL-2003',
-        orderId: '#ORD-1003',
-        customerName: 'Sean Fuertes',
-        deliveryAddress: '112 Santos St.\nNueva Ecija',
-        scheduledDate: '2026-02-28',
-        status: 'pending',
-    },
-    {
-        id: '4',
-        deliveryId: '#DEL-2004',
-        orderId: '#ORD-1004',
-        customerName: 'Dhaye Perez',
-        deliveryAddress: '335 Uranus St.\nPampanga',
-        scheduledDate: '2026-02-28',
-        status: 'delivered',
-    },
-];
+const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
+
+let deliveries = [];
+let activeSearchQuery = '';
+let activeStatusFilter = 'all';
+
+const trackingStatusConfig = {
+    'confirmed': 'Confirmed',
+    'prepared': 'Prepared by Seller',
+    'out_for_delivery': 'Out for Delivery',
+    'delivered': 'Delivered'
+};
+
+function normalizeTrackingStatus(status) {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
+        return 'prepared';
+    }
+
+    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
+        return 'out_for_delivery';
+    }
+
+    if (value === 'delivered') {
+        return 'delivered';
+    }
+
+    return 'confirmed';
+}
+
+function mapTrackingToDeliveryStatus(trackingStatus) {
+    const value = normalizeTrackingStatus(trackingStatus);
+    if (value === 'out_for_delivery') {
+        return 'out-for-delivery';
+    }
+
+    if (value === 'delivered') {
+        return 'delivered';
+    }
+
+    return 'pending';
+}
 
 // Status configurations
 const statusConfig = {
@@ -54,8 +58,164 @@ const statusConfig = {
     }
 };
 
+function buildDeliveryAddress(details) {
+    if (!details || typeof details !== 'object') {
+        return 'Address not provided';
+    }
+
+    const address = String(details.address || '').trim();
+    if (address) {
+        return address;
+    }
+
+    return 'Address not provided';
+}
+
+function getNextDeliveryId(existingDeliveries) {
+    const maxNumber = existingDeliveries.reduce((maxValue, delivery) => {
+        const parsed = Number(String(delivery.deliveryId || '').replace(/[^0-9]/g, ''));
+        if (!Number.isFinite(parsed)) {
+            return maxValue;
+        }
+        return Math.max(maxValue, parsed);
+    }, 2000);
+
+    return '#DEL-' + String(maxNumber + 1);
+}
+
+function saveDeliveries() {
+    localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(deliveries));
+}
+
+function removeOrderFromUserStores(orderId) {
+    const targetOrderId = String(orderId || '').trim();
+    if (!targetOrderId) {
+        return;
+    }
+
+    const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const nextPurchases = Array.isArray(purchases)
+        ? purchases.filter(order => String(order && order.orderId || '').trim() !== targetOrderId)
+        : [];
+    localStorage.setItem('purchaseOrders', JSON.stringify(nextPurchases));
+
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const nextReservations = Array.isArray(reservations)
+        ? reservations.filter(order => String(order && order.orderId || '').trim() !== targetOrderId)
+        : [];
+    localStorage.setItem('reservations', JSON.stringify(nextReservations));
+}
+
+function getPurchaseOrders() {
+    const stored = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    return Array.isArray(stored) ? stored : [];
+}
+
+function getReservationOrders() {
+    const stored = JSON.parse(localStorage.getItem('reservations') || '[]');
+    if (!Array.isArray(stored)) {
+        return [];
+    }
+
+    return stored.filter((order) => {
+        if (!order || typeof order !== 'object') {
+            return false;
+        }
+
+        if (order.isPlacedOrder === true) {
+            return true;
+        }
+
+        return String(order.orderId || '').indexOf('#RES-') === 0;
+    });
+}
+
+function getDeliverableOrders() {
+    return getPurchaseOrders().concat(getReservationOrders());
+}
+
+function syncPurchaseOrdersToDeliveries() {
+    const purchaseOrders = getDeliverableOrders();
+
+    purchaseOrders.forEach((order) => {
+        const orderId = String(order.orderId || '').trim();
+        if (!orderId) {
+            return;
+        }
+
+        const alreadyExists = deliveries.some((delivery) => String(delivery.orderId || '') === orderId);
+        if (alreadyExists) {
+            return;
+        }
+
+        const trackingStatus = normalizeTrackingStatus(order.trackingStatus || 'confirmed');
+        const createdDate = order.createdAt ? new Date(order.createdAt) : new Date();
+        const scheduledDate = createdDate.toISOString().slice(0, 10);
+
+        deliveries.push({
+            id: String(Date.now()) + '-' + Math.floor(Math.random() * 100000),
+            deliveryId: getNextDeliveryId(deliveries),
+            orderId: orderId,
+            customerName: String(order.customerName || order.deliveryDetails?.fullName || 'Guest Customer'),
+            deliveryAddress: buildDeliveryAddress(order.deliveryDetails),
+            scheduledDate: scheduledDate,
+            status: mapTrackingToDeliveryStatus(trackingStatus),
+            trackingStatus: trackingStatus
+        });
+    });
+}
+
+function loadDeliveries() {
+    const stored = JSON.parse(localStorage.getItem(DELIVERY_STORAGE_KEY) || '[]');
+    deliveries = Array.isArray(stored) ? stored : [];
+
+    const purchaseOrders = getDeliverableOrders();
+    const validOrderIds = new Set(
+        purchaseOrders
+            .map((order) => String(order.orderId || '').trim())
+            .filter(Boolean)
+    );
+
+    // Keep only rows that are still connected to buyer-side purchase orders.
+    deliveries = deliveries.filter((delivery) => validOrderIds.has(String(delivery.orderId || '').trim()));
+
+    deliveries = deliveries.map((delivery) => {
+        const normalizedTracking = normalizeTrackingStatus(delivery.trackingStatus);
+        return {
+            ...delivery,
+            trackingStatus: normalizedTracking,
+            status: mapTrackingToDeliveryStatus(normalizedTracking)
+        };
+    });
+
+    syncPurchaseOrdersToDeliveries();
+    saveDeliveries();
+}
+
+function getFilteredDeliveries() {
+    return deliveries.filter((delivery) => {
+        const matchesSearch = !activeSearchQuery || (
+            delivery.deliveryId.toLowerCase().includes(activeSearchQuery) ||
+            delivery.orderId.toLowerCase().includes(activeSearchQuery) ||
+            delivery.customerName.toLowerCase().includes(activeSearchQuery) ||
+            delivery.deliveryAddress.toLowerCase().includes(activeSearchQuery) ||
+            delivery.scheduledDate.includes(activeSearchQuery) ||
+            String((statusConfig[delivery.status] && statusConfig[delivery.status].label) || '').toLowerCase().includes(activeSearchQuery) ||
+            String(trackingStatusConfig[delivery.trackingStatus] || '').toLowerCase().includes(activeSearchQuery)
+        );
+
+        const matchesStatus = activeStatusFilter === 'all' || delivery.status === activeStatusFilter;
+        return matchesSearch && matchesStatus;
+    });
+}
+
+function applyFiltersAndRender() {
+    renderDeliveries(getFilteredDeliveries());
+}
+
 // Initialize the page
 function init() {
+    loadDeliveries();
     updateStats();
     renderDeliveries();
     setupEventListeners();
@@ -78,17 +238,16 @@ function formatId(id) {
     return `<div>${parts[0]}-</div><div>${parts[1]}</div>`;
 }
 
-// Create status dropdown
-function createStatusDropdown(delivery) {
-    const statuses = ['out-for-delivery', 'pending', 'delivered'];
+function createTrackingStatusDropdown(delivery) {
+    const statuses = ['confirmed', 'prepared', 'out_for_delivery', 'delivered'];
     const options = statuses.map(status => `
-        <option value="${status}" ${delivery.status === status ? 'selected' : ''}>
-            ${statusConfig[status].label}
+        <option value="${status}" ${delivery.trackingStatus === status ? 'selected' : ''}>
+            ${trackingStatusConfig[status]}
         </option>
     `).join('');
 
     return `
-        <select class="status-select ${delivery.status}" data-id="${delivery.id}" aria-label="Delivery status for ${delivery.deliveryId}">
+        <select class="status-select tracking-status-select" data-id="${delivery.id}" aria-label="Tracking status for ${delivery.deliveryId}">
             ${options}
         </select>
     `;
@@ -121,7 +280,9 @@ function renderDeliveries(filteredDeliveries = deliveries) {
                 ${delivery.scheduledDate}
             </div>
             <div class="table-cell">
-                ${createStatusDropdown(delivery)}
+                <div class="delivery-status-stack">
+                    ${createTrackingStatusDropdown(delivery)}
+                </div>
             </div>
             <div class="table-cell action-cell">
                 <button class="delete-btn" data-id="${delivery.id}" title="Delete delivery">
@@ -145,32 +306,63 @@ function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', handleSearch);
 
-    // Filter dropdown (placeholder functionality)
+    setupStatusFilterDropdown();
+}
+
+function setupStatusFilterDropdown() {
     const filterDropdown = document.getElementById('filterDropdown');
-    filterDropdown.addEventListener('click', () => {
-        alert('Filter dropdown functionality can be implemented here');
+    const dropdownContainer = document.getElementById('statusFilterDropdown');
+    const filterMenu = document.getElementById('statusFilterMenu');
+    const filterLabel = document.getElementById('filterDropdownLabel');
+    const options = filterMenu ? Array.from(filterMenu.querySelectorAll('.filter-option')) : [];
+
+    if (!filterDropdown || !dropdownContainer || !filterMenu || !filterLabel) {
+        return;
+    }
+
+    const closeDropdown = () => {
+        dropdownContainer.classList.remove('is-open');
+        filterDropdown.setAttribute('aria-expanded', 'false');
+    };
+
+    filterDropdown.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const willOpen = !dropdownContainer.classList.contains('is-open');
+        closeDropdown();
+        if (willOpen) {
+            dropdownContainer.classList.add('is-open');
+            filterDropdown.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    options.forEach((option) => {
+        option.addEventListener('click', () => {
+            activeStatusFilter = option.getAttribute('data-status') || 'all';
+            options.forEach((item) => item.classList.remove('active'));
+            option.classList.add('active');
+            filterLabel.textContent = option.textContent || 'All Deliveries';
+            closeDropdown();
+            applyFiltersAndRender();
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('#statusFilterDropdown')) {
+            closeDropdown();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeDropdown();
+        }
     });
 }
 
 // Handle search
 function handleSearch(event) {
-    const query = event.target.value.toLowerCase();
-    
-    if (!query) {
-        renderDeliveries();
-        return;
-    }
-
-    const filtered = deliveries.filter(delivery => 
-        delivery.deliveryId.toLowerCase().includes(query) ||
-        delivery.orderId.toLowerCase().includes(query) ||
-        delivery.customerName.toLowerCase().includes(query) ||
-        delivery.deliveryAddress.toLowerCase().includes(query) ||
-        delivery.scheduledDate.includes(query) ||
-        statusConfig[delivery.status].label.toLowerCase().includes(query)
-    );
-
-    renderDeliveries(filtered);
+    activeSearchQuery = String(event.target.value || '').toLowerCase().trim();
+    applyFiltersAndRender();
 }
 
 // Setup delete buttons
@@ -190,7 +382,9 @@ function handleDelete(event) {
         // Find and remove delivery
         const index = deliveries.findIndex(d => d.id === id);
         if (index !== -1) {
+            removeOrderFromUserStores(delivery.orderId);
             deliveries.splice(index, 1);
+            saveDeliveries();
             updateStats();
             renderDeliveries();
         }
@@ -199,20 +393,21 @@ function handleDelete(event) {
 
 // Setup status dropdowns
 function setupStatusDropdowns() {
-    const statusDropdowns = document.querySelectorAll('.status-select');
-    statusDropdowns.forEach(dropdown => {
-        dropdown.addEventListener('change', handleStatusChange);
+    const trackingStatusDropdowns = document.querySelectorAll('.tracking-status-select');
+    trackingStatusDropdowns.forEach(dropdown => {
+        dropdown.addEventListener('change', handleTrackingStatusChange);
     });
 }
 
-// Handle status change
-function handleStatusChange(event) {
+function handleTrackingStatusChange(event) {
     const deliveryId = event.currentTarget.getAttribute('data-id');
-    const newStatus = event.currentTarget.value;
+    const newTrackingStatus = event.currentTarget.value;
 
     const delivery = deliveries.find(d => d.id === deliveryId);
     if (delivery) {
-        delivery.status = newStatus;
+        delivery.trackingStatus = normalizeTrackingStatus(newTrackingStatus);
+        delivery.status = mapTrackingToDeliveryStatus(delivery.trackingStatus);
+        saveDeliveries();
         updateStats();
         renderDeliveries();
     }

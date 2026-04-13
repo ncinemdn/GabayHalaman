@@ -458,6 +458,10 @@ body {
     white-space: nowrap;
 }
 
+.filter-dropdown-container {
+    position: relative;
+}
+
 .filter-dropdown {
     display: flex;
     align-items: center;
@@ -479,6 +483,51 @@ body {
 
 .filter-dropdown:hover {
     background-color: #e5e5e5;
+}
+
+.filter-dropdown[aria-expanded="true"] {
+    background-color: #e6efe0;
+    border-color: #78a240;
+}
+
+.filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 210px;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-radius: 12px;
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.18);
+    padding: 0.35rem;
+    z-index: 50;
+    display: none;
+}
+
+.filter-dropdown-container.is-open .filter-menu {
+    display: block;
+}
+
+.filter-option {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    font-family: 'Inria Serif', serif;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.filter-option:hover {
+    background: #f3f5ef;
+}
+
+.filter-option.active {
+    background: #e6efe0;
+    color: #2e7d32;
+    font-weight: 700;
 }
 
 .chevron-icon {
@@ -574,6 +623,17 @@ body {
     color: #000;
     min-width: 140px;
     appearance: auto;
+}
+
+.delivery-status-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.tracking-status-select {
+    border-color: #d5d5d5;
 }
 
 .status-select:hover {

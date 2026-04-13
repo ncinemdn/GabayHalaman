@@ -215,32 +215,73 @@ body {
 
 .content-box {
     background-color: #f6f4f9;
-    border-radius: 0 0 50px 50px;
+    border-radius: 50px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     padding: 2rem 2rem 2.5rem;
+}
+
+.content-box.is-empty {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
 }
 
 
 .empty-state {
     text-align: center;
-    padding: 4rem 2rem;
+    padding: 3rem 2rem;
+    max-width: 760px;
+    margin: 0 auto;
+    border-radius: 24px;
+    border: 1px solid rgba(62, 90, 24, 0.25);
+    background:
+        radial-gradient(circle at 20% 18%, rgba(126, 163, 61, 0.2), transparent 52%),
+        linear-gradient(140deg, #f7faef 0%, #f7f1fa 60%, #eff7ee 100%);
+    box-shadow: 0 14px 28px rgba(54, 80, 23, 0.14);
+}
+
+.empty-icon {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 0.9rem;
+    border-radius: 20px;
+    border: 1px solid rgba(62, 90, 24, 0.3);
+    background: #ffffff;
+    color: #3e5a18;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 18px rgba(62, 90, 24, 0.17);
+}
+
+.empty-icon svg {
+    width: 42px;
+    height: 42px;
 }
 
 
 .empty-state h2 {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 32px;
-    color: #595959;
-    margin-bottom: 1rem;
+    font-size: 36px;
+    color: #2c4114;
+    margin-bottom: 0.7rem;
 }
 
 
 .empty-state p {
     font-family: 'Inria Serif', serif;
-    font-size: 20px;
-    color: #595959;
-    margin-bottom: 2rem;
+    font-size: 18px;
+    color: #587045;
+    margin-bottom: 1.4rem;
+}
+
+.empty-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
 }
 
 
@@ -250,16 +291,36 @@ body {
     color: white;
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 24px;
-    padding: 1rem 3rem;
-    border-radius: 50px;
+    font-size: 20px;
+    padding: 0.8rem 1.9rem;
+    border-radius: 999px;
     text-decoration: none;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, transform 0.2s;
 }
 
 
 .btn-reserve:hover {
     opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-shop {
+    display: inline-block;
+    background: #ffffff;
+    color: #2f4915;
+    border: 1px solid rgba(62, 90, 24, 0.4);
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 20px;
+    padding: 0.8rem 1.9rem;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-shop:hover {
+    background: #f1f7ea;
+    transform: translateY(-1px);
 }
 
 
@@ -468,7 +529,7 @@ body {
 
 
     .content-box {
-        border-radius: 0 0 30px 30px;
+        border-radius: 30px;
     }
 
 
@@ -545,9 +606,22 @@ body {
         font-size: 16px;
     }
 
+    .empty-actions {
+        flex-direction: column;
+    }
+
 
     .btn-reserve {
         font-size: 18px;
         padding: 0.8rem 2rem;
+        width: min(100%, 260px);
+        text-align: center;
+    }
+
+    .btn-shop {
+        font-size: 18px;
+        padding: 0.8rem 2rem;
+        width: min(100%, 260px);
+        text-align: center;
     }
 }

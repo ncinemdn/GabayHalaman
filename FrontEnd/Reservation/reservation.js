@@ -100,6 +100,7 @@ const plantsByCategory = {
 
 // State management
 let selectedPlants = [];
+const RESERVATION_PREFILL_KEY = 'reservationPrefillPlant';
 
 function getSourcePlantsByCategory() {
     if (window.GHPlantData) {
@@ -174,6 +175,69 @@ function handlePlantSelectionClick(event) {
     selectPlant(plantId, category);
 }
 
+function normalizePrefillSize(size) {
+    const value = String(size || '').toLowerCase();
+    if (value === 'xl' || value === 'extra large' || value === 'extra large (xl)') {
+        return 'XL';
+    }
+    if (value === 'medium') {
+        return 'Medium';
+    }
+    return '';
+}
+
+function applyReservationPrefill() {
+    const raw = localStorage.getItem(RESERVATION_PREFILL_KEY);
+    if (!raw) {
+        return;
+    }
+
+    let prefill = null;
+    try {
+        prefill = JSON.parse(raw);
+    } catch (error) {
+        localStorage.removeItem(RESERVATION_PREFILL_KEY);
+        return;
+    }
+
+    if (!prefill || !prefill.category || !prefill.id) {
+        localStorage.removeItem(RESERVATION_PREFILL_KEY);
+        return;
+    }
+
+    const categoryField = document.getElementById('category');
+    const sourceByCategory = getSourcePlantsByCategory();
+    const categoryPlants = sourceByCategory[prefill.category] || [];
+    const matchedPlant = categoryPlants.find(plant => String(plant.id) === String(prefill.id));
+
+    if (!matchedPlant || !isPlantAvailable(matchedPlant)) {
+        localStorage.removeItem(RESERVATION_PREFILL_KEY);
+        return;
+    }
+
+    categoryField.value = prefill.category;
+    const maxStock = Math.max(1, getAvailableStock(matchedPlant));
+    const qty = Math.min(maxStock, Math.max(1, parseInt(prefill.quantity, 10) || 1));
+    const size = normalizePrefillSize(prefill.size);
+
+    removeSelectedPlant(prefill.id);
+    selectedPlants.push({
+        ...matchedPlant,
+        category: prefill.category,
+        quantity: qty,
+        size: size
+    });
+
+    updatePlantDisplay();
+
+    const prefilledCard = document.querySelector(`.plant-card[data-plant-id="${prefill.id}"]`);
+    if (prefilledCard) {
+        prefilledCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    localStorage.removeItem(RESERVATION_PREFILL_KEY);
+}
+
 // Initialize the display
 function init() {
     const categoryField = document.getElementById('category');
@@ -186,6 +250,8 @@ function init() {
     });
 
     plantDisplay.addEventListener('click', handlePlantSelectionClick);
+
+    applyReservationPrefill();
 }
 
 
