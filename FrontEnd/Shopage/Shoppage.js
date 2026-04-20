@@ -20,26 +20,28 @@ let refreshMoreCarousel = null;
 const DEFAULT_PLANT_IMAGE = (window.GHPlantData && window.GHPlantData.DEFAULT_PLANT_IMAGE)
     || 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
 
+const PLANT_API = window.plantDataAPI || window.GHPlantData || null;
+
 const categoryDisplayMap = {
-    'Fruit Bearing': 'Fruit Bearing',
-    'Citrus Variety': 'Citrus',
-    'Mangga Variety': 'Mango',
-    'Dwarf Coconut': 'Coconut',
-    'Cuttings/Dwarf': 'Guava',
-    'Flowering Trees': 'Flowering',
-    'Forest Trees': 'Forest',
-    'Others': 'Others'
+    'Citrus': 'Citrus',
+    'Coconut': 'Coconut',
+    'Mango': 'Mango',
+    'Guava': 'Guava',
+    'Grafted': 'Grafted',
+    'Forest': 'Forest',
+    'Flowering': 'Flowering',
+    'Cuttings': 'Cuttings'
 };
 
 const categoryImageMap = {
-    'Fruit Bearing': 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Citrus Variety': 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Mangga Variety': 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Dwarf Coconut': 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Cuttings/Dwarf': 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80',
-    'Flowering Trees': 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Forest Trees': 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Others': DEFAULT_PLANT_IMAGE
+    'Citrus': 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Coconut': 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Mango': 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Guava': 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80',
+    'Grafted': 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Forest': 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Flowering': 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    'Cuttings': 'https://images.unsplash.com/photo-1461354464878-ad92f492a5a0?auto=format&fit=crop&w=680&q=80'
 };
 
 let allPlantsPool = [];
@@ -51,7 +53,7 @@ let currentPlantsMeta = {
 };
 
 function buildAllPlantsPool() {
-    const inventory = window.GHPlantData ? window.GHPlantData.getPlantInventory() : [];
+    const inventory = PLANT_API ? PLANT_API.getPlantInventory() : [];
 
     return inventory.map((plant) => {
         const sourceCategory = plant.category;
@@ -65,8 +67,8 @@ function buildAllPlantsPool() {
             category: displayCategory,
             sourceCategory,
             image: plant.image || categoryImage,
-            availableStock: window.GHPlantData ? window.GHPlantData.getEffectiveStock(plant) : 0,
-            inStock: window.GHPlantData ? window.GHPlantData.isInStock(plant) : false
+            availableStock: PLANT_API ? PLANT_API.getEffectiveStock(plant) : 0,
+            inStock: PLANT_API ? PLANT_API.isInStock(plant) : false
         };
     });
 }
