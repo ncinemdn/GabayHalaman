@@ -343,7 +343,7 @@ function editPlant(id) {
     plantName.value = plant.name;
     plantCategory.value = plant.category;
     plantSize.value = selectedSize;
-    plantPrice.value = `$ ${sizeData.price.toFixed(2)}`;
+    plantPrice.value = `₱ ${sizeData.price.toFixed(2)}`;
     plantStock.value = sizeData.stock;
     plantDescription.value = plant.description || '';
     
@@ -592,26 +592,18 @@ function removeImage() {
 }
 
 // Price formatting
-plantPrice.addEventListener('input', (e) => {
-    let value = e.target.value.replace(/[^0-9.]/g, '');
-    if (value) {
-        const num = parseFloat(value);
-        if (!isNaN(num)) {
-            e.target.value = `$ ${num.toFixed(2)}`;
-        }
-    }
-});
-
 plantPrice.addEventListener('focus', (e) => {
+    // Remove formatting when user starts typing
     e.target.value = e.target.value.replace(/[^0-9.]/g, '');
 });
 
 plantPrice.addEventListener('blur', (e) => {
+    // Add formatting when user finishes editing
     let value = e.target.value.replace(/[^0-9.]/g, '');
     if (value) {
         const num = parseFloat(value);
         if (!isNaN(num)) {
-            e.target.value = `$ ${num.toFixed(2)}`;
+            e.target.value = `₱ ${num.toFixed(2)}`;
         }
     }
 });
