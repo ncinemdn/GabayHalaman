@@ -105,6 +105,7 @@ const state = {
 let moreProducts = [];
 let refreshMoreCarousel = null;
 const PLANT_API = window.plantDataAPI || window.GHPlantData || null;
+const REVIEW_STORAGE_KEY = 'productDetailReviewsByPlant';
 
 function getInventory() {
     if (!PLANT_API) {
@@ -154,11 +155,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initQuantityControls();
     initSizeButtons();
     initTabs();
+    initReviews();
     initMoreProductsCarousel();
     initMorePlantsToggle();
     initAddToCartToast();
     initBuyNowButton();
     initReserveNowButton();
+    initFooter();
 });
 
 function getRandomPlants(count, excludedPlantId) {
@@ -364,6 +367,140 @@ function initTabs() {
             
             state.selectedTab = tabName;
         };
+    });
+}
+
+function getReviewStorage() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(REVIEW_STORAGE_KEY) || '{}');
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function getCurrentPlantReviewKey() {
+    if (!state.currentPlant) {
+        return null;
+    }
+    const id = String(state.currentPlant.id || '').trim();
+    if (id) {
+        return id;
+    }
+    return String(state.currentPlant.name || '').toLowerCase().trim();
+}
+
+function buildReviewStars(rating) {
+    const safeRating = Math.max(1, Math.min(5, Number(rating) || 1));
+    return '★'.repeat(safeRating) + '☆'.repeat(5 - safeRating);
+}
+
+function renderProductReviews(reviews) {
+    const reviewsList = document.getElementById('productReviewsList');
+    const reviewsNote = document.getElementById('reviewsTabNote');
+
+    if (!reviewsList || !reviewsNote) {
+        return;
+    }
+
+    reviewsList.innerHTML = '';
+    reviews.forEach(function(review) {
+        const reviewItem = document.createElement('article');
+        reviewItem.className = 'review-item';
+
+        const reviewHeader = document.createElement('div');
+        reviewHeader.className = 'review-item-header';
+
+        const reviewName = document.createElement('p');
+        reviewName.className = 'review-item-name';
+        reviewName.textContent = review.name;
+
+        const reviewStars = document.createElement('p');
+        reviewStars.className = 'review-item-stars';
+        reviewStars.textContent = buildReviewStars(review.rating);
+
+        const reviewComment = document.createElement('p');
+        reviewComment.className = 'review-item-comment';
+        reviewComment.textContent = review.comment;
+
+        const reviewDate = document.createElement('p');
+        reviewDate.className = 'review-item-date';
+        reviewDate.textContent = review.date;
+
+        reviewHeader.appendChild(reviewName);
+        reviewHeader.appendChild(reviewStars);
+        reviewItem.appendChild(reviewHeader);
+        reviewItem.appendChild(reviewComment);
+        reviewItem.appendChild(reviewDate);
+        reviewsList.appendChild(reviewItem);
+    });
+
+    reviewsNote.style.display = reviews.length ? 'none' : '';
+}
+
+function initReviews() {
+    const form = document.getElementById('productReviewForm');
+    const nameInput = document.getElementById('reviewUserName');
+    const ratingInput = document.getElementById('reviewUserRating');
+    const commentInput = document.getElementById('reviewUserComment');
+    const starButtons = document.querySelectorAll('.reviews-star-btn');
+
+    if (!form || !nameInput || !ratingInput || !commentInput) {
+        return;
+    }
+
+    const key = getCurrentPlantReviewKey();
+    const storage = getReviewStorage();
+    const existingReviews = key && Array.isArray(storage[key]) ? storage[key] : [];
+    renderProductReviews(existingReviews);
+
+    const setStarRating = function(ratingValue) {
+        const rating = Math.max(0, Math.min(5, Number(ratingValue) || 0));
+        ratingInput.value = String(rating);
+        starButtons.forEach(function(starBtn) {
+            const starValue = Number(starBtn.dataset.value || 0);
+            starBtn.classList.toggle('is-active', starValue <= rating);
+        });
+    };
+
+    starButtons.forEach(function(starBtn) {
+        starBtn.addEventListener('click', function() {
+            setStarRating(Number(starBtn.dataset.value || 0));
+        });
+    });
+
+    setStarRating(0);
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const keyForSave = getCurrentPlantReviewKey();
+        if (!keyForSave) {
+            return;
+        }
+
+        const name = String(nameInput.value || '').trim();
+        const comment = String(commentInput.value || '').trim();
+        const rating = Number(ratingInput.value || 0);
+
+        if (!name || !comment || !rating) {
+            return;
+        }
+
+        const nextStorage = getReviewStorage();
+        const current = Array.isArray(nextStorage[keyForSave]) ? nextStorage[keyForSave] : [];
+        const newReview = {
+            name,
+            rating,
+            comment,
+            date: 'Posted on ' + new Date().toLocaleDateString()
+        };
+
+        nextStorage[keyForSave] = [newReview, ...current].slice(0, 20);
+        localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(nextStorage));
+        renderProductReviews(nextStorage[keyForSave]);
+        form.reset();
+        setStarRating(0);
     });
 }
 
@@ -710,5 +847,16 @@ function initMorePlantsToggle() {
                 refreshMoreCarousel();
             });
         }
+    });
+}
+
+function initFooter() {
+    const backToTopButton = document.querySelector('.footer-back-to-top');
+    if (!backToTopButton) {
+        return;
+    }
+
+    backToTopButton.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }

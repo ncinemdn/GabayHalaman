@@ -142,7 +142,29 @@
                 <div class="tab-content" id="reviewsTab">
                     <div class="tab-header-bar"></div>
                     <div class="tab-body">
-                        <p class="text-center">No reviews yet. Be the first to review this product!</p>
+                        <div class="reviews-tab-wrap">
+                            <div class="reviews-create-card">
+                                <h3 class="reviews-create-title">Write a review</h3>
+                                <form id="productReviewForm" class="reviews-create-form">
+                                    <div class="reviews-create-row">
+                                        <input id="reviewUserName" type="text" class="reviews-input" placeholder="Your name" required>
+                                        <div class="reviews-star-picker" id="reviewUserStars" role="radiogroup" aria-label="Choose rating">
+                                            <button type="button" class="reviews-star-btn" data-value="1" aria-label="1 star">★</button>
+                                            <button type="button" class="reviews-star-btn" data-value="2" aria-label="2 stars">★</button>
+                                            <button type="button" class="reviews-star-btn" data-value="3" aria-label="3 stars">★</button>
+                                            <button type="button" class="reviews-star-btn" data-value="4" aria-label="4 stars">★</button>
+                                            <button type="button" class="reviews-star-btn" data-value="5" aria-label="5 stars">★</button>
+                                        </div>
+                                    </div>
+                                    <input id="reviewUserRating" type="hidden" required>
+                                    <textarea id="reviewUserComment" class="reviews-textarea" placeholder="Share your experience with this plant" rows="3" required></textarea>
+                                    <button type="submit" class="reviews-submit-btn">Post Review</button>
+                                </form>
+                            </div>
+
+                            <p id="reviewsTabNote" class="text-center">No reviews yet. Be the first to review this product!</p>
+                            <div id="productReviewsList" class="reviews-tab-list" aria-live="polite"></div>
+                        </div>
                     </div>
                 </div>
             </div>
