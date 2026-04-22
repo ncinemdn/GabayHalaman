@@ -101,12 +101,45 @@ const plantsByCategory = {
 // State management
 let selectedPlants = [];
 const RESERVATION_PREFILL_KEY = 'reservationPrefillPlant';
+const GH_CATEGORY_BY_UI_CATEGORY = {
+    'Citrus Variety': 'Citrus',
+    'Mangga Variety': 'Mango',
+    'Dwarf Coconut': 'Coconut',
+    'Cuttings/Dwarf': 'Cuttings',
+    'Flowering Trees': 'Flowering',
+    'Forest Trees': 'Forest'
+};
+
+function getLocalPlantsByCategory() {
+    return plantsByCategory;
+}
 
 function getSourcePlantsByCategory() {
     if (window.GHPlantData) {
         return window.GHPlantData.getPlantsByCategory();
     }
-    return plantsByCategory;
+    return getLocalPlantsByCategory();
+}
+
+function getPlantsForCategory(category) {
+    const sourceByCategory = getSourcePlantsByCategory();
+    if (sourceByCategory && Array.isArray(sourceByCategory[category])) {
+        return sourceByCategory[category];
+    }
+
+    const mappedCategory = GH_CATEGORY_BY_UI_CATEGORY[category];
+    if (mappedCategory && sourceByCategory && Array.isArray(sourceByCategory[mappedCategory])) {
+        return sourceByCategory[mappedCategory];
+    }
+
+    const localByCategory = getLocalPlantsByCategory();
+    return Array.isArray(localByCategory[category]) ? localByCategory[category] : [];
+}
+
+function getAllSourcePlants() {
+    const sourcePlants = Object.values(getSourcePlantsByCategory() || {}).flat();
+    const localPlants = Object.values(getLocalPlantsByCategory() || {}).flat();
+    return [...sourcePlants, ...localPlants];
 }
 
 function getAvailableStock(plant) {
@@ -206,8 +239,7 @@ function applyReservationPrefill() {
     }
 
     const categoryField = document.getElementById('category');
-    const sourceByCategory = getSourcePlantsByCategory();
-    const categoryPlants = sourceByCategory[prefill.category] || [];
+    const categoryPlants = getPlantsForCategory(prefill.category);
     const matchedPlant = categoryPlants.find(plant => String(plant.id) === String(prefill.id));
 
     if (!matchedPlant || !isPlantAvailable(matchedPlant)) {
@@ -273,7 +305,7 @@ function updatePlantDisplay() {
     }
 
 
-    const allPlants = getSourcePlantsByCategory()[category] || [];
+    const allPlants = getPlantsForCategory(category);
     // Limit to maximum 8 plants per category to reduce scrolling
     const plants = allPlants.slice(0, 8);
     const plantsHTML = plants.map(plant => {
@@ -338,8 +370,7 @@ function updatePlantDisplay() {
 
 // Called when quantity input changes on a plant card
 function onPlantQuantityChange(plantId, value) {
-    const categoryData = getSourcePlantsByCategory();
-    const matchingPlant = Object.values(categoryData).flat().find(plant => String(plant.id) === String(plantId));
+    const matchingPlant = getAllSourcePlants().find(plant => String(plant.id) === String(plantId));
     const maxStock = matchingPlant ? Math.max(1, getAvailableStock(matchingPlant)) : 99;
     const qty = Math.min(maxStock, Math.max(1, parseInt(value, 10) || 1));
     const selected = getSelectedPlant(plantId);
@@ -361,7 +392,7 @@ function selectPlant(plantId, category) {
     const currentScrollY = window.scrollY;
     const plantsList = document.querySelector('.plants-list');
     const currentListScrollTop = plantsList ? plantsList.scrollTop : 0;
-    const plants = getSourcePlantsByCategory()[category] || [];
+    const plants = getPlantsForCategory(category);
     const plant = plants.find(p => String(p.id) === String(plantId));
     if (!plant) return;
     if (!isPlantAvailable(plant)) return;
@@ -399,22 +430,19 @@ function selectPlant(plantId, category) {
 function handleReserve() {
     const selectedCategory = document.getElementById('category').value;
     const deliveryDate = document.getElementById('deliveryDate').value;
-    const missingRequirements = [];
 
     if (!selectedCategory) {
-        missingRequirements.push('Select a category of plant.');
-    }
-
-    if (!deliveryDate) {
-        missingRequirements.push('Select a delivery date.');
+        alert('Please select a category.');
+        return;
     }
 
     if (selectedPlants.length === 0) {
-        missingRequirements.push('Select at least one plant.');
+        alert('Please select a Plant.');
+        return;
     }
 
-    if (missingRequirements.length > 0) {
-        alert('Please complete the following before reserving:\n• ' + missingRequirements.join('\n• '));
+    if (!deliveryDate) {
+        alert('Please select a date.');
         return;
     }
 
@@ -450,6 +478,8 @@ function handleReserve() {
         price: plant.price,
         name: plant.name,
         id: plant.id,
+        image: plant.image || DEFAULT_PLANT_IMAGE,
+        isPlacedOrder: false
     }));
 
     const existingReservations = JSON.parse(localStorage.getItem('reservations') || '[]');

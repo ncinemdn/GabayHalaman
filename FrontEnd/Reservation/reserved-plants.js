@@ -45,6 +45,37 @@ function getPlantImage(plantName) {
     return plantImages[plantName] || DEFAULT_PLANT_IMAGE;
 }
 
+function toSafeNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeReservationItem(rawItem) {
+    const item = rawItem || {};
+    const id = item.id != null ? item.id : (item.plantId != null ? item.plantId : null);
+
+    const inventoryPlant = window.GHPlantData
+        ? (id != null ? window.GHPlantData.getPlantById(id) : window.GHPlantData.getPlantByName(item.name || item.plantName || ''))
+        : null;
+
+    const name = item.name || item.plantName || (inventoryPlant ? inventoryPlant.name : 'Unknown Plant');
+    const quantity = Math.max(1, toSafeNumber(item.quantity != null ? item.quantity : item.qty, 1));
+    const price = Math.max(0, toSafeNumber(item.price, inventoryPlant ? inventoryPlant.price : 0));
+    const plantSize = item.plantSize || item.size || 'N/A';
+    const image = item.image || (inventoryPlant ? inventoryPlant.image : '') || getPlantImage(name);
+
+    return {
+        ...item,
+        id,
+        name,
+        quantity,
+        price,
+        plantSize,
+        image,
+        deliveryDate: item.deliveryDate || item.date || ''
+    };
+}
+
 
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -54,7 +85,10 @@ function formatDate(dateString) {
 
 
 function loadReservations() {
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]').filter(item => !item.isPlacedOrder);
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]')
+        .filter(item => !item.isPlacedOrder)
+        .map(normalizeReservationItem)
+        .filter(item => item.deliveryDate);
     const container = document.getElementById('reservationsContainer');
 
 
@@ -113,7 +147,7 @@ function loadReservations() {
 
 
         plants.forEach(plant => {
-            const image = getPlantImage(plant.name);
+            const image = plant.image || getPlantImage(plant.name);
            
             html += `
                 <div class="plant-card">
@@ -153,7 +187,9 @@ function loadReservations() {
 
 
 function goToDeliveryDetails(deliveryDate) {
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]').filter(item => !item.isPlacedOrder);
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]')
+        .filter(item => !item.isPlacedOrder)
+        .map(normalizeReservationItem);
     const selectedReservations = reservations.filter(reservation => reservation.deliveryDate === deliveryDate);
 
     if (selectedReservations.length > 0) {
