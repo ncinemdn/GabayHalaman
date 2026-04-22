@@ -15,13 +15,85 @@ const TRENDING_NAME_ALIASES = {
     'golden': 'dwarf coconut golden variety'
 };
 
+const TRENDING_CATEGORY_ALIASES = {
+    'citrus variety': 'citrus',
+    'dwarf coconut': 'coconut',
+    'mangga variety': 'mango',
+    'flowering trees': 'flowering',
+    'cuttings/dwarf': 'cuttings',
+    'forest trees': 'forest',
+    'fruit bearing': 'grafted'
+};
+
 function normalizePlantName(value) {
     return String(value || '')
         .toLowerCase()
         .replace(/[^a-z0-9]/g, '');
 }
 
-function findInventoryPlantByName(name) {
+function normalizeCategoryName(value) {
+    const normalized = String(value || '')
+        .toLowerCase()
+        .replace(/[_-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return TRENDING_CATEGORY_ALIASES[normalized] || normalized;
+}
+
+function tokenizeName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, ' ')
+        .split(/\s+/)
+        .filter(function(token) {
+            return token.length > 1;
+        });
+}
+
+function scorePlantMatch(targetName, candidateName) {
+    const targetTokens = tokenizeName(targetName);
+    const candidateTokens = tokenizeName(candidateName);
+
+    if (!targetTokens.length || !candidateTokens.length) {
+        return 0;
+    }
+
+    let overlap = 0;
+    targetTokens.forEach(function(token) {
+        if (candidateTokens.includes(token)) {
+            overlap += 1;
+        }
+    });
+
+    const normalizedTarget = normalizePlantName(targetName);
+    const normalizedCandidate = normalizePlantName(candidateName);
+
+    if (normalizedCandidate === normalizedTarget) {
+        return 1000;
+    }
+
+    if (normalizedCandidate.includes(normalizedTarget) || normalizedTarget.includes(normalizedCandidate)) {
+        return 600 + overlap;
+    }
+
+    return overlap;
+}
+
+function getInventoryByCategoryHint(categoryHint) {
+    if (!PLANT_API) {
+        return [];
+    }
+
+    const normalizedHint = normalizeCategoryName(categoryHint);
+    const inventory = PLANT_API.getPlantInventory();
+
+    return inventory.filter(function(plant) {
+        return normalizeCategoryName(plant.category) === normalizedHint;
+    });
+}
+
+function findInventoryPlantByName(name, categoryHint) {
     if (!PLANT_API || !name) {
         return null;
     }
@@ -34,13 +106,25 @@ function findInventoryPlantByName(name) {
         return directMatch;
     }
 
-    const target = normalizePlantName(aliasName);
-    const inventory = PLANT_API.getPlantInventory();
+    const scopedInventory = getInventoryByCategoryHint(categoryHint);
+    const fallbackInventory = PLANT_API.getPlantInventory();
 
-    return inventory.find(function(plant) {
-        const candidate = normalizePlantName(plant.name);
-        return candidate === target || candidate.includes(target) || target.includes(candidate);
-    }) || null;
+    const pickBest = function(list) {
+        let bestPlant = null;
+        let bestScore = 0;
+
+        list.forEach(function(plant) {
+            const score = scorePlantMatch(aliasName, plant.name);
+            if (score > bestScore) {
+                bestScore = score;
+                bestPlant = plant;
+            }
+        });
+
+        return bestScore > 0 ? bestPlant : null;
+    };
+
+    return pickBest(scopedInventory) || pickBest(fallbackInventory);
 }
 
 function syncTrendingWithInventory() {
@@ -50,9 +134,22 @@ function syncTrendingWithInventory() {
 
     ['new', 'bestseller'].forEach(function(tabKey) {
         productsByTab[tabKey] = (productsByTab[tabKey] || []).map(function(item) {
-            const livePlant = findInventoryPlantByName(item.name);
+            const livePlant = findInventoryPlantByName(item.name, item.category);
             if (!livePlant) {
-                return item;
+                const categoryCandidates = getInventoryByCategoryHint(item.category);
+                if (!categoryCandidates.length) {
+                    return item;
+                }
+
+                const fallback = categoryCandidates[0];
+                return {
+                    ...item,
+                    id: String(fallback.id),
+                    name: fallback.name,
+                    category: fallback.category,
+                    image: fallback.image || item.image || DEFAULT_PLANT_IMAGE,
+                    price: Number(fallback.price || item.price || 250)
+                };
             }
 
             return {
@@ -176,7 +273,7 @@ function buildProductDetailUrl(plant) {
     let plantId = String(plant.id || '').trim();
 
     if (!plantId && PLANT_API) {
-        const found = findInventoryPlantByName(plant.name);
+        const found = findInventoryPlantByName(plant.name, plant.category);
         if (found) {
             plantId = String(found.id);
         }
