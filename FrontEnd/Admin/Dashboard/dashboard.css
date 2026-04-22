@@ -148,7 +148,12 @@ body {
 .nav-item.active {
     background-color: #2e7d32;
     color: white;
-    box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.25);
+    box-shadow: none;
+    margin: 0 10px;
+    width: calc(100% - 20px);
+    border-radius: 14px;
+    padding-left: 14px;
+    padding-right: 14px;
 }
 
 .nav-icon {
@@ -349,10 +354,10 @@ body {
 /* Dashboard Stats */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 24px;
     margin: 30px auto 50px;
-    max-width: 780px;
+    max-width: 1080px;
     padding: 0 24px;
 }
 
@@ -361,6 +366,13 @@ body {
     border-radius: 15px;
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
     padding: 18px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card.clickable:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.16);
+    cursor: pointer;
 }
 
 .stat-content {
@@ -437,6 +449,115 @@ body {
     color: #999;
     font-size: 20px;
     padding: 150px 0;
+}
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+}
+
+.popup-content {
+    width: min(92vw, 520px);
+    max-height: 85vh;
+    background: white;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.popup-header h3 {
+    margin: 0;
+    font-size: 22px;
+    color: #222;
+}
+
+.popup-close {
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #666;
+}
+
+.popup-body {
+    padding: 20px 24px 28px;
+    overflow-y: auto;
+    max-height: calc(85vh - 88px);
+}
+
+.client-item {
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+}
+
+.client-item:hover {
+    background: #f7fdf7;
+}
+
+.client-name {
+    margin: 0;
+    font-size: 16px;
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.client-details {
+    display: grid;
+    gap: 14px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-label {
+    font-weight: 700;
+    color: #444;
+}
+
+.detail-value {
+    color: #222;
+}
+
+.plant-list h4 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.plant-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.plant-tag {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 14px;
 }
 
 /* Buttons */

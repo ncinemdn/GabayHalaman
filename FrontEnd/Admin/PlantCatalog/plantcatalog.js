@@ -17,6 +17,51 @@ const categoryFilter = document.getElementById('categoryFilter');
 const tableBody = document.getElementById('tableBody');
 const cardsContainer = document.getElementById('cardsContainer');
 
+const DEFAULT_SIZE_OPTIONS = ['Medium', 'Extra Large'];
+
+function getPlantSelectedSize(plant) {
+    return plant.selectedSize || 'Medium';
+}
+
+function getPlantSizeData(plant) {
+    const selectedSize = getPlantSelectedSize(plant);
+    const sizes = plant.sizes || {};
+    return sizes[selectedSize] || { price: Number(plant.price) || 0, stock: Number(plant.stock) || 0 };
+}
+
+function normalizePlantData(plant) {
+    const normalized = { ...plant };
+    const basePrice = Number(plant.price) || 0;
+    const baseStock = Number(plant.stock) || 0;
+    normalized.sizes = normalized.sizes || {
+        Medium: { price: basePrice, stock: baseStock },
+        'Extra Large': { price: basePrice, stock: 0 }
+    };
+    if (!normalized.sizes.Medium) {
+        normalized.sizes.Medium = { price: basePrice, stock: baseStock };
+    }
+    if (!normalized.sizes['Extra Large']) {
+        normalized.sizes['Extra Large'] = { price: basePrice, stock: 0 };
+    }
+    normalized.selectedSize = normalized.selectedSize || 'Medium';
+    return normalized;
+}
+
+function changePlantSize(id, size) {
+    const plant = plants.find(p => p.id === id);
+    if (!plant) return;
+
+    if (!plant.sizes) {
+        plant.sizes = {
+            Medium: { price: Number(plant.price) || 0, stock: Number(plant.stock) || 0 },
+            'Extra Large': { price: Number(plant.price) || 0, stock: 0 }
+        };
+    }
+
+    plant.selectedSize = size;
+    renderPlants();
+}
+
 // Modal elements
 const modalTitle = document.getElementById('modalTitle');
 const imageInput = document.getElementById('imageInput');
@@ -29,6 +74,7 @@ const plantCategory = document.getElementById('plantCategory');
 const plantPrice = document.getElementById('plantPrice');
 const plantStock = document.getElementById('plantStock');
 const plantDescription = document.getElementById('plantDescription');
+const plantSize = document.getElementById('plantSize');
 const btnCancel = document.getElementById('btnCancel');
 const btnSave = document.getElementById('btnSave');
 const btnOkay = document.getElementById('btnOkay');
@@ -63,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadPlantInventory() {
     if (window.GHPlantData) {
-        plants = window.GHPlantData.getPlantInventory();
+        plants = (window.GHPlantData.getPlantInventory() || []).map(normalizePlantData);
     }
 
     customCategories = new Set(plants.map(plant => plant.category));
@@ -171,7 +217,9 @@ function renderPlants() {
 // Render desktop table
 function renderDesktopTable(filteredPlants) {
     tableBody.innerHTML = filteredPlants.map(plant => {
-        const stockStatus = getStockStatus(plant.stock, plant.available);
+        const selectedSize = getPlantSelectedSize(plant);
+        const sizeData = getPlantSizeData(plant);
+        const stockStatus = getStockStatus(sizeData.stock, plant.available);
         return `
             <div class="table-row">
                 <div class="table-cell">
@@ -179,8 +227,14 @@ function renderDesktopTable(filteredPlants) {
                 </div>
                 <div class="table-cell plant-name">${plant.name}</div>
                 <div class="table-cell plant-category">${plant.category}</div>
-                <div class="table-cell plant-price">₱${plant.price}</div>
-                <div class="table-cell plant-stock">${plant.stock} units</div>
+                <div class="table-cell">
+                    <select class="size-select" onchange="changePlantSize('${plant.id}', this.value)">
+                        <option value="Medium" ${selectedSize === 'Medium' ? 'selected' : ''}>Medium</option>
+                        <option value="Extra Large" ${selectedSize === 'Extra Large' ? 'selected' : ''}>Extra Large</option>
+                    </select>
+                </div>
+                <div class="table-cell plant-price">₱${sizeData.price.toFixed(2)}</div>
+                <div class="table-cell plant-stock">${sizeData.stock} units</div>
                 <div class="table-cell">
                     <span class="stock-badge ${stockStatus.class}">${stockStatus.label}</span>
                 </div>
@@ -211,7 +265,9 @@ function renderDesktopTable(filteredPlants) {
 // Render mobile cards
 function renderMobileCards(filteredPlants) {
     cardsContainer.innerHTML = filteredPlants.map(plant => {
-        const stockStatus = getStockStatus(plant.stock, plant.available);
+        const selectedSize = getPlantSelectedSize(plant);
+        const sizeData = getPlantSizeData(plant);
+        const stockStatus = getStockStatus(sizeData.stock, plant.available);
         return `
             <div class="plant-card">
                 <div class="card-header">
@@ -219,12 +275,13 @@ function renderMobileCards(filteredPlants) {
                     <div class="card-info">
                         <h3 class="card-name">${plant.name}</h3>
                         <p class="card-category">${plant.category}</p>
-                        <p class="card-price">₱${plant.price}</p>
+                        <p class="card-size">Size: ${selectedSize}</p>
+                        <p class="card-price">₱${sizeData.price.toFixed(2)}</p>
                         <span class="stock-badge ${stockStatus.class}">${stockStatus.label}</span>
                     </div>
                 </div>
                 <div class="card-footer">
-                    <div class="card-stock">${plant.stock} units</div>
+                    <div class="card-stock">${sizeData.stock} units</div>
                     <div class="card-actions">
                         <div class="toggle-switch ${plant.available ? 'on' : 'off'}" onclick="toggleAvailability('${plant.id}')">
                             <div class="toggle-knob"></div>
@@ -280,10 +337,15 @@ function editPlant(id) {
     modalTitle.textContent = 'Edit Plant';
     btnSave.textContent = 'Update Plant';
 
+    const selectedSize = getPlantSelectedSize(plant);
+    const sizeData = getPlantSizeData(plant);
+
     plantName.value = plant.name;
     plantCategory.value = plant.category;
-    plantPrice.value = `$ ${plant.price.toFixed(2)}`;
-    plantStock.value = plant.stock;
+    plantSize.value = selectedSize;
+    plantPrice.value = `$ ${sizeData.price.toFixed(2)}`;
+    plantStock.value = sizeData.stock;
+    plantDescription.value = plant.description || '';
     
     if (plant.image) {
         currentImagePreview = plant.image;
@@ -396,15 +458,16 @@ function renderCategoriesList() {
 function savePlant() {
     const name = plantName.value.trim();
     const category = plantCategory.value;
+    const selectedSize = plantSize.value || 'Medium';
     const priceText = plantPrice.value.replace(/[^0-9.]/g, '');
     const price = parseFloat(priceText);
     const stock = parseInt(plantStock.value) || 0;
+    const description = plantDescription.value.trim();
 
     if (!name || !category || !price || price <= 0 || stock < 0) {
         confirmationMessage.textContent = 'Please fill in all required fields with valid data.';
         confirmationModal.classList.add('active');
         document.body.style.overflow = 'hidden';
-        // Make it just a notification, not a delete confirmation
         btnConfirmDelete.style.display = 'none';
         btnConfirmCancel.textContent = 'Close';
         btnConfirmCancel.addEventListener('click', function closeErrorModal() {
@@ -416,28 +479,53 @@ function savePlant() {
         return;
     }
 
-    const plantData = {
-        name,
-        category,
-        price,
-        stock,
-        image: currentImagePreview || (window.GHPlantData ? window.GHPlantData.DEFAULT_PLANT_IMAGE : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'),
-        available: stock > 0
-    };
-
     if (editingPlantId) {
-        // Update existing plant
         const index = plants.findIndex(p => p.id === editingPlantId);
         if (index !== -1) {
+            const existing = plants[index];
+            const existingSizes = existing.sizes || {
+                Medium: { price: Number(existing.price) || 0, stock: Number(existing.stock) || 0 },
+                'Extra Large': { price: Number(existing.price) || 0, stock: 0 }
+            };
+            const updatedSizes = {
+                Medium: existingSizes.Medium || { price: 0, stock: 0 },
+                'Extra Large': existingSizes['Extra Large'] || { price: 0, stock: 0 }
+            };
+            updatedSizes[selectedSize] = { price, stock };
+            const hasAnyStock = updatedSizes.Medium.stock > 0 || updatedSizes['Extra Large'].stock > 0;
+
             plants[index] = {
-                ...plants[index],
-                ...plantData,
-                available: stock > 0 ? plants[index].available : false
+                ...existing,
+                name,
+                category,
+                description,
+                image: currentImagePreview || existing.image || (window.GHPlantData ? window.GHPlantData.DEFAULT_PLANT_IMAGE : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'),
+                selectedSize,
+                sizes: updatedSizes,
+                price,
+                stock,
+                available: existing.available && hasAnyStock
             };
         }
     } else {
-        // Add new plant
-        plantData.id = Date.now().toString();
+        const sizes = {
+            Medium: { price: selectedSize === 'Medium' ? price : 0, stock: selectedSize === 'Medium' ? stock : 0 },
+            'Extra Large': { price: selectedSize === 'Extra Large' ? price : 0, stock: selectedSize === 'Extra Large' ? stock : 0 }
+        };
+        const hasAnyStock = sizes.Medium.stock > 0 || sizes['Extra Large'].stock > 0;
+
+        const plantData = {
+            id: Date.now().toString(),
+            name,
+            category,
+            description,
+            image: currentImagePreview || (window.GHPlantData ? window.GHPlantData.DEFAULT_PLANT_IMAGE : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'),
+            selectedSize,
+            sizes,
+            price,
+            stock,
+            available: hasAnyStock
+        };
         plants.push(plantData);
     }
 
@@ -470,6 +558,7 @@ function closeSuccessModal() {
 function resetForm() {
     plantName.value = '';
     plantCategory.value = '';
+    plantSize.value = 'Medium';
     plantPrice.value = '';
     plantStock.value = '';
     plantDescription.value = '';

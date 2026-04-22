@@ -148,7 +148,12 @@ body {
 .nav-item.active {
     background-color: #2e7d32;
     color: white;
-    box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.25);
+    box-shadow: none;
+    margin: 0 10px;
+    width: calc(100% - 20px);
+    border-radius: 14px;
+    padding-left: 14px;
+    padding-right: 14px;
 }
 
 .nav-icon {
@@ -490,7 +495,7 @@ body {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #e5e5e5;
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(9, 1fr);
     gap: 0.75rem;
 }
 
@@ -502,6 +507,25 @@ body {
     color: black;
 }
 
+.size-select {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid #d4d4d4;
+    border-radius: 12px;
+    background: white;
+    font-family: 'Inria Serif', serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333;
+    outline: none;
+    appearance: none;
+}
+
+.size-select:focus {
+    border-color: #7fab81;
+}
+
+
 .table-body {
     display: flex;
     flex-direction: column;
@@ -509,7 +533,7 @@ body {
 
 .table-row {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(9, 1fr);
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     align-items: center;
@@ -699,6 +723,13 @@ body {
     font-family: 'Inter', sans-serif;
     font-size: 0.875rem;
     color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.card-size {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: #4f4f4f;
     margin-bottom: 0.5rem;
 }
 
