@@ -107,3 +107,139 @@ if (document.getElementById("signUpForm")) {
         await signup(name, email, contactNumber, password);
     });
 }
+
+async function sendRecoveryCodeToEmail(email) {
+    await apiRequest('/admin/forgot-password/send-code', 'POST', {
+        email,
+    });
+}
+
+async function verifyRecoveryCode(email, enteredCode) {
+    await apiRequest('/admin/forgot-password/verify-code', 'POST', {
+        email,
+        code: enteredCode,
+    });
+}
+
+async function resetPasswordByEmail(email, newPassword) {
+    await apiRequest('/admin/forgot-password/reset-password', 'POST', {
+        email,
+        newPassword,
+    });
+}
+
+// Forgot Password form handler
+if (document.getElementById("forgotPasswordForm")) {
+    let isCodeVerified = false;
+
+    const forgotForm = document.getElementById("forgotPasswordForm");
+    const forgotEmailInput = document.getElementById("forgotEmail");
+    const forgotCodeInput = document.getElementById("forgotCode");
+    const newPasswordInput = document.getElementById("newPassword");
+    const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
+    const passwordFields = document.getElementById("passwordFields");
+    const forgotError = document.getElementById("forgotError");
+    const forgotSuccess = document.getElementById("forgotSuccess");
+    const sendCodeBtn = document.getElementById("sendCodeBtn");
+    const submitBtn = forgotForm.querySelector("button[type='submit']");
+
+    if (sendCodeBtn) {
+        sendCodeBtn.addEventListener("click", async function () {
+            const email = forgotEmailInput.value.trim();
+
+            forgotError.textContent = "";
+            forgotSuccess.textContent = "";
+
+            if (!email) {
+                forgotError.textContent = "Enter your email first.";
+                return;
+            }
+
+            sendCodeBtn.disabled = true;
+
+            try {
+                await sendRecoveryCodeToEmail(email);
+
+                isCodeVerified = false;
+                passwordFields.classList.add("is-hidden");
+                newPasswordInput.value = "";
+                confirmNewPasswordInput.value = "";
+                if (submitBtn) {
+                    submitBtn.textContent = "Send Request";
+                }
+
+                forgotSuccess.textContent = "Code sent to your email. Check your inbox and enter the authentication code.";
+            } catch (error) {
+                console.error(error);
+                forgotError.textContent = error.message || "Failed to send code from server.";
+            } finally {
+                sendCodeBtn.disabled = false;
+            }
+        });
+    }
+
+    forgotForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const email = forgotEmailInput.value.trim();
+        const enteredCode = forgotCodeInput.value.trim();
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmNewPasswordInput.value;
+        forgotError.textContent = "";
+        forgotSuccess.textContent = "";
+
+        if (!email) {
+            forgotError.textContent = "Email is required.";
+            return;
+        }
+
+        if (!enteredCode) {
+            forgotError.textContent = "Authentication code is required.";
+            return;
+        }
+
+        try {
+            await verifyRecoveryCode(email, enteredCode);
+        } catch (error) {
+            forgotError.textContent = error.message || "Invalid authentication code.";
+            return;
+        }
+
+        if (!isCodeVerified) {
+            isCodeVerified = true;
+            passwordFields.classList.remove("is-hidden");
+            forgotSuccess.textContent = "Code verified. Enter your new password and click Send Request again.";
+            if (submitBtn) {
+                submitBtn.textContent = "Reset Password";
+            }
+            return;
+        }
+
+        if (!newPassword || !confirmPassword) {
+            forgotError.textContent = "Enter and confirm your new password.";
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            forgotError.textContent = "New password must be at least 8 characters.";
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            forgotError.textContent = "New password and confirm password do not match.";
+            return;
+        }
+
+        try {
+            await resetPasswordByEmail(email, newPassword);
+            forgotSuccess.textContent = "Password updated successfully. Redirecting to sign in...";
+
+            setTimeout(function () {
+                window.location.href = "signin.html";
+            }, 1400);
+        } catch (error) {
+            console.error(error);
+            forgotError.textContent = error.message || "Failed to reset password.";
+        }
+    });
+}

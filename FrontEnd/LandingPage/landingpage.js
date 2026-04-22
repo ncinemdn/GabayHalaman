@@ -1,6 +1,71 @@
 let selectedTab = 'new';
 let trendingCenterIndex = 1;
 let categoryIndex = 0;
+const PLANT_API = window.plantDataAPI || window.GHPlantData || null;
+
+const TRENDING_NAME_ALIASES = {
+    'carabao manggo': 'carabao mango',
+    'queen manggo': 'queen mango',
+    'indian manggo': 'indian mango',
+    'king manggo': 'king mango',
+    'purple manggo': 'purple mango',
+    'apple manggo': 'apple mango',
+    'tacunan variety': 'tacunan coconut',
+    'catigan variety': 'catigan dwarf coconut',
+    'golden': 'dwarf coconut golden variety'
+};
+
+function normalizePlantName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+}
+
+function findInventoryPlantByName(name) {
+    if (!PLANT_API || !name) {
+        return null;
+    }
+
+    const rawName = String(name).trim();
+    const aliasName = TRENDING_NAME_ALIASES[rawName.toLowerCase()] || rawName;
+
+    const directMatch = PLANT_API.getPlantByName(aliasName) || PLANT_API.getPlantByName(rawName);
+    if (directMatch) {
+        return directMatch;
+    }
+
+    const target = normalizePlantName(aliasName);
+    const inventory = PLANT_API.getPlantInventory();
+
+    return inventory.find(function(plant) {
+        const candidate = normalizePlantName(plant.name);
+        return candidate === target || candidate.includes(target) || target.includes(candidate);
+    }) || null;
+}
+
+function syncTrendingWithInventory() {
+    if (!PLANT_API) {
+        return;
+    }
+
+    ['new', 'bestseller'].forEach(function(tabKey) {
+        productsByTab[tabKey] = (productsByTab[tabKey] || []).map(function(item) {
+            const livePlant = findInventoryPlantByName(item.name);
+            if (!livePlant) {
+                return item;
+            }
+
+            return {
+                ...item,
+                id: String(livePlant.id),
+                name: livePlant.name,
+                category: livePlant.category,
+                image: livePlant.image || item.image || DEFAULT_PLANT_IMAGE,
+                price: Number(livePlant.price || item.price || 250)
+            };
+        });
+    });
+}
 
 const productsByTab = {
     new: [
@@ -108,9 +173,10 @@ function buildActionButton(type) {
 }
 
 function buildProductDetailUrl(plant) {
-    let plantId = '';
-    if (window.GHPlantData) {
-        const found = window.GHPlantData.getPlantByName(plant.name);
+    let plantId = String(plant.id || '').trim();
+
+    if (!plantId && PLANT_API) {
+        const found = findInventoryPlantByName(plant.name);
         if (found) {
             plantId = String(found.id);
         }
@@ -131,6 +197,8 @@ function buildProductDetailUrl(plant) {
 }
 
 function renderTrendingProducts() {
+    syncTrendingWithInventory();
+
     const track = document.querySelector('#trendingTrack');
     const items = productsByTab[selectedTab] || [];
     const visibleCards = getVisibleCards();
@@ -509,6 +577,7 @@ function initializeFooter() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    syncTrendingWithInventory();
     initializeTabs();
     initializeTrendingCarousel();
     initializeCategoryCarousel();
