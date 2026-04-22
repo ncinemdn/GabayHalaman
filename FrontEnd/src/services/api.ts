@@ -23,7 +23,17 @@ export const apiClient = {
       const response = await fetch(url, options);
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        // Try to get error message from response body
+        let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+        try {
+          const errorBody = await response.json();
+          if (errorBody.message) {
+            errorMessage = errorBody.message;
+          }
+        } catch (e) {
+          // Response wasn't JSON, use default error
+        }
+        throw new Error(errorMessage);
       }
 
       // Handle empty responses (204 No Content)
@@ -31,7 +41,18 @@ export const apiClient = {
         return null as T;
       }
 
-      return await response.json() as T;
+      // Handle boolean/plain text responses from backend
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json() as T;
+      } else {
+        // For plain text or other content types
+        const text = await response.text();
+        if (text === 'true') return true as unknown as T;
+        if (text === 'false') return false as unknown as T;
+        if (!isNaN(Number(text)) && text !== '') return Number(text) as unknown as T;
+        return text as unknown as T;
+      }
     } catch (error) {
       console.error(`Error calling ${url}:`, error);
       throw error;

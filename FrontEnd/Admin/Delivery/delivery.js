@@ -413,9 +413,23 @@ function handleTrackingStatusChange(event) {
     }
 }
 
+// Logout function
+function logout() {
+    // Clear admin session from localStorage
+    localStorage.removeItem('admin');
+    // Redirect to signin page
+    window.location.href = '../../Admin/Auth/signin.html';
+}
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
+}
+
+// Logout button handler
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
 }

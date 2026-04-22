@@ -19,7 +19,17 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      // Try to get error message from response body
+      let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+      try {
+        const errorBody = await response.json();
+        if (errorBody.message) {
+          errorMessage = errorBody.message;
+        }
+      } catch (e) {
+        // Response wasn't JSON, use default error
+      }
+      throw new Error(errorMessage);
     }
 
     // Handle empty responses (204 No Content)
@@ -27,7 +37,19 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
       return null;
     }
 
-    return await response.json();
+    // Try to parse as JSON, but handle plain text/boolean responses
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    } else {
+      // For plain text or other content types, return the text or boolean
+      const text = await response.text();
+      // Try to parse as boolean or number
+      if (text === 'true') return true;
+      if (text === 'false') return false;
+      if (!isNaN(text) && text !== '') return Number(text);
+      return text;
+    }
   } catch (error) {
     console.error(`Error calling ${url}:`, error);
     throw error;
