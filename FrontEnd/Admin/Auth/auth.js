@@ -30,14 +30,27 @@ async function login(email, password) {
 
 async function signup(name, email, contactNumber, password) {
     try {
+        // Validate inputs
+        if (!name || !email || !contactNumber || !password) {
+            document.getElementById("signUpError").textContent = "All fields are required";
+            return;
+        }
+
+        // Match the backend Admin model property names
         const newAdmin = {
-            name,
-            email,
-            contactNumber,
-            password_hash: password, // Note: In production, hash the password on the server
+            full_name: name,           // Backend expects 'full_name', not 'name'
+            email: email,
+            phone: contactNumber,      // Backend expects 'phone', not 'contactNumber'
+            password_hash: password,
+            created_at: new Date().toISOString(),  // Add timestamp
+            updated_at: new Date().toISOString(),  // Add timestamp
         };
 
-        await adminAPI.create(newAdmin);
+        console.log('Sending admin data:', newAdmin);
+
+        const response = await adminAPI.create(newAdmin);
+        
+        console.log('API Response:', response);
 
         // Clear error if success
         document.getElementById("signUpError").textContent = "";
@@ -48,8 +61,18 @@ async function signup(name, email, contactNumber, password) {
         }, 2000);
 
     } catch (error) {
-        console.error(error);
-        document.getElementById("signUpError").textContent = "Failed to create account. Please try again.";
+        console.error('Signup error:', error);
+        
+        // Provide specific error messages
+        if (error.message.includes('409') || error.message.includes('conflict')) {
+            document.getElementById("signUpError").textContent = "Email already exists";
+        } else if (error.message.includes('400') || error.message.includes('validation')) {
+            document.getElementById("signUpError").textContent = "Invalid input data";
+        } else if (error.message.includes('duplicate') || error.message.includes('Duplicate')) {
+            document.getElementById("signUpError").textContent = "Email already registered. Please use a different email.";
+        } else {
+            document.getElementById("signUpError").textContent = "Failed to create account: " + error.message;
+        }
     }
 }
 

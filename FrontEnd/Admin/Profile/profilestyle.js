@@ -1,3 +1,11 @@
+// Logout function
+function logout() {
+    // Clear admin session from localStorage
+    localStorage.removeItem('admin');
+    // Redirect to signin page
+    window.location.href = '../../Admin/Auth/signin.html';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const PROFILE_KEY = 'gh_admin_profile_data';
     const PASSWORD_KEY = 'gh_admin_profile_password';
@@ -222,5 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
             profileToast.classList.remove('show');
             profileToast.classList.add('hidden');
         }, 2200);
+    }
+});
+
+// Logout button handler
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
     }
 });

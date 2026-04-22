@@ -45,6 +45,14 @@ const categoriesList = document.getElementById('categoriesList');
 // Confirmation tracking
 let pendingDeleteId = null;
 
+// Logout function
+function logout() {
+    // Clear admin session from localStorage
+    localStorage.removeItem('admin');
+    // Redirect to signin page
+    window.location.href = '../../Admin/Auth/signin.html';
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadPlantInventory();
@@ -99,6 +107,8 @@ function attachEventListeners() {
             const page = this.getAttribute('data-page');
             if (page === 'dashboard') {
                 window.location.href = '../Dashboard/dashboard.html';
+            } else if (page === 'logout') {
+                logout();
             } else if (page === 'catalog') {
                 // Stay on current page
             }

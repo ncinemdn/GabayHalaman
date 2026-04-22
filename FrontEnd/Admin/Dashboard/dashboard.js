@@ -269,6 +269,14 @@ const pages = {
 // Initialize the app
 let currentPage = 'dashboard';
 
+// Logout function
+function logout() {
+    // Clear admin session from localStorage
+    localStorage.removeItem('admin');
+    // Redirect to signin page
+    window.location.href = '../../Admin/Auth/signin.html';
+}
+
 // Load page content
 function loadPage(pageName) {
     currentPage = pageName;
@@ -300,7 +308,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-page]').forEach(item => {
         item.addEventListener('click', function() {
             const page = this.getAttribute('data-page');
-            if (page === 'catalog') {
+            if (page === 'logout') {
+                logout();
+            } else if (page === 'catalog') {
                 window.location.href = '../PlantCatalog/plantcatalog.html';
             } else {
                 loadPage(page);
