@@ -1,0 +1,591 @@
+/* Global responsive helpers for static pages */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+    max-width: 100%;
+    height: auto;
+}
+
+input,
+select,
+textarea,
+button {
+    max-width: 100%;
+    font: inherit;
+}
+
+/* Common wrappers used across pages */
+.header,
+.header-inner,
+.nav,
+.header-icons,
+.hero-section,
+.hero-content,
+.features-grid,
+.product-container,
+.shop-layout,
+.shop-main,
+.shop-sidebar,
+.shop-category-list,
+.cart-container,
+.order-container,
+.reservation-container,
+.dashboard-container,
+.content,
+.main-content,
+.container,
+.row,
+.grid {
+    min-width: 0;
+}
+
+.header-inner,
+.container,
+.content,
+.main-content,
+.product-container,
+.cart-container,
+.order-container,
+.reservation-container,
+.dashboard-container {
+    width: min(1200px, calc(100% - 2rem));
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.features-grid,
+.grid,
+.row,
+.cards,
+.card-grid,
+.plants-grid,
+.all-plants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.table-wrap,
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* Prevent oversized fixed-width blocks from causing horizontal scroll */
+[class*="container"],
+[class*="wrapper"],
+[class*="inner"] {
+    max-width: 100%;
+}
+
+table {
+    width: 100%;
+    min-width: 640px;
+}
+
+@media (max-width: 1024px) {
+    .header-inner,
+    .container,
+    .content,
+    .main-content,
+    .product-container,
+    .cart-container,
+    .order-container,
+    .reservation-container,
+    .dashboard-container {
+        width: calc(100% - 1.5rem);
+    }
+
+    .shop-layout,
+    .product-container,
+    .reservation-layout,
+    .dashboard-layout,
+    .admin-layout {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+
+    .shop-sidebar,
+    .sidebar,
+    .left-panel,
+    .right-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        position: static !important;
+    }
+
+    .hero-section {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+        min-height: 0 !important;
+        gap: 1rem;
+    }
+
+    .hero-bg,
+    .hero-content,
+    .hero-image {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    .hero-bg {
+        display: none !important;
+    }
+
+    .hero-content,
+    .hero-image {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .hero-image img {
+        width: 100% !important;
+        height: auto !important;
+        object-fit: cover;
+    }
+
+    .section-title,
+    .trending-title,
+    .reviews-title,
+    .faqs-title {
+        font-size: clamp(2rem, 6vw, 3rem) !important;
+        line-height: 1.15;
+    }
+
+    .carousel-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .product-track,
+    .category-track {
+        gap: 1rem !important;
+    }
+
+    .product-card,
+    .category-slide {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    .product-card-inner {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 360px;
+    }
+
+    .product-image {
+        position: static !important;
+        inset: auto !important;
+        padding: 1rem 1rem 0 !important;
+    }
+
+    .product-image img {
+        max-height: 260px !important;
+    }
+
+    .category-card {
+        width: 100% !important;
+        min-height: 220px !important;
+        height: auto !important;
+    }
+
+    .category-image,
+    .category-image-standard,
+    .category-image-tall,
+    .category-image-tall-right,
+    .category-image-right {
+        position: absolute !important;
+        width: min(72vw, 320px) !important;
+        max-width: 100% !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+    }
+
+    .reviews-list,
+    .reviews-image,
+    .faqs-container,
+    .category-products-container {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .review-modal-card,
+    .review-success-card {
+        width: min(94vw, 640px) !important;
+        max-width: 94vw !important;
+    }
+
+    .all-plants-header,
+    .shop-sort-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+    }
+
+    .header {
+        position: static !important;
+    }
+
+    .header-inner {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .logo-section,
+    .nav,
+    .header-icons {
+        width: 100%;
+    }
+
+    .nav {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+
+    .nav > a,
+    .nav .nav-dropdown,
+    .header-icons .icon-btn,
+    .header-icons a {
+        flex: 0 0 auto;
+    }
+
+    .header-icons {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .hero-title,
+    .section-title,
+    h1 {
+        font-size: clamp(1.5rem, 8vw, 2.4rem) !important;
+        line-height: 1.2;
+    }
+
+    h2 {
+        font-size: clamp(1.2rem, 7vw, 2rem) !important;
+    }
+
+    .hero-content {
+        padding: 1.25rem !important;
+    }
+
+    .hero-btn,
+    .reviews-btn,
+    .review-submit-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    p,
+    li,
+    label,
+    input,
+    button,
+    select,
+    textarea {
+        font-size: 0.95rem;
+    }
+
+    .shop-category-list,
+    .filters,
+    .tabs,
+    .button-group {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .all-plants-grid,
+    .product-grid,
+    .items-grid,
+    .reservation-grid,
+    .cards,
+    .card-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .features-grid,
+    .category-products-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .feature-text,
+    .category-label,
+    .product-name {
+        font-size: clamp(1rem, 4.5vw, 1.25rem) !important;
+        line-height: 1.35;
+    }
+
+    .tab-btn {
+        padding: 0.65rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+
+    .carousel-btn,
+    .category-nav {
+        width: 42px !important;
+        height: 42px !important;
+    }
+
+    .review-input-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .modal,
+    .dialog,
+    .popup,
+    .overlay-card {
+        width: min(92vw, 560px) !important;
+        max-width: 92vw !important;
+        margin: 0 auto;
+    }
+
+    .cart-table,
+    .order-table,
+    .admin-table {
+        min-width: 620px;
+    }
+
+    .footer,
+    .footer-content {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-inner,
+    .container,
+    .content,
+    .main-content,
+    .product-container,
+    .cart-container,
+    .order-container,
+    .reservation-container,
+    .dashboard-container {
+        width: calc(100% - 1rem);
+    }
+
+    .brand-text,
+    .logo-text {
+        max-width: 150px;
+    }
+
+    .hero-btn,
+    .btn,
+    button,
+    input[type="submit"],
+    input[type="button"] {
+        width: 100%;
+    }
+
+    .hero-section,
+    .trending-section,
+    .features-section,
+    .category-section,
+    .reviews-section,
+    .faqs-section {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .hero-title {
+        font-size: clamp(1.4rem, 9vw, 2rem) !important;
+    }
+
+    .hero-quote,
+    .hero-author,
+    .footer-description,
+    .reviews-note {
+        font-size: 0.9rem !important;
+    }
+
+    .product-card-inner {
+        min-height: 300px;
+    }
+
+    .product-image img {
+        max-height: 200px !important;
+    }
+
+    .category-card {
+        min-height: 200px !important;
+    }
+
+    .site-footer,
+    .footer-main,
+    .footer-bar {
+        text-align: center !important;
+    }
+
+    .form-row,
+    .form-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 0.65rem;
+    }
+
+    .nav-dropdown-menu,
+    .dropdown-menu {
+        left: 0 !important;
+        right: auto !important;
+        min-width: min(90vw, 260px);
+    }
+}
+
+/* Landing page navbar: keep one row and compress instead of wrapping */
+@media (max-width: 1024px) {
+    .landing-page .header-inner {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: calc(100% - 1.2rem) !important;
+        padding: clamp(6px, 1.2vw, 12px) clamp(8px, 1.8vw, 20px) !important;
+        gap: clamp(8px, 1.6vw, 16px) !important;
+        border-radius: 999px !important;
+    }
+
+    .landing-page .logo-section,
+    .landing-page .nav,
+    .landing-page .header-icons {
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    .landing-page .nav {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 1 auto !important;
+        gap: clamp(8px, 1.8vw, 20px) !important;
+        overflow: hidden !important;
+    }
+
+    .landing-page .header-icons {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: clamp(4px, 1vw, 10px) !important;
+        flex: 0 0 auto !important;
+    }
+
+    .landing-page .nav a,
+    .landing-page .nav-dropdown-toggle {
+        font-size: clamp(12px, 1.8vw, 18px) !important;
+        white-space: nowrap !important;
+    }
+
+    .landing-page .logo {
+        width: clamp(28px, 3.2vw, 45px) !important;
+        height: clamp(28px, 3.2vw, 45px) !important;
+    }
+
+    .landing-page .brand-text {
+        height: clamp(14px, 1.8vw, 24px) !important;
+        max-width: clamp(78px, 12vw, 160px) !important;
+    }
+
+    .landing-page .icon-btn {
+        padding: clamp(2px, 0.5vw, 6px) !important;
+    }
+
+    .landing-page .icon-btn svg {
+        width: clamp(14px, 1.9vw, 20px) !important;
+        height: clamp(14px, 1.9vw, 20px) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .landing-page .header-inner {
+        width: calc(100% - 0.8rem) !important;
+        padding: 6px 8px !important;
+        gap: 8px !important;
+    }
+
+    .landing-page .nav {
+        gap: 10px !important;
+    }
+
+    .landing-page .nav a,
+    .landing-page .nav-dropdown-toggle {
+        font-size: 12px !important;
+    }
+
+    .landing-page .brand-text {
+        max-width: 96px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-page .header-inner {
+        width: calc(100% - 0.5rem) !important;
+        padding: 5px 6px !important;
+        gap: 6px !important;
+    }
+
+    .landing-page .nav {
+        gap: 8px !important;
+    }
+
+    .landing-page .nav a,
+    .landing-page .nav-dropdown-toggle {
+        font-size: 11px !important;
+    }
+
+    .landing-page .logo {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .landing-page .brand-text {
+        height: 12px !important;
+        max-width: 76px !important;
+    }
+
+    .landing-page .icon-btn svg {
+        width: 13px !important;
+        height: 13px !important;
+    }
+}

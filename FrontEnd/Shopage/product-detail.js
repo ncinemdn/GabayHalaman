@@ -94,6 +94,7 @@ const plantDescriptions = {
 
 const state = {
     currentImageIndex: 0,
+    productImages: [],
     quantity: 1,
     selectedSize: 'medium',
     selectedTab: 'additional',
@@ -103,21 +104,22 @@ const state = {
 
 let moreProducts = [];
 let refreshMoreCarousel = null;
+const PLANT_API = window.plantDataAPI || window.GHPlantData || null;
 
 function getInventory() {
-    if (!window.GHPlantData) {
+    if (!PLANT_API) {
         return [];
     }
-    return window.GHPlantData.getPlantInventory();
+    return PLANT_API.getPlantInventory();
 }
 
 function getPlantStockState(plant) {
-    if (!window.GHPlantData) {
+    if (!PLANT_API) {
         return { inStock: true, stock: 1 };
     }
 
-    const latest = window.GHPlantData.getPlantById(plant.id) || plant;
-    const stock = window.GHPlantData.getEffectiveStock(latest);
+    const latest = PLANT_API.getPlantById(plant.id) || plant;
+    const stock = PLANT_API.getEffectiveStock(latest);
     return {
         inStock: stock > 0,
         stock
@@ -239,62 +241,78 @@ function loadPlantData() {
         if (incrementBtn) incrementBtn.disabled = true;
     }
     
-    // Update main image
-    document.getElementById('mainImage').src = foundPlant.image;
-    document.getElementById('mainImage').alt = foundPlant.name;
-    
-    // Generate thumbnail (using same image repeated for demo - in production, you'd have multiple images)
+    state.productImages = PLANT_API
+        ? PLANT_API.getPlantGallery(foundPlant.category, foundPlant.name, foundPlant.image)
+        : [foundPlant.image];
+
+    // Update main image and thumbnails using the real gallery
+    const mainImage = document.getElementById('mainImage');
+    mainImage.src = state.productImages[0] || foundPlant.image;
+    mainImage.alt = foundPlant.name;
+
     const thumbnailsContainer = document.getElementById('thumbnails');
     thumbnailsContainer.innerHTML = '';
-    for (let i = 0; i < 4; i++) {
+    state.productImages.forEach((image, i) => {
         const thumbDiv = document.createElement('div');
         thumbDiv.className = `thumbnail ${i === 0 ? 'active' : ''}`;
         thumbDiv.onclick = () => selectImage(i);
         
         const thumbImg = document.createElement('img');
-        thumbImg.src = foundPlant.image;
+        thumbImg.src = image;
         thumbImg.alt = `${foundPlant.name} thumbnail ${i + 1}`;
         
         thumbDiv.appendChild(thumbImg);
         thumbnailsContainer.appendChild(thumbDiv);
+    });
+
+    state.currentImageIndex = 0;
+}
+
+function selectImage(index) {
+    if (!state.productImages.length) {
+        return;
     }
+    state.currentImageIndex = index;
+    updateMainImage();
+}
+
+function updateMainImage() {
+    const mainImage = document.getElementById('mainImage');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+
+    if (state.productImages.length > 0 && mainImage) {
+        mainImage.src = state.productImages[state.currentImageIndex];
+    }
+
+    thumbnails.forEach((thumb, index) => {
+        thumb.classList.toggle('active', index === state.currentImageIndex);
+    });
 }
 
 // Product Image Carousel
 function initProductImageCarousel() {
-    const mainImage = document.getElementById('mainImage');
     const prevBtn = document.getElementById('prevImageBtn');
     const nextBtn = document.getElementById('nextImageBtn');
-    
-    // Get all thumbnail images for cycling
-    const thumbnails = document.querySelectorAll('.thumbnail');
-    const productImages = Array.from(thumbnails).map(thumb => thumb.querySelector('img').src);
+
+    if (!prevBtn || !nextBtn) {
+        return;
+    }
     
     prevBtn.onclick = () => {
-        state.currentImageIndex = (state.currentImageIndex - 1 + productImages.length) % productImages.length;
+        if (!state.productImages.length) {
+            return;
+        }
+        state.currentImageIndex = (state.currentImageIndex - 1 + state.productImages.length) % state.productImages.length;
         updateMainImage();
     };
     
     nextBtn.onclick = () => {
-        state.currentImageIndex = (state.currentImageIndex + 1) % productImages.length;
+        if (!state.productImages.length) {
+            return;
+        }
+        state.currentImageIndex = (state.currentImageIndex + 1) % state.productImages.length;
         updateMainImage();
     };
-    
-    function selectImage(index) {
-        state.currentImageIndex = index;
-        updateMainImage();
-    }
-    
-    function updateMainImage() {
-        const thumbnails = document.querySelectorAll('.thumbnail');
-        if (productImages.length > 0) {
-            mainImage.src = productImages[state.currentImageIndex];
-        }
-        
-        thumbnails.forEach((thumb, index) => {
-            thumb.classList.toggle('active', index === state.currentImageIndex);
-        });
-    }
 }
 
 // Quantity Controls

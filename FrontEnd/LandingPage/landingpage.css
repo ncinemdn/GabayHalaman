@@ -165,6 +165,7 @@ body {
   opacity: 0.6;
 }
 
+
 /* Hero Section */
 .hero-section {
     position: relative;
@@ -1318,10 +1319,6 @@ body {
         height: 60px;
     }
 
-    .nav {
-        display: none;
-    }
-
     .header-icons {
         gap: 1rem;
     }
@@ -1409,6 +1406,7 @@ body {
         font-size: 1.35rem;
     }
 }
+
 
 /* 2026 responsive and carousel overrides */
 .hero-section {

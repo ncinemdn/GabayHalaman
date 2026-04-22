@@ -1,7 +1,91 @@
 (function initPlantData(window) {
-    const STORAGE_KEY = 'gh_plant_inventory_v2';
+    const STORAGE_KEY = 'gh_plant_inventory_v3';
 
     const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGZydWl0JTIwdHJlZXxlbnwxfHx8fDE3NzI5NTQxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+
+    const LOCAL_PLANT_IMAGES = {
+        'citrus|american lemon': 'PlantPics/Citrus/American Lemon/americanlemon1.jpg',
+        'citrus|calamandarin': 'PlantPics/Citrus/Calamandarin/calamandarin1.jpg',
+        'citrus|calamansi': 'PlantPics/Citrus/Calamansi/calamansi1.jpg',
+        'citrus|dalandan': 'PlantPics/Citrus/Dalandan/dalandan1.jpg',
+        'citrus|dalanghita': 'PlantPics/Citrus/Dalanghita/dalanghita1.jpg',
+        'citrus|davao pomelo': 'PlantPics/Citrus/Davao Pomelo/davaopomelo1.jpg',
+        'citrus|dayap': 'PlantPics/Citrus/Dayap/dayap1.jpg',
+        'citrus|japanese orange': 'PlantPics/Citrus/Japanese Orange/japanese1.jpg',
+        'citrus|kiat-kiat': 'PlantPics/Citrus/Kiat-kiat/kiat1.jpg',
+        'citrus|lemon meyer': 'PlantPics/Citrus/Lemon Meyer/meyer1.jpg',
+        'citrus|pomegrenate': 'PlantPics/Citrus/Pomegrenate/pomegranate1.jpg',
+        'citrus|ponkan': 'PlantPics/Citrus/Ponkan/ponkan1.jpg',
+        'citrus|sagada orange': 'PlantPics/Citrus/Sagada Orange/sagada1.jpg',
+        'citrus|satsuma citrus': 'PlantPics/Citrus/Satsuma Citrus/satsuma1.jpg',
+        'citrus|suha davao': 'PlantPics/Citrus/Suha Davao/suhadavao1.jpg',
+        'citrus|yellow lemon': 'PlantPics/Citrus/Yellow Lemon/yellow1.jpg',
+        'coconut|hybrid coconut': 'PlantPics/Coconut/Hybrid Coconut/hybrid1.jpg',
+        'coconut|native coconut': 'PlantPics/Coconut/Native Coconut/native1.jpg',
+        'coconut|golden coconut': 'PlantPics/Coconut/Golden Coconut/golden1.jpg',
+        'coconut|dwarf golden': 'PlantPics/Coconut/Dwarf Coconut/dwarf1.jpg',
+        'coconut|macapuno': 'PlantPics/Coconut/Macapuno/macapuno1.jpg',
+        'cuttings|paminta': 'PlantPics/Cuttings/Paminta/paminta1.jpg',
+        'cuttings|micracle fruit': 'PlantPics/Cuttings/Miracle Fruit/miracle1.jpg',
+        'cuttings|karamay': 'PlantPics/Cuttings/Karamay/karamay1.jpg',
+        'cuttings|sarguelas': 'PlantPics/Cuttings/Sarguelas/sarguelas1.jpg',
+        'cuttings|mabolo': 'PlantPics/Cuttings/Mabolo/mabolo1.jpg',
+        'cuttings|bignay': 'PlantPics/Cuttings/Bignay/bignay1.jpg',
+        'cuttings|robusta': 'PlantPics/Cuttings/Robusta/robusta1.jpg',
+        'cuttings|arabica coffee': 'PlantPics/Cuttings/Arabica Coffee/arabica1.jpg',
+        'cuttings|barako': 'PlantPics/Cuttings/Barako/barako1.jpg',
+        'flowering|golden trumpet': 'PlantPics/Flowering/Golden Trumpet/trumpet1.jpg',
+        'flowering|pink trumpet': 'PlantPics/Flowering/Pink Trumpet/pink1.jpg',
+        'flowering|cherry blossom': 'PlantPics/Flowering/Cherry Blossom/blossom1.jpg',
+        'flowering|golden shower': 'PlantPics/Flowering/Golden Shower/shower1.jpg',
+        'flowering|fire tree': 'PlantPics/Flowering/Fire Tree/fire1.jpg',
+        'flowering|ilang ilang': 'PlantPics/Flowering/Ilang-ilang/ilangilang1.jpg',
+        'flowering|jacaranda': 'PlantPics/Flowering/Jacaranda/jacaranda1.jpg',
+        'flowering|pine tree': 'PlantPics/Flowering/Pine Tree/pine1.jpg',
+        'flowering|dates palm': 'PlantPics/Flowering/Dates Palm/datepalm.jpg'
+    };
+
+    function resolveFrontEndAsset(pathFromFrontEnd) {
+        const normalizedPath = String(pathFromFrontEnd || '').replace(/^\/+/, '');
+        const current = window.location.pathname.replace(/\\/g, '/');
+        const idx = current.toLowerCase().lastIndexOf('/frontend/');
+
+        if (idx !== -1) {
+            const base = current.slice(0, idx + '/FrontEnd/'.length);
+            return base + normalizedPath;
+        }
+
+        return '../' + normalizedPath;
+    }
+
+    function getPlantImage(category, name, fallbackImage) {
+        const key = `${String(category || '').trim().toLowerCase()}|${String(name || '').trim().toLowerCase()}`;
+        const localPath = LOCAL_PLANT_IMAGES[key];
+
+        if (localPath) {
+            return resolveFrontEndAsset(localPath);
+        }
+
+        return fallbackImage || DEFAULT_PLANT_IMAGE;
+    }
+
+    function getPlantGallery(category, name, fallbackImage) {
+        const key = `${String(category || '').trim().toLowerCase()}|${String(name || '').trim().toLowerCase()}`;
+        const localPath = LOCAL_PLANT_IMAGES[key];
+
+        if (localPath) {
+            const numberedMatch = localPath.match(/^(.*?)(\d+)(\.[a-z0-9]+)$/i);
+            if (numberedMatch) {
+                const base = numberedMatch[1];
+                const ext = numberedMatch[3];
+                return [1, 2, 3, 4].map((index) => resolveFrontEndAsset(`${base}${index}${ext}`));
+            }
+
+            return [resolveFrontEndAsset(localPath)];
+        }
+
+        return [fallbackImage || DEFAULT_PLANT_IMAGE];
+    }
 
     const MASTER_PLANTS_BY_CATEGORY = {
         'Citrus': [
@@ -144,7 +228,7 @@
                     name: item.name,
                     category,
                     price: item.price,
-                    image: item.image || DEFAULT_PLANT_IMAGE,
+                    image: getPlantImage(category, item.name, item.image),
                     stock: defaultStockForPrice(item.price),
                     available: true
                 });
@@ -230,6 +314,7 @@
             getEffectiveStock,
             isInStock,
             getStockLabel,
+            getPlantGallery,
             savePlantInventory,
             MASTER_PLANTS_BY_CATEGORY
         };
