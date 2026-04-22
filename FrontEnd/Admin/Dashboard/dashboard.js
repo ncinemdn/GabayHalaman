@@ -40,6 +40,31 @@ const pages = {
                 <p class="placeholder">Important notifications and alerts will appear here</p>
             </div>
         </div>
+
+            <div id="clientsPopup" class="popup-overlay" style="display: none;">
+                <div class="popup-content">
+                    <div class="popup-header">
+                        <h3>Client List</h3>
+                        <button class="popup-close" onclick="closePopup('clientsPopup')">×</button>
+                    </div>
+                    <div class="popup-body" id="clientsList">
+                        <!-- Client names will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="clientDetailsPopup" class="popup-overlay" style="display: none;">
+                <div class="popup-content">
+                    <div class="popup-header">
+                        <h3 id="clientDetailsTitle">Client Details</h3>
+                        <button class="popup-close" onclick="closePopup('clientDetailsPopup')">×</button>
+                    </div>
+                    <div class="popup-body" id="clientDetailsContent">
+                        <!-- Client details will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
     `,
 
     catalog: `
@@ -235,12 +260,15 @@ const pages = {
 // Initialize the app
 let currentPage = 'dashboard';
 let salesChart = null;
+let currentDashboardData = null;
 
 // Default dashboard data
 const defaultDashboardData = {
     totalPlants: 324,
     totalOrders: 1458,
     pendingOrders: 12,
+    totalClients: 0,
+    clientsData: [],
     monthlyGrowth: 12.5,
     salesData: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -249,16 +277,45 @@ const defaultDashboardData = {
 };
 
 // Get dashboard data from API or localStorage
+function resolveClientName(request) {
+    return request.full_name || request.name || request.customer_name || request.customerName || '';
+}
+
+function resolvePlantName(request) {
+    return request.plant_name || request.plantName || request.plant || '';
+}
+
+function resolveOrderAmount(request) {
+    const raw = request.amount || request.total_price || request.totalPrice || request.total || 0;
+    const value = typeof raw === 'string' ? parseFloat(raw.replace(/[^0-9.-]+/g, '')) : raw;
+    return Number.isFinite(value) ? value : 0;
+}
+
+function resolveOrderQuantity(request) {
+    const raw = request.quantity || request.qty || request.amount_of_plants || request.plant_count || 1;
+    const value = typeof raw === 'string' ? parseFloat(raw.replace(/[^0-9.-]+/g, '')) : raw;
+    return Number.isFinite(value) && value > 0 ? Math.round(value) : 1;
+}
+
 async function getDashboardData() {
     try {
         // Try to fetch from backend
         const plants = await plantsAPI.getAll();
         const requests = await requestsAPI.getAll();
         
+        const clientNames = new Set();
+        const validRequests = Array.isArray(requests) ? requests : [];
+        validRequests.forEach(request => {
+            const name = resolveClientName(request);
+            if (name) clientNames.add(name.trim());
+        });
+        
         return {
             totalPlants: plants ? plants.length : 0,
-            totalOrders: requests ? requests.length : 0,
-            pendingOrders: requests ? requests.filter(r => r.status === 'pending').length : 0,
+            totalOrders: validRequests.length,
+            pendingOrders: validRequests.filter(r => (r.status || '').toLowerCase() === 'pending').length,
+            totalClients: clientNames.size,
+            clientsData: validRequests,
             monthlyGrowth: 12.5,
             salesData: defaultDashboardData.salesData
         };
@@ -269,16 +326,19 @@ async function getDashboardData() {
 }
 
 // Generate stat card HTML
-function createStatCard(title, value, info, icon) {
+function createStatCard(title, value, info, icon, onClick = null) {
+    const clickableClass = onClick ? 'stat-card clickable' : 'stat-card';
+    const clickAction = onClick ? `onclick="${onClick}"` : '';
+    const displayValue = value != null && typeof value.toLocaleString === 'function' ? value.toLocaleString() : '0';
     return `
-        <div class="stat-card">
+        <div class="${clickableClass}" ${clickAction}>
             <div class="stat-content">
                 <div class="stat-icon">
                     ${icon}
                 </div>
                 <div class="stat-details">
                     <p class="stat-label">${title}</p>
-                    <p class="stat-value">${value.toLocaleString()}</p>
+                    <p class="stat-value">${displayValue}</p>
                     <p class="stat-info">${info}</p>
                 </div>
             </div>
@@ -292,6 +352,8 @@ const plantIconSvg = '<svg width="56" height="59" fill="none" viewBox="0 0 56 59
 const orderIconSvg = '<svg width="56" height="59" fill="none" viewBox="0 0 56 59"><path d="M6.22222 59C4.51111 59 3.0463 58.4498 1.82778 57.3494C0.609259 56.249 0 54.9262 0 53.381V19.6667C0 18.1214 0.609259 16.7986 1.82778 15.6982C3.0463 14.5978 4.51111 14.0476 6.22222 14.0476H12.4444C12.4444 10.1611 13.9611 6.84821 16.9944 4.10893C20.0278 1.36964 23.6963 0 28 0C32.3037 0 35.9722 1.36964 39.0056 4.10893C42.0389 6.84821 43.5556 10.1611 43.5556 14.0476H49.7778C51.4889 14.0476 52.9537 14.5978 54.1722 15.6982C55.3907 16.7986 56 18.1214 56 19.6667V53.381C56 54.9262 55.3907 56.249 54.1722 57.3494C52.9537 58.4498 51.4889 59 49.7778 59H6.22222ZM6.22222 53.381H49.7778V19.6667H6.22222V53.381ZM39.0056 32.4149C42.0389 29.6756 43.5556 26.3627 43.5556 22.4762H37.3333C37.3333 24.8175 36.4259 26.8075 34.6111 28.4464C32.7963 30.0853 30.5926 30.9048 28 30.9048C25.4074 30.9048 23.2037 30.0853 21.3889 28.4464C19.5741 26.8075 18.6667 24.8175 18.6667 22.4762H12.4444C12.4444 26.3627 13.9611 29.6756 16.9944 32.4149C20.0278 35.1542 23.6963 36.5238 28 36.5238C32.3037 36.5238 35.9722 35.1542 39.0056 32.4149ZM18.6667 14.0476H37.3333C37.3333 11.7063 36.4259 9.71627 34.6111 8.07738C32.7963 6.43849 30.5926 5.61905 28 5.61905C25.4074 5.61905 23.2037 6.43849 21.3889 8.07738C19.5741 9.71627 18.6667 11.7063 18.6667 14.0476Z" fill="#2E7D32"/></svg>';
 
 const pendingIconSvg = '<svg width="58" height="60" fill="none" viewBox="0 0 58 60"><path d="M25.7778 52.275V31.725L6.44444 21.3V41.85L25.7778 52.275ZM32.2222 52.275L51.5556 41.85V21.3L32.2222 31.725V52.275ZM25.7778 59.175L3.22222 47.1C2.20185 46.55 1.40972 45.825 0.845833 44.925C0.281944 44.025 0 43.025 0 41.925V18.075C0 16.975 0.281944 15.975 0.845833 15.075C1.40972 14.175 2.20185 13.45 3.22222 12.9L25.7778 0.825C26.7981 0.275 27.8722 0 29 0C30.1278 0 31.2019 0.275 32.2222 0.825L54.7778 12.9C55.7982 13.45 56.5903 14.175 57.1542 15.075C57.7181 15.975 58 16.975 58 18.075V41.925C58 43.025 57.7181 44.025 57.1542 44.925C56.5903 45.825 55.7982 46.55 54.7778 47.1L32.2222 59.175C31.2019 59.725 30.1278 60 29 60C27.8722 60 26.7981 59.725 25.7778 59.175ZM41.8889 19.575L48.0917 16.275L29 6L22.7167 9.375L41.8889 19.575ZM29 26.55L35.2833 23.175L16.1917 12.9L9.90833 16.275L29 26.55Z" fill="#2E7D32"/></svg>';
+
+const clientsIconSvg = '<svg width="56" height="59" fill="none" viewBox="0 0 56 59"><path d="M28 59C24.7333 59 21.6562 58.4622 18.7687 57.3867C15.8812 56.3112 13.2417 54.7901 10.85 52.8234L5.95 57.8938C5.30833 58.5698 4.49167 58.9078 3.5 58.9078C2.50833 58.9078 1.69167 58.5698 1.05 57.8938C0.408333 57.2177 0.0875 56.3573 0.0875 55.3125C0.0875 54.2677 0.408333 53.4073 1.05 52.7313L5.8625 47.6609C3.99583 45.1411 2.55208 42.3448 1.53125 39.2719C0.510417 36.199 0 32.9417 0 29.5C0 21.2646 2.7125 14.2891 8.1375 8.57344C13.5625 2.85781 20.1833 0 28 0H56V29.5C56 37.7354 53.2875 44.7109 47.8625 50.4266C42.4375 56.1422 35.8167 59 28 59ZM28 51.625C33.8333 51.625 38.7917 49.474 42.875 45.1719C46.9583 40.8698 49 35.6458 49 29.5V7.375H28C22.1667 7.375 17.2083 9.52604 13.125 13.8281C9.04167 18.1302 7 23.3542 7 29.5C7 31.8969 7.35 34.1862 8.05 36.368C8.75 38.5497 9.7125 40.5318 10.9375 42.3141L29.05 23.2313C29.6917 22.5552 30.5083 22.2172 31.5 22.2172C32.4917 22.2172 33.3083 22.5552 33.95 23.2313C34.65 23.9688 35 24.8445 35 25.8586C35 26.8727 34.65 27.7484 33.95 28.4859L15.8375 47.5688C17.5292 48.8594 19.4104 49.8581 21.4812 50.5648C23.5521 51.2716 25.725 51.625 28 51.625Z" fill="#2E7D32"/></svg>';
 
 // Populate dashboard with dynamic data
 async function populateDashboard() {
@@ -308,6 +370,7 @@ async function populateDashboard() {
         ${createStatCard('Total Plants', data.totalPlants, 'Active Listings', plantIconSvg)}
         ${createStatCard('Total Orders', data.totalOrders, `+${data.monthlyGrowth}% this month`, orderIconSvg)}
         ${createStatCard('Pending Orders', data.pendingOrders, 'Needs Attention', pendingIconSvg)}
+        ${createStatCard('Total Clients', data.totalClients, 'Unique Customers', clientsIconSvg, 'showClientsPopup()')}
     `;
     
     const statsContainer = document.getElementById('dashboardStats');
@@ -315,8 +378,122 @@ async function populateDashboard() {
         statsContainer.innerHTML = statsHtml;
     }
     
+    // Cache the loaded dashboard data so popups can reuse it
+    currentDashboardData = data;
+
     // Initialize chart
     initializeSalesChart(data.salesData);
+
+    // Update the Important section with analytics
+    updateImportantSection(data);
+}
+
+function showClientsPopup() {
+    const data = currentDashboardData || defaultDashboardData;
+    const clientNames = Array.from(new Set(data.clientsData?.map(resolveClientName).filter(name => !!name))).sort();
+    const clientsList = document.getElementById('clientsList');
+    if (!clientsList) return;
+
+    clientsList.innerHTML = clientNames.length > 0 ? clientNames.map(name => `
+        <div class="client-item" onclick="showClientDetailsPopup('${name.replace(/'/g, "\\'")}')">
+            <p class="client-name">${name}</p>
+        </div>
+    `).join('') : '<p class="placeholder">No clients found.</p>';
+
+    document.getElementById('clientsPopup').style.display = 'flex';
+}
+
+function showClientDetailsPopup(clientName) {
+    const data = currentDashboardData || defaultDashboardData;
+    const clientOrders = (data.clientsData || []).filter(request => resolveClientName(request) === clientName);
+
+    const orderAmounts = clientOrders
+        .map(resolveOrderAmount)
+        .filter(amount => amount > 0);
+    const totalOrders = clientOrders.length;
+    const minOrder = orderAmounts.length ? Math.min(...orderAmounts) : 0;
+    const maxOrder = orderAmounts.length ? Math.max(...orderAmounts) : 0;
+
+    const plantsRequested = Array.from(new Set(clientOrders.map(resolvePlantName).filter(name => !!name))).sort();
+    const plantTags = plantsRequested.length > 0 ? plantsRequested.map(plant => `<span class="plant-tag">${plant}</span>`).join('') : '<p class="placeholder">No plant requests available.</p>';
+
+    const detailsContent = document.getElementById('clientDetailsContent');
+    if (!detailsContent) return;
+
+    detailsContent.innerHTML = `
+        <div class="client-details">
+            <div class="detail-item">
+                <span class="detail-label">Total Orders</span>
+                <span class="detail-value">${totalOrders}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Minimum Order</span>
+                <span class="detail-value">₱${minOrder.toLocaleString()}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Maximum Order</span>
+                <span class="detail-value">₱${maxOrder.toLocaleString()}</span>
+            </div>
+            <div class="plant-list">
+                <h4>Plants Requested</h4>
+                <div class="plant-tags">${plantTags}</div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('clientDetailsTitle').textContent = `${clientName} - Details`;
+    document.getElementById('clientDetailsPopup').style.display = 'flex';
+}
+
+function closePopup(popupId) {
+    const popup = document.getElementById(popupId);
+    if (popup) popup.style.display = 'none';
+}
+
+function updateImportantSection(data) {
+    const allRequests = Array.isArray(data.clientsData) ? data.clientsData : [];
+
+    const plantCounts = allRequests.reduce((acc, request) => {
+        const plant = resolvePlantName(request);
+        if (!plant) return acc;
+        acc[plant] = (acc[plant] || 0) + 1;
+        return acc;
+    }, {});
+
+    const mostDemandedPlants = Object.entries(plantCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([plant, count]) => `${plant} (${count})`)
+        .join(', ');
+
+    const clientPlantCounts = allRequests.reduce((acc, request) => {
+        const clientName = resolveClientName(request);
+        if (!clientName) return acc;
+        acc[clientName] = (acc[clientName] || 0) + resolveOrderQuantity(request);
+        return acc;
+    }, {});
+
+    const topClients = Object.entries(clientPlantCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([client, count]) => `${client} (${count} plants)`)
+        .join(', ');
+
+    const importantSectionCard = document.querySelector('.section-card');
+    if (!importantSectionCard) return;
+
+    importantSectionCard.innerHTML = `
+        <div style="display: grid; gap: 20px;">
+            <div>
+                <h3 style="margin: 0 0 8px; color: #2e7d32;">Most Demanded Plants</h3>
+                <p style="margin: 0; color: #444; font-size: 15px;">${mostDemandedPlants || 'No plant demand data available.'}</p>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 8px; color: #2e7d32;">Top Clients</h3>
+                <p style="margin: 0; color: #444; font-size: 15px;">${topClients || 'No client order data available.'}</p>
+            </div>
+        </div>
+    `;
 }
 
 // Initialize sales chart

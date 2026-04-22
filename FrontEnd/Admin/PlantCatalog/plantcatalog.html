@@ -109,12 +109,6 @@
             <!-- Top Bar -->
             <header class="top-bar">
                 <div class="top-bar-content">
-                    <div class="search-container-header">
-                        <input type="text" placeholder="Search..." class="search-input-header">
-                        <svg class="search-icon-header" viewBox="0 0 18 18">
-                            <path d="M12.5 11h-.79l-.28-.27A6.471 6.471 0 0 0 13 6.5 6.5 6.5 0 1 0 6.5 13c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L17.49 16l-4.99-5zm-6 0C4.01 11 2 8.99 2 6.5S4.01 2 6.5 2 11 4.01 11 6.5 8.99 11 6.5 11z" fill="#8B8989"/>
-                        </svg>
-                    </div>
                     <div class="user-info">
                         <div class="user-avatar"></div>
                         <div class="user-details">
@@ -171,6 +165,7 @@
                         <div class="table-cell">Plant Image</div>
                         <div class="table-cell">Plant Name</div>
                         <div class="table-cell">Category</div>
+                        <div class="table-cell">Size</div>
                         <div class="table-cell">Price</div>
                         <div class="table-cell">Stock Quantity</div>
                         <div class="table-cell">Stock Status</div>
@@ -229,6 +224,17 @@
                     <option value="Outdoor Plants">Outdoor Plants</option>
                     <option value="Flowering Plants">Flowering Plants</option>
                     <option value="Herbs">Herbs</option>
+                </select>
+                <svg class="select-arrow-modal" viewBox="0 0 12 8">
+                    <path d="M6 8L0 1.51351L1.4 0L6 4.97297L10.6 0L12 1.51351L6 8Z" fill="black"/>
+                </svg>
+            </div>
+
+            <p class="form-label">Size</p>
+            <div class="form-input-container">
+                <select id="plantSize" class="form-input">
+                    <option value="Medium">Medium</option>
+                    <option value="Extra Large">Extra Large</option>
                 </select>
                 <svg class="select-arrow-modal" viewBox="0 0 12 8">
                     <path d="M6 8L0 1.51351L1.4 0L6 4.97297L10.6 0L12 1.51351L6 8Z" fill="black"/>
