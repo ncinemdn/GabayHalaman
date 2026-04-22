@@ -100,6 +100,9 @@ function loadCurrentOrder() {
     const trackingLabel = formatTrackingLabel(trackingStatus);
     const orderStatusClass = normalizeOrderStatus(order.orderStatus);
     const orderStatusLabel = formatOrderStatusLabel(order.orderStatus);
+    const isReservedOrder = Boolean(order.isReserved);
+    const reserveLabel = isReservedOrder ? 'Reserved' : 'Not Reserved';
+    const reserveClass = isReservedOrder ? 'reserved' : 'not-reserved';
 
     return `
         <div class="order-card">
@@ -112,20 +115,18 @@ function loadCurrentOrder() {
                     <div class="order-items">
                         ${itemsHTML}
                     </div>
-                    <p style="margin-top:6px;font-size:13px;color:#555;">Total: \u20B1${totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2})}</p>
+                    <p class="order-total-row">
+                      <span class="order-total-label">Total</span>
+                      <span class="order-total-value">\u20B1${totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+                    </p>
+                    <p class="order-reserve-row">
+                      <span class="order-reserve-label">Reservation</span>
+                      <span class="order-reserve-badge ${reserveClass}">${reserveLabel}</span>
+                    </p>
                 </div>
                 <p class="order-status ${orderStatusClass}">${orderStatusLabel}</p>
             </div>
             
-            <div class="delivery-banner">
-                <p class="delivery-text">Status: ${trackingLabel}</p>
-                <div class="delivery-chevron">
-                    <svg fill="none" preserveAspectRatio="none" viewBox="0 0 24 24" style="transform: rotate(-90deg);">
-                        <path d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z" fill="#359C4D" />
-                    </svg>
-                </div>
-            </div>
-
             <div class="button-container">
                 <button class="order-btn disabled">Order Received</button>
         <button class="order-btn primary" onclick="openOrderDetails('${order.id}')">Order Details</button>
@@ -279,7 +280,20 @@ function getPurchaseOrders() {
     .concat(Array.isArray(purchases) ? purchases : [])
     .concat(reservationOrders);
 
-  return allOrders.sort((a, b) => {
+  return allOrders.map(order => {
+    const isReserved = Boolean(
+      order && (
+        order.isReserved === true ||
+        order.isPlacedOrder === true ||
+        String(order.orderId || '').indexOf('#RES-') === 0
+      )
+    );
+
+    return {
+      ...order,
+      isReserved
+    };
+  }).sort((a, b) => {
     const first = new Date(a && a.createdAt ? a.createdAt : 0).getTime();
     const second = new Date(b && b.createdAt ? b.createdAt : 0).getTime();
     return second - first;
