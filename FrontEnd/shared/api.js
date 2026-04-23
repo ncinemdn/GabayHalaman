@@ -119,3 +119,39 @@ const requestsAPI = {
   delete: (id) => apiRequest(`/request/${id}`, 'DELETE'),
   getDeliveryWindow: (clientId) => apiRequest(`/request/delivery-window/${clientId}`),
 };
+
+// PlantSize endpoints
+const plantSizesAPI = {
+  getAll: () => apiRequest('/plantsize'),
+  getById: (id) => apiRequest(`/plantsize/${id}`),
+  create: (data) => apiRequest('/plantsize', 'POST', data),
+  update: (data) => apiRequest('/plantsize', 'PUT', data),
+  delete: (id) => apiRequest(`/plantsize/${id}`, 'DELETE'),
+};
+
+// RequestPlant endpoints
+const requestPlantsAPI = {
+  getAll: () => apiRequest('/requestplant'),
+  getById: (id) => apiRequest(`/requestplant/${id}`),
+  create: (data) => apiRequest('/requestplant', 'POST', data),
+  update: (data) => apiRequest('/requestplant', 'PUT', data),
+  delete: (id) => apiRequest(`/requestplant/${id}`, 'DELETE'),
+};
+
+// Review endpoints
+const reviewsAPI = {
+  getAll: () => apiRequest('/review'),
+  getById: (id) => apiRequest(`/review/${id}`),
+  create: (data) => apiRequest('/review', 'POST', data),
+  update: (data) => apiRequest('/review', 'PUT', data),
+  delete: (id) => apiRequest(`/review/${id}`, 'DELETE'),
+};
+
+// AdminLog endpoints
+const adminLogsAPI = {
+  getAll: () => apiRequest('/adminlog'),
+  getById: (id) => apiRequest(`/adminlog/${id}`),
+  create: (data) => apiRequest('/adminlog', 'POST', data),
+  update: (data) => apiRequest('/adminlog', 'PUT', data),
+  delete: (id) => apiRequest(`/adminlog/${id}`, 'DELETE'),
+};
