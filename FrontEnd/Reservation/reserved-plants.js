@@ -1,8 +1,29 @@
 // ================= API =================
 const plantAPI = {
     async getAll() {
-        const res = await fetch('http://localhost:5007/api/Plant');
-        return await res.json();
+        try {
+            const plants = await fetch('http://localhost:5007/api/plant').then(r => r.json());
+            const categories = await fetch('http://localhost:5007/api/category').then(r => r.json());
+            
+            // Create category map
+            const categoryMap = {};
+            if (Array.isArray(categories)) {
+                categories.forEach(cat => {
+                    categoryMap[cat.category_id] = cat.category_name || `Category ${cat.category_id}`;
+                });
+            }
+            
+            // Return plants with resolved category names
+            return plants.map(p => ({
+                ...p,
+                plant_name: p.plant_name,
+                plant_id: p.plant_id,
+                category: categoryMap[p.category_id] || 'General'
+            }));
+        } catch (error) {
+            console.error('Failed to fetch plants:', error);
+            return [];
+        }
     }
 };
 

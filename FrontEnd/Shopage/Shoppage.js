@@ -20,19 +20,51 @@ let refreshMoreCarousel = null;
 const DEFAULT_PLANT_IMAGE = (window.GHPlantData && window.GHPlantData.DEFAULT_PLANT_IMAGE)
     || 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
 
-    const PLANT_API = {
+const PLANT_API = {
     async getPlantInventory() {
-        const res = await fetch('http://localhost:5007/api/Plant');
-        const data = await res.json();
-
-        return data.map(p => ({
-            id: p.plant_id,
-            name: p.plant_name,
-            price: p.price,
-            category: p.category,
-            image: p.image,
-            stock: p.stock
-        }));
+        try {
+            // Fetch all plants
+            const plants = await fetch('http://localhost:5007/api/plant').then(r => r.json());
+            // Fetch all plant sizes (for pricing and stock)
+            const sizes = await fetch('http://localhost:5007/api/plantsize').then(r => r.json());
+            // Fetch all categories (for category names)
+            const categories = await fetch('http://localhost:5007/api/category').then(r => r.json());
+            
+            // Create a map of category_id to category_name
+            const categoryMap = {};
+            if (Array.isArray(categories)) {
+                categories.forEach(cat => {
+                    categoryMap[cat.category_id] = cat.category_name || `Category ${cat.category_id}`;
+                });
+            }
+            
+            // Create a map of plant_id to first available size (for pricing/stock)
+            const plantSizeMap = {};
+            if (Array.isArray(sizes)) {
+                sizes.forEach(size => {
+                    if (size.plant_id && !plantSizeMap[size.plant_id]) {
+                        plantSizeMap[size.plant_id] = size;
+                    }
+                });
+            }
+            
+            // Combine plant and size data
+            return plants.map(p => {
+                const sizeData = plantSizeMap[p.plant_id] || { price: 0, stock_quantity: 0 };
+                const categoryName = categoryMap[p.category_id] || 'General';
+                return {
+                    id: p.plant_id,
+                    name: p.plant_name,
+                    price: sizeData.price || 0,
+                    category: categoryName,
+                    image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
+                    stock: sizeData.stock_quantity || 0
+                };
+            });
+        } catch (error) {
+            console.error('Failed to fetch plant inventory:', error);
+            return [];
+        }
     },
 
     getEffectiveStock(plant) {
@@ -44,18 +76,13 @@ const DEFAULT_PLANT_IMAGE = (window.GHPlantData && window.GHPlantData.DEFAULT_PL
     }
 };
 
-const categoryDisplayMap = {
-    'Citrus': 'Citrus',
-    'Coconut': 'Coconut',
-    'Mango': 'Mango',
-    'Guava': 'Guava',
-    'Grafted': 'Grafted',
-    'Forest': 'Forest',
-    'Flowering': 'Flowering',
-    'Cuttings': 'Cuttings'
-};
+// Fetch categories from database at runtime
+let categoryDisplayMap = {};
+let categoryImageMap = {};
+let categoriesLoaded = false;
 
-const categoryImageMap = {
+// Default fallback image map
+const DEFAULT_CATEGORY_IMAGES = {
     'Citrus': 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     'Coconut': 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     'Mango': 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
@@ -65,6 +92,39 @@ const categoryImageMap = {
     'Flowering': 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     'Cuttings': 'https://images.unsplash.com/photo-1461354464878-ad92f492a5a0?auto=format&fit=crop&w=680&q=80'
 };
+
+// Function to load categories from backend
+async function loadCategoriesFromBackend() {
+    try {
+        const categories = await categoriesAPI.getAll();
+        if (Array.isArray(categories) && categories.length > 0) {
+            categories.forEach(cat => {
+                const displayName = cat.category_name || cat.name || cat.category_id;
+                categoryDisplayMap[displayName] = displayName;
+                categoryImageMap[displayName] = cat.image || DEFAULT_CATEGORY_IMAGES[displayName] || DEFAULT_PLANT_IMAGE;
+            });
+            categoriesLoaded = true;
+            console.log('✓ Categories loaded from backend:', categoryDisplayMap);
+            return;
+        }
+    } catch (error) {
+        console.warn('Failed to load categories from API, using fallback:', error);
+    }
+    
+    // Fallback to default categories if API fails
+    categoryDisplayMap = {
+        'Citrus': 'Citrus',
+        'Coconut': 'Coconut',
+        'Mango': 'Mango',
+        'Guava': 'Guava',
+        'Grafted': 'Grafted',
+        'Forest': 'Forest',
+        'Flowering': 'Flowering',
+        'Cuttings': 'Cuttings'
+    };
+    categoryImageMap = DEFAULT_CATEGORY_IMAGES;
+    categoriesLoaded = true;
+}
 
 let allPlantsPool = [];
 let products = [];
@@ -77,16 +137,17 @@ let currentPlantsMeta = {
 async function buildAllPlantsPool() {
     const inventory = await PLANT_API.getPlantInventory();
     return inventory.map((plant) => {
-        const sourceCategory = plant.category;
-        const displayCategory = categoryDisplayMap[sourceCategory] || sourceCategory;
-        const categoryImage = categoryImageMap[sourceCategory] || DEFAULT_PLANT_IMAGE;
+        // Use the category directly from the plant data
+        // (it's already resolved from category_id in PLANT_API.getPlantInventory)
+        const displayCategory = plant.category;
+        const categoryImage = categoryImageMap[displayCategory] || DEFAULT_PLANT_IMAGE;
 
         return {
             id: String(plant.id),
             name: plant.name,
             price: plant.price,
             category: displayCategory,
-            sourceCategory,
+            sourceCategory: displayCategory,
             image: plant.image || categoryImage,
             availableStock: PLANT_API ? PLANT_API.getEffectiveStock(plant) : 0,
             inStock: PLANT_API ? PLANT_API.isInStock(plant) : false
@@ -101,6 +162,10 @@ async function refreshPlantsData() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
+    // Load categories first from backend
+    await loadCategoriesFromBackend();
+    
+    // Then load plants
     await refreshPlantsData();
     initAllPlantsSection();
     initProductImageCarousel();

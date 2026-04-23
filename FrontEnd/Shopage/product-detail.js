@@ -13,17 +13,51 @@ let refreshMoreCarousel = null;
 
 const PLANT_API = {
     async getPlantInventory() {
-        const res = await fetch('http://localhost:5007/api/Plant');
-        const data = await res.json();
-
-        return data.map(p => ({
-            id: p.plant_id,
-            name: p.plant_name,
-            price: p.price,
-            category: p.category,
-            image: p.image,
-            stock: p.stock
-        }));
+        try {
+            // Fetch all plants
+            const plants = await fetch('http://localhost:5007/api/plant').then(r => r.json());
+            // Fetch all plant sizes (for pricing and stock)
+            const sizes = await fetch('http://localhost:5007/api/plantsize').then(r => r.json());
+            // Fetch all categories (for category names)
+            const categories = await fetch('http://localhost:5007/api/category').then(r => r.json());
+            
+            // Create a map of category_id to category_name
+            const categoryMap = {};
+            if (Array.isArray(categories)) {
+                categories.forEach(cat => {
+                    categoryMap[cat.category_id] = cat.category_name || `Category ${cat.category_id}`;
+                });
+            }
+            
+            // Create a map of plant_id to first available size (for pricing/stock)
+            const plantSizeMap = {};
+            if (Array.isArray(sizes)) {
+                sizes.forEach(size => {
+                    if (size.plant_id && !plantSizeMap[size.plant_id]) {
+                        plantSizeMap[size.plant_id] = size;
+                    }
+                });
+            }
+            
+            const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+            
+            // Combine plant and size data
+            return plants.map(p => {
+                const sizeData = plantSizeMap[p.plant_id] || { price: 0, stock_quantity: 0 };
+                const categoryName = categoryMap[p.category_id] || 'General';
+                return {
+                    id: p.plant_id,
+                    name: p.plant_name,
+                    price: sizeData.price || 0,
+                    category: categoryName,
+                    image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
+                    stock: sizeData.stock_quantity || 0
+                };
+            });
+        } catch (error) {
+            console.error('Failed to fetch plant inventory:', error);
+            return [];
+        }
     },
 
     getPlantById(id, list) {
