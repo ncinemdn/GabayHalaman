@@ -7,18 +7,10 @@ const state = {
     currentProductIndex: 0,
 };
 
-// Product images
-const productImages = [
-    'https://images.unsplash.com/photo-1509937528035-ad76254b0356?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1463320726281-696a485928c7?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1481687727648-08e5f80f6bf0?w=800&h=800&fit=crop'
-];
-
 let refreshMoreCarousel = null;
 
 const DEFAULT_PLANT_IMAGE = (window.GHPlantData && window.GHPlantData.DEFAULT_PLANT_IMAGE)
-    || 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+    || 'https://images.unsplash.com/photo-1448991311032-c1a2cf2d65fb?auto=format&fit=crop&w=1080&q=80';
 
 const PLANT_API = {
     async getPlantInventory() {
@@ -81,17 +73,8 @@ let categoryDisplayMap = {};
 let categoryImageMap = {};
 let categoriesLoaded = false;
 
-// Default fallback image map
-const DEFAULT_CATEGORY_IMAGES = {
-    'Citrus': 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Coconut': 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Mango': 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Guava': 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=680&q=80',
-    'Grafted': 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Forest': 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Flowering': 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    'Cuttings': 'https://images.unsplash.com/photo-1461354464878-ad92f492a5a0?auto=format&fit=crop&w=680&q=80'
-};
+// Default category fallback image
+const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1448991311032-c1a2cf2d65fb?auto=format&fit=crop&w=1080&q=80';
 
 // Function to load categories from backend
 async function loadCategoriesFromBackend() {
@@ -99,31 +82,40 @@ async function loadCategoriesFromBackend() {
         const categories = await categoriesAPI.getAll();
         if (Array.isArray(categories) && categories.length > 0) {
             categories.forEach(cat => {
-                const displayName = cat.category_name || cat.name || cat.category_id;
+                const displayName = cat.category_name || cat.name || `Category ${cat.category_id}`;
                 categoryDisplayMap[displayName] = displayName;
-                categoryImageMap[displayName] = cat.image || DEFAULT_CATEGORY_IMAGES[displayName] || DEFAULT_PLANT_IMAGE;
+                categoryImageMap[displayName] = cat.image || DEFAULT_CATEGORY_IMAGE;
             });
             categoriesLoaded = true;
             console.log('✓ Categories loaded from backend:', categoryDisplayMap);
             return;
         }
     } catch (error) {
-        console.warn('Failed to load categories from API, using fallback:', error);
+        console.warn('Failed to load categories from API:', error);
     }
     
-    // Fallback to default categories if API fails
-    categoryDisplayMap = {
-        'Citrus': 'Citrus',
-        'Coconut': 'Coconut',
-        'Mango': 'Mango',
-        'Guava': 'Guava',
-        'Grafted': 'Grafted',
-        'Forest': 'Forest',
-        'Flowering': 'Flowering',
-        'Cuttings': 'Cuttings'
-    };
-    categoryImageMap = DEFAULT_CATEGORY_IMAGES;
+    // Always mark categories loaded so the page can continue rendering
     categoriesLoaded = true;
+}
+
+function renderCategoryChips() {
+    const chipContainer = document.querySelector('.shop-category-list');
+    if (!chipContainer) {
+        return;
+    }
+
+    const staticChips = [
+        { label: 'Preferred Seedlings', value: 'all', active: true },
+        { label: 'All Plants', value: 'all-plants', active: false }
+    ];
+
+    const dynamicChips = Object.keys(categoryDisplayMap).map((category) => {
+        return `<a class="shop-category-chip" data-category="${category}" href="#allPlantsSection">${category}</a>`;
+    }).join('');
+
+    chipContainer.innerHTML = staticChips.map(chip => `
+        <a class="shop-category-chip${chip.active ? ' active' : ''}" data-category="${chip.value}" href="#allPlantsSection">${chip.label}</a>
+    `).join('') + dynamicChips;
 }
 
 let allPlantsPool = [];
@@ -164,6 +156,7 @@ async function refreshPlantsData() {
 document.addEventListener('DOMContentLoaded', async function() {
     // Load categories first from backend
     await loadCategoriesFromBackend();
+    renderCategoryChips();
     
     // Then load plants
     await refreshPlantsData();

@@ -1,255 +1,140 @@
 let selectedTab = 'new';
 let trendingCenterIndex = 1;
 let categoryIndex = 0;
-const PLANT_API = window.plantDataAPI || window.GHPlantData || null;
 
-const TRENDING_NAME_ALIASES = {
-    'carabao manggo': 'carabao mango',
-    'queen manggo': 'queen mango',
-    'indian manggo': 'indian mango',
-    'king manggo': 'king mango',
-    'purple manggo': 'purple mango',
-    'apple manggo': 'apple mango',
-    'tacunan variety': 'tacunan coconut',
-    'catigan variety': 'catigan dwarf coconut',
-    'golden': 'dwarf coconut golden variety'
+const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1448991311032-c1a2cf2d65fb?auto=format&fit=crop&w=1080&q=80';
+const DEFAULT_CATEGORY_IMAGE = DEFAULT_PLANT_IMAGE;
+
+let allPlantsPool = [];
+let categoryDisplayMap = {};
+let categoryImageMap = {};
+let categoriesLoaded = false;
+
+const productsByTab = {
+    new: [],
+    bestseller: []
 };
 
-const TRENDING_CATEGORY_ALIASES = {
-    'citrus variety': 'citrus',
-    'dwarf coconut': 'coconut',
-    'mangga variety': 'mango',
-    'flowering trees': 'flowering',
-    'cuttings/dwarf': 'cuttings',
-    'forest trees': 'forest',
-    'fruit bearing': 'grafted'
-};
+const PLANT_API = {
+    async getPlantInventory() {
+        try {
+            const [plants, sizes, categories] = await Promise.all([
+                plantsAPI.getAll(),
+                plantSizesAPI.getAll(),
+                categoriesAPI.getAll()
+            ]);
 
-function normalizePlantName(value) {
-    return String(value || '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '');
-}
-
-function normalizeCategoryName(value) {
-    const normalized = String(value || '')
-        .toLowerCase()
-        .replace(/[_-]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    return TRENDING_CATEGORY_ALIASES[normalized] || normalized;
-}
-
-function tokenizeName(value) {
-    return String(value || '')
-        .toLowerCase()
-        .replace(/[^a-z0-9 ]/g, ' ')
-        .split(/\s+/)
-        .filter(function(token) {
-            return token.length > 1;
-        });
-}
-
-function scorePlantMatch(targetName, candidateName) {
-    const targetTokens = tokenizeName(targetName);
-    const candidateTokens = tokenizeName(candidateName);
-
-    if (!targetTokens.length || !candidateTokens.length) {
-        return 0;
-    }
-
-    let overlap = 0;
-    targetTokens.forEach(function(token) {
-        if (candidateTokens.includes(token)) {
-            overlap += 1;
-        }
-    });
-
-    const normalizedTarget = normalizePlantName(targetName);
-    const normalizedCandidate = normalizePlantName(candidateName);
-
-    if (normalizedCandidate === normalizedTarget) {
-        return 1000;
-    }
-
-    if (normalizedCandidate.includes(normalizedTarget) || normalizedTarget.includes(normalizedCandidate)) {
-        return 600 + overlap;
-    }
-
-    return overlap;
-}
-
-function getInventoryByCategoryHint(categoryHint) {
-    if (!PLANT_API) {
-        return [];
-    }
-
-    const normalizedHint = normalizeCategoryName(categoryHint);
-    const inventory = PLANT_API.getPlantInventory();
-
-    return inventory.filter(function(plant) {
-        return normalizeCategoryName(plant.category) === normalizedHint;
-    });
-}
-
-function findInventoryPlantByName(name, categoryHint) {
-    if (!PLANT_API || !name) {
-        return null;
-    }
-
-    const rawName = String(name).trim();
-    const aliasName = TRENDING_NAME_ALIASES[rawName.toLowerCase()] || rawName;
-
-    const directMatch = PLANT_API.getPlantByName(aliasName) || PLANT_API.getPlantByName(rawName);
-    if (directMatch) {
-        return directMatch;
-    }
-
-    const scopedInventory = getInventoryByCategoryHint(categoryHint);
-    const fallbackInventory = PLANT_API.getPlantInventory();
-
-    const pickBest = function(list) {
-        let bestPlant = null;
-        let bestScore = 0;
-
-        list.forEach(function(plant) {
-            const score = scorePlantMatch(aliasName, plant.name);
-            if (score > bestScore) {
-                bestScore = score;
-                bestPlant = plant;
+            const categoryMap = {};
+            if (Array.isArray(categories)) {
+                categories.forEach(cat => {
+                    const displayName = cat.category_name || cat.name || `Category ${cat.category_id}`;
+                    categoryMap[cat.category_id] = displayName;
+                });
             }
-        });
 
-        return bestScore > 0 ? bestPlant : null;
-    };
+            const plantSizeMap = {};
+            if (Array.isArray(sizes)) {
+                sizes.forEach(size => {
+                    if (size.plant_id && !plantSizeMap[size.plant_id]) {
+                        plantSizeMap[size.plant_id] = size;
+                    }
+                });
+            }
 
-    return pickBest(scopedInventory) || pickBest(fallbackInventory);
+            return Array.isArray(plants) ? plants.map(p => ({
+                id: p.plant_id,
+                name: p.plant_name,
+                category: categoryMap[p.category_id] || 'General',
+                price: Number((plantSizeMap[p.plant_id]?.price) || 0),
+                image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
+                stock: Number((plantSizeMap[p.plant_id]?.stock_quantity) || 0)
+            })) : [];
+        } catch (error) {
+            console.error('Failed to fetch landing page inventory:', error);
+            return [];
+        }
+    },
+
+    getPlantByName(name) {
+        if (!name || !allPlantsPool.length) {
+            return null;
+        }
+
+        const searchName = normalizePlantName(name);
+        return allPlantsPool.find(function(plant) {
+            return normalizePlantName(plant.name) === searchName;
+        }) || null;
+    }
+};
+
+async function loadLandingData() {
+    try {
+        const [plants, categories] = await Promise.all([
+            PLANT_API.getPlantInventory(),
+            categoriesAPI.getAll()
+        ]);
+
+        allPlantsPool = Array.isArray(plants) ? plants : [];
+
+        if (Array.isArray(categories)) {
+            categories.forEach(cat => {
+                const displayName = cat.category_name || cat.name || `Category ${cat.category_id}`;
+                categoryDisplayMap[displayName] = displayName;
+                categoryImageMap[displayName] = cat.image || DEFAULT_CATEGORY_IMAGE;
+            });
+        }
+
+        categoriesLoaded = true;
+        syncTrendingWithInventory();
+        renderCategoryTrack();
+        initializeCategoryCarousel();
+    } catch (error) {
+        console.error('Failed to load landing page data:', error);
+    }
 }
 
-function syncTrendingWithInventory() {
-    if (!PLANT_API) {
+function renderCategoryTrack() {
+    const track = document.getElementById('categoryTrack');
+    if (!track) {
         return;
     }
 
-    ['new', 'bestseller'].forEach(function(tabKey) {
-        productsByTab[tabKey] = (productsByTab[tabKey] || []).map(function(item) {
-            const livePlant = findInventoryPlantByName(item.name, item.category);
-            if (!livePlant) {
-                const categoryCandidates = getInventoryByCategoryHint(item.category);
-                if (!categoryCandidates.length) {
-                    return item;
-                }
+    const cardStyles = ['category-card-brown', 'category-card-green', 'category-card-sage'];
+    const categoryCards = Object.keys(categoryDisplayMap).map((category, index) => {
+        const cardClass = cardStyles[index % cardStyles.length];
+        const image = categoryImageMap[category] || DEFAULT_CATEGORY_IMAGE;
+        const categorySlug = encodeURIComponent(category.toLowerCase().replace(/\s+/g, '-'));
 
-                const fallback = categoryCandidates[0];
-                return {
-                    ...item,
-                    id: String(fallback.id),
-                    name: fallback.name,
-                    category: fallback.category,
-                    image: fallback.image || item.image || DEFAULT_PLANT_IMAGE,
-                    price: Number(fallback.price || item.price || 250)
-                };
-            }
+        return `
+            <a class="category-card ${cardClass} category-slide" href="../Shopage/Shoppage.html?category=${categorySlug}" data-category-label="${category}">
+                <div class="category-image-standard">
+                    <img alt="${category}" src="${image}" onerror="this.src='${DEFAULT_CATEGORY_IMAGE}'">
+                </div>
+                <div class="category-label">${category}</div>
+            </a>
+        `;
+    }).join('');
 
-            return {
-                ...item,
-                id: String(livePlant.id),
-                name: livePlant.name,
-                category: livePlant.category,
-                image: livePlant.image || item.image || DEFAULT_PLANT_IMAGE,
-                price: Number(livePlant.price || item.price || 250)
-            };
-        });
-    });
+    track.innerHTML = categoryCards || '<div class="category-empty">No categories are available yet.</div>';
 }
 
-const productsByTab = {
-    new: [
-        { name: 'Calamansi', category: 'Citrus Variety', price: 200, image: '../LandingPage/calamansi.jpg' },
-        { name: 'Carabao Manggo', category: 'Mangga Variety', price: 350, image: '../Admin/PlantCatalog/images/carabao_mango.jpg' },
-        { name: 'Golden', category: 'Dwarf Coconut', price: 400, image: '../Admin/PlantCatalog/images/native_coconut.jpg' },
-        { name: 'Davao Pomelo', category: 'Citrus Variety', price: 250, image: '../Admin/PlantCatalog/images/suha_davao.jpg' },
-        { name: 'Red Guaple', category: 'Cuttings/Dwarf', price: 200, image: 'https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Golden Trumpet', category: 'Flowering Trees', price: 700, image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ],
-    bestseller: [
-        { name: 'Queen Manggo', category: 'Mangga Variety', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Lemon Meyer', category: 'Citrus Variety', price: 250, image: 'https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Tacunan Variety', category: 'Dwarf Coconut', price: 550, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Sweet Catimon', category: 'Mangga Variety', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Pink Trumpet', category: 'Flowering Trees', price: 800, image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Golden Shower', category: 'Flowering Trees', price: 900, image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ]
-};
+function getRandomPlants(count) {
+    const shuffled = [...allPlantsPool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+}
 
-const DEFAULT_PLANT_IMAGE = '../LandingPage/calamansi.jpg';
+function syncTrendingWithInventory() {
+    if (!allPlantsPool.length) {
+        productsByTab.new = [];
+        productsByTab.bestseller = [];
+        return;
+    }
 
-const reservationPlantsByCategory = {
-    'Fruit Bearing': [
-        { name: 'Rambutan RR Tuklapin', price: 250, image: 'https://images.unsplash.com/photo-1609123079242-086695c6ff09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Mangosteen', price: 350, image: 'https://images.unsplash.com/photo-1706698352015-a907c7f8a445?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Lansones Longkong', price: 350, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Durian Puyat', price: 300, image: 'https://images.unsplash.com/photo-1630510526315-aba311212355?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Sweet Tamarind', price: 250, image: 'https://images.unsplash.com/photo-1597081779002-314055fe24ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Bangkok Santol', price: 250, image: 'https://images.unsplash.com/photo-1737992468893-9c109da39f9b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: "Dian't Duhat", price: 250, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Sweet Balimbing', price: 250, image: 'https://images.unsplash.com/photo-1760509614441-e9ca05cba0df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ],
-    'Citrus Variety': [
-        { name: 'Japanese Orange', price: 300, image: 'https://images.unsplash.com/photo-1769968065899-832195e26d5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Davao Pomelo', price: 250, image: 'https://images.unsplash.com/photo-1655082291675-b919ca1c3419?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Satsuma Citrus', price: 250, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Dalanghita', price: 250, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Dayap', price: 250, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Calamansi', price: 200, image: 'https://images.unsplash.com/photo-1710425923077-1a7120a69eaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Kiat Kiat', price: 300, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Lemon Meyer', price: 250, image: 'https://images.unsplash.com/photo-1585931158785-8e8b240c627f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ],
-    'Mangga Variety': [
-        { name: 'Carabao Manggo', price: 350, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Queen Manggo', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Sweet Catimon', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Sweet Catimon Double Rootstock', price: 800, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Indian Manggo', price: 250, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'King Manggo', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Purple Manggo', price: 350, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Apple Manggo', price: 250, image: 'https://images.unsplash.com/photo-1689001819501-416754401ab1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ],
-    'Dwarf Coconut': [
-        { name: 'Golden', price: 400, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Tacunan Variety', price: 550, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Catigan Variety', price: 250, image: 'https://images.unsplash.com/photo-1720798377880-2a1b656848ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ],
-    'Cuttings/Dwarf': [
-        { name: 'Red Guaple', price: 200, image: 'https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Green Guaple', price: 200, image: 'https://images.unsplash.com/photo-1689996647099-a7a0b67fd2f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Marang', price: 250, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Lychee', price: 350, image: 'https://images.unsplash.com/photo-1705335834319-92a152363ea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Langka', price: 200, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Hybrid Mulberry', price: 200, image: 'https://images.unsplash.com/photo-1711641011417-3162af1e834c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Red Cardinal Grapes', price: 250, image: 'https://images.unsplash.com/photo-1660805376081-c6b01b7b78f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Sweet Guyabano', price: 300, image: 'https://images.unsplash.com/photo-1651565919334-bf81165cd0a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ],
-    'Flowering Trees': [
-        { name: 'Golden Trumpet', price: 700, image: 'https://images.unsplash.com/photo-1689790733141-9b4ef8ed1bc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Pink Trumpet', price: 800, image: 'https://images.unsplash.com/photo-1760135638379-0e749e10c1b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Golden Shower', price: 900, image: 'https://images.unsplash.com/photo-1683613791927-660d0ed2d86f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Fire Tree', price: 1200, image: 'https://images.unsplash.com/photo-1683356478048-ea3261e194b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Ilang Ilang', price: 700, image: 'https://images.unsplash.com/photo-1552017650-c117c3535f68?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Jacaranda', price: 1000, image: 'https://images.unsplash.com/photo-1695389591261-ee471f900c62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Pine Tree', price: 1200, image: 'https://images.unsplash.com/photo-1643550265302-a91ec947eb43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Palm Tree', price: 1500, image: 'https://images.unsplash.com/photo-1761001826491-91409e63205a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ],
-    'Forest Trees': [
-        { name: 'Gemelina', price: 250, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Mahogany', price: 350, image: 'https://images.unsplash.com/photo-1544840281-274ae2755620?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Narra', price: 350, image: 'https://images.unsplash.com/photo-1746311673824-69a17ad5672e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Molave', price: 250, image: DEFAULT_PLANT_IMAGE },
-        { name: 'Pole Bamboo', price: 550, image: 'https://images.unsplash.com/photo-1696677049444-f695a0935b49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' },
-        { name: 'Thai Bamboo', price: 550, image: 'https://images.unsplash.com/photo-1696677049444-f695a0935b49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080' }
-    ]
-};
+    productsByTab.new = getRandomPlants(Math.min(6, allPlantsPool.length));
+    productsByTab.bestseller = [...allPlantsPool]
+        .sort((a, b) => Number(b.price || 0) - Number(a.price || 0))
+        .slice(0, Math.min(6, allPlantsPool.length));
+}
 
 function getVisibleCards() {
     if (window.innerWidth <= 768) {
@@ -450,11 +335,14 @@ function renderCategoryProducts(categoryKey, categoryLabel) {
     const resultsSection = document.querySelector('#categoryProductsSection');
     const resultsTitle = document.querySelector('#categoryProductsTitle');
     const resultsGrid = document.querySelector('#categoryProductsGrid');
-    const plants = reservationPlantsByCategory[categoryKey] || [];
 
     if (!resultsSection || !resultsTitle || !resultsGrid) {
         return;
     }
+
+    const plants = allPlantsPool.filter(function(plant) {
+        return normalizeCategoryName(plant.category) === normalizeCategoryName(categoryKey);
+    });
 
     resultsTitle.textContent = categoryLabel + ' Plants';
 
@@ -673,11 +561,10 @@ function initializeFooter() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    syncTrendingWithInventory();
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadLandingData();
     initializeTabs();
     initializeTrendingCarousel();
-    initializeCategoryCarousel();
     initializeCategoryShopByCategory();
     initializeFAQs();
     initializeButtons();
