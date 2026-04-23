@@ -2,8 +2,8 @@
 const plantAPI = {
     async getAll() {
         try {
-            const plants = await fetch('http://localhost:5007/api/plant').then(r => r.json());
-            const categories = await fetch('http://localhost:5007/api/category').then(r => r.json());
+            const plants = await fetch('https://localhost:7178/api/plant').then(r => r.json());
+            const categories = await fetch('https://localhost:7178/api/category').then(r => r.json());
             
             // Create category map
             const categoryMap = {};

@@ -7,6 +7,7 @@ function logout() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const ADMIN_KEY = 'admin';
     const PROFILE_KEY = 'gh_admin_profile_data';
     const PASSWORD_KEY = 'gh_admin_profile_password';
 
@@ -18,6 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const profile = loadProfile();
+    const currentAdmin = loadAdminSession();
+    if (!currentAdmin) {
+        window.location.href = '../../Admin/Auth/signin.html';
+        return;
+    }
 
     const heroName = document.getElementById('heroName');
     const headerName = document.querySelector('.user-name');
@@ -184,27 +190,57 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detailPhone) detailPhone.textContent = data.phone;
     }
 
-    function loadProfile() {
+    function loadAdminSession() {
         try {
-            const saved = localStorage.getItem(PROFILE_KEY);
-            if (!saved) {
-                return { ...defaultProfile };
-            }
-
-            const parsed = JSON.parse(saved);
-            return {
-                fullName: parsed.fullName || defaultProfile.fullName,
-                role: parsed.role || defaultProfile.role,
-                email: parsed.email || defaultProfile.email,
-                phone: parsed.phone || defaultProfile.phone
-            };
+            return JSON.parse(localStorage.getItem(ADMIN_KEY) || 'null');
         } catch (error) {
-            return { ...defaultProfile };
+            return null;
         }
+    }
+
+    function loadProfile() {
+        const savedProfile = (() => {
+            try {
+                const saved = localStorage.getItem(PROFILE_KEY);
+                if (!saved) return null;
+                return JSON.parse(saved);
+            } catch (error) {
+                return null;
+            }
+        })();
+
+        const admin = loadAdminSession();
+        const baseProfile = savedProfile ? {
+            fullName: savedProfile.fullName || defaultProfile.fullName,
+            role: savedProfile.role || defaultProfile.role,
+            email: savedProfile.email || defaultProfile.email,
+            phone: savedProfile.phone || defaultProfile.phone
+        } : { ...defaultProfile };
+
+        if (!admin) {
+            return baseProfile;
+        }
+
+        const mergedProfile = {
+            fullName: admin.full_name || admin.name || baseProfile.fullName,
+            role: admin.role || baseProfile.role || 'Administrator',
+            email: admin.email || baseProfile.email,
+            phone: admin.phone || baseProfile.phone
+        };
+
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(mergedProfile));
+        return mergedProfile;
     }
 
     function saveProfile(data) {
         localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+        const admin = loadAdminSession();
+        if (admin) {
+            admin.full_name = data.fullName;
+            admin.email = data.email;
+            admin.phone = data.phone;
+            localStorage.setItem(ADMIN_KEY, JSON.stringify(admin));
+        }
     }
 
     function openPasswordModal() {
