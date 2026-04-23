@@ -18,13 +18,13 @@ namespace ProjectName.Repositories
     {
         IDbConnection connection;
         readonly string connectionString;
-        public GenericRepository(IConfiguration configuration)
-        {
-            connectionString = configuration.GetConnectionString("DefaultConnection");
-            connection = new SqlConnection(connectionString);
-        }
+		public GenericRepository()
+		{
+			connectionString = "Server=LAPTOP-21JQHQ4T\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;";
+			connection = new SqlConnection(connectionString);
+		}
 
-        public IEnumerable<T> GetAll()
+		public IEnumerable<T> GetAll()
         {
             string tableName = GetTableName();
 

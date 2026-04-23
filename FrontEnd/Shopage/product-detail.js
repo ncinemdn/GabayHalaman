@@ -112,7 +112,7 @@ function buildPlantFromQuery(urlParams) {
         id: generatedId,
         name,
         category,
-        image: image || 'https://images.unsplash.com/photo-1509937528035-ad76254b0356?w=800&h=800&fit=crop',
+        image: image || DEFAULT_PLANT_IMAGE,
         price
     };
 }
