@@ -20,7 +20,29 @@ let refreshMoreCarousel = null;
 const DEFAULT_PLANT_IMAGE = (window.GHPlantData && window.GHPlantData.DEFAULT_PLANT_IMAGE)
     || 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
 
-const PLANT_API = window.plantDataAPI || window.GHPlantData || null;
+    const PLANT_API = {
+    async getPlantInventory() {
+        const res = await fetch('http://localhost:5007/api/Plant');
+        const data = await res.json();
+
+        return data.map(p => ({
+            id: p.plant_id,
+            name: p.plant_name,
+            price: p.price,
+            category: p.category,
+            image: p.image,
+            stock: p.stock
+        }));
+    },
+
+    getEffectiveStock(plant) {
+        return plant.stock || 0;
+    },
+
+    isInStock(plant) {
+        return (plant.stock || 0) > 0;
+    }
+};
 
 const categoryDisplayMap = {
     'Citrus': 'Citrus',
@@ -52,9 +74,8 @@ let currentPlantsMeta = {
     subtitle: 'Showing random plants from our collection.'
 };
 
-function buildAllPlantsPool() {
-    const inventory = PLANT_API ? PLANT_API.getPlantInventory() : [];
-
+async function buildAllPlantsPool() {
+    const inventory = await PLANT_API.getPlantInventory();
     return inventory.map((plant) => {
         const sourceCategory = plant.category;
         const displayCategory = categoryDisplayMap[sourceCategory] || sourceCategory;
@@ -73,14 +94,14 @@ function buildAllPlantsPool() {
     });
 }
 
-function refreshPlantsData() {
-    allPlantsPool = buildAllPlantsPool();
+async function refreshPlantsData() {
+    allPlantsPool = await buildAllPlantsPool();
     products = getRandomPlants(Math.min(12, allPlantsPool.length));
 }
 
 // Initialize app
-document.addEventListener('DOMContentLoaded', function() {
-    refreshPlantsData();
+document.addEventListener('DOMContentLoaded', async function() {
+    await refreshPlantsData();
     initAllPlantsSection();
     initProductImageCarousel();
     initQuantityControls();
