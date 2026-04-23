@@ -192,6 +192,54 @@ function loadOrderDetails() {
     document.getElementById('detailsItems').innerHTML = itemsHTML;
     document.getElementById('detailsTotalQty').textContent = totalQty;
     document.getElementById('detailsTotalPrice').textContent = '\u20B1' + totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2});
+
+    // Load delivery window
+    loadDeliveryWindow(latestOrder);
+}
+
+async function loadDeliveryWindow(order) {
+    const earliestDeliveryElement = document.getElementById('detailsEarliestDelivery');
+    const latestDeliveryElement = document.getElementById('detailsLatestDelivery');
+
+    if (!earliestDeliveryElement || !latestDeliveryElement) return;
+
+    try {
+        // Get client ID from order (assuming it's stored in the order data)
+        const clientId = order.clientId || order.customerId;
+
+        if (!clientId) {
+            earliestDeliveryElement.textContent = 'N/A';
+            latestDeliveryElement.textContent = 'N/A';
+            return;
+        }
+
+        const deliveryWindow = await requestsAPI.getDeliveryWindow(clientId);
+
+        if (deliveryWindow && deliveryWindow.EarliestDelivery && deliveryWindow.LatestDelivery) {
+            // Format dates
+            const earliestDate = new Date(deliveryWindow.EarliestDelivery);
+            const latestDate = new Date(deliveryWindow.LatestDelivery);
+
+            earliestDeliveryElement.textContent = earliestDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            latestDeliveryElement.textContent = latestDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } else {
+            earliestDeliveryElement.textContent = 'Not scheduled';
+            latestDeliveryElement.textContent = 'Not scheduled';
+        }
+    } catch (error) {
+        console.error('Error loading delivery window:', error);
+        earliestDeliveryElement.textContent = 'Error loading';
+        latestDeliveryElement.textContent = 'Error loading';
+    }
 }
 
 function updateHistoryButtons() {

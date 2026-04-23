@@ -117,4 +117,5 @@ const requestsAPI = {
   create: (data) => apiRequest('/request', 'POST', data),
   update: (data) => apiRequest('/request', 'PUT', data),
   delete: (id) => apiRequest(`/request/${id}`, 'DELETE'),
+  getDeliveryWindow: (clientId) => apiRequest(`/request/delivery-window/${clientId}`),
 };
