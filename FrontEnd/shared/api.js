@@ -1,5 +1,5 @@
 // API Configuration for vanilla JavaScript files
-const API_BASE_URL = 'http://localhost:5007/api';
+const API_BASE_URL = 'https://localhost:7178/api';
 
 // Generic fetch wrapper
 async function apiRequest(endpoint, method = 'GET', body = null) {

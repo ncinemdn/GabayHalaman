@@ -1,13 +1,26 @@
 async function login(email, password) {
     try {
+        console.log('Fetching all admins from API...');
         const admins = await adminAPI.getAll();
+        console.log('Admins fetched:', admins);
+
+        if (!admins || !Array.isArray(admins)) {
+            console.error('API did not return an array of admins:', admins);
+            document.getElementById("signInError").textContent = "Server returned invalid data";
+            return;
+        }
 
         const user = admins.find(a => a.email === email);
+        console.log('User found:', user);
 
         if (!user) {
             document.getElementById("signInError").textContent = "User not found";
             return;
         }
+
+        console.log('Checking password...');
+        console.log('Stored hash:', user.password_hash);
+        console.log('Entered password:', password);
 
         if (user.password_hash !== password) {
             document.getElementById("signInError").textContent = "Incorrect password";
@@ -15,6 +28,7 @@ async function login(email, password) {
         }
 
         // Clear error if success
+        console.log('Login successful, saving session and redirecting...');
         document.getElementById("signInError").textContent = "";
 
         // Save session
@@ -23,8 +37,8 @@ async function login(email, password) {
         window.location.href = "../Dashboard/dashboard.html";
 
     } catch (error) {
-        console.error(error);
-        document.getElementById("signInError").textContent = "Server error";
+        console.error('Login error:', error);
+        document.getElementById("signInError").textContent = "Server error: " + error.message;
     }
 }
 
@@ -51,8 +65,16 @@ async function signup(name, email, contactNumber, password) {
         const response = await adminAPI.create(newAdmin);
         
         console.log('API Response:', response);
+        console.log('Response type:', typeof response);
+
+        if (!response) {
+            console.error('API returned falsy response:', response);
+            document.getElementById("signUpError").textContent = "Failed to create account. Email may already exist or server error.";
+            return;
+        }
 
         // Clear error if success
+        console.log('Account created successfully');
         document.getElementById("signUpError").textContent = "";
         document.getElementById("signUpSuccess").textContent = "Account created successfully! Redirecting to sign in...";
 
@@ -62,6 +84,7 @@ async function signup(name, email, contactNumber, password) {
 
     } catch (error) {
         console.error('Signup error:', error);
+        console.error('Error message:', error.message);
         
         // Provide specific error messages
         if (error.message.includes('409') || error.message.includes('conflict')) {
@@ -71,42 +94,170 @@ async function signup(name, email, contactNumber, password) {
         } else if (error.message.includes('duplicate') || error.message.includes('Duplicate')) {
             document.getElementById("signUpError").textContent = "Email already registered. Please use a different email.";
         } else {
-            document.getElementById("signUpError").textContent = "Failed to create account: " + error.message;
+            document.getElementById("signUpError").textContent = "Error: " + error.message;
         }
     }
 }
 
-// Sign In form handler
-if (document.getElementById("signInForm")) {
-    document.getElementById("signInForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Auth page loaded, attaching event handlers...');
+    
+    const signInForm = document.getElementById("signInForm");
+    console.log('Sign-in form found:', !!signInForm);
+    
+    if (signInForm) {
+        signInForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            console.log('Sign-in form submitted');
 
-        const email = document.getElementById("signinEmail").value;
-        const password = document.getElementById("signinPassword").value;
+            const email = document.getElementById("signinEmail").value;
+            const password = document.getElementById("signinPassword").value;
 
-        await login(email, password);
-    });
-}
+            console.log('Attempting login with email:', email);
+            await login(email, password);
+        });
+    }
 
-// Sign Up form handler
-if (document.getElementById("signUpForm")) {
-    document.getElementById("signUpForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
+    const signUpForm = document.getElementById("signUpForm");
+    console.log('Sign-up form found:', !!signUpForm);
+    
+    if (signUpForm) {
+        signUpForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            console.log('Sign-up form submitted');
 
-        const name = document.getElementById("signupName").value;
-        const email = document.getElementById("signupEmail").value;
-        const contactNumber = document.getElementById("signupContact").value;
-        const password = document.getElementById("signupPassword").value;
-        const confirmPassword = document.getElementById("signupConfirmPassword").value;
+            const name = document.getElementById("signupName").value;
+            const email = document.getElementById("signupEmail").value;
+            const contactNumber = document.getElementById("signupContact").value;
+            const password = document.getElementById("signupPassword").value;
+            const confirmPassword = document.getElementById("signupConfirmPassword").value;
 
-        if (password !== confirmPassword) {
-            document.getElementById("signUpError").textContent = "Passwords do not match";
-            return;
+            if (password !== confirmPassword) {
+                document.getElementById("signUpError").textContent = "Passwords do not match";
+                return;
+            }
+
+            await signup(name, email, contactNumber, password);
+        });
+    }
+
+    const forgotForm = document.getElementById("forgotPasswordForm");
+    console.log('Forgot password form found:', !!forgotForm);
+    
+    if (forgotForm) {
+        let isCodeVerified = false;
+
+        const forgotEmailInput = document.getElementById("forgotEmail");
+        const forgotCodeInput = document.getElementById("forgotCode");
+        const newPasswordInput = document.getElementById("newPassword");
+        const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
+        const passwordFields = document.getElementById("passwordFields");
+        const forgotError = document.getElementById("forgotError");
+        const forgotSuccess = document.getElementById("forgotSuccess");
+        const sendCodeBtn = document.getElementById("sendCodeBtn");
+        const submitBtn = forgotForm.querySelector("button[type='submit']");
+
+        if (sendCodeBtn) {
+            sendCodeBtn.addEventListener("click", async function () {
+                const email = forgotEmailInput.value.trim();
+
+                forgotError.textContent = "";
+                forgotSuccess.textContent = "";
+
+                if (!email) {
+                    forgotError.textContent = "Enter your email first.";
+                    return;
+                }
+
+                sendCodeBtn.disabled = true;
+
+                try {
+                    await sendRecoveryCodeToEmail(email);
+
+                    isCodeVerified = false;
+                    passwordFields.classList.add("is-hidden");
+                    newPasswordInput.value = "";
+                    confirmNewPasswordInput.value = "";
+                    if (submitBtn) {
+                        submitBtn.textContent = "Send Request";
+                    }
+
+                    forgotSuccess.textContent = "Code sent to your email. Check your inbox and enter the authentication code.";
+                } catch (error) {
+                    console.error(error);
+                    forgotError.textContent = error.message || "Failed to send code from server.";
+                } finally {
+                    sendCodeBtn.disabled = false;
+                }
+            });
         }
 
-        await signup(name, email, contactNumber, password);
-    });
-}
+        forgotForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const email = forgotEmailInput.value.trim();
+            const enteredCode = forgotCodeInput.value.trim();
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmNewPasswordInput.value;
+            forgotError.textContent = "";
+            forgotSuccess.textContent = "";
+
+            if (!email) {
+                forgotError.textContent = "Email is required.";
+                return;
+            }
+
+            if (!enteredCode) {
+                forgotError.textContent = "Authentication code is required.";
+                return;
+            }
+
+            try {
+                await verifyRecoveryCode(email, enteredCode);
+            } catch (error) {
+                forgotError.textContent = error.message || "Invalid authentication code.";
+                return;
+            }
+
+            if (!isCodeVerified) {
+                isCodeVerified = true;
+                passwordFields.classList.remove("is-hidden");
+                forgotSuccess.textContent = "Code verified. Enter your new password and click Send Request again.";
+                if (submitBtn) {
+                    submitBtn.textContent = "Reset Password";
+                }
+                return;
+            }
+
+            if (!newPassword || !confirmPassword) {
+                forgotError.textContent = "Enter and confirm your new password.";
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                forgotError.textContent = "New password must be at least 8 characters.";
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                forgotError.textContent = "New password and confirm password do not match.";
+                return;
+            }
+
+            try {
+                await resetPasswordByEmail(email, newPassword);
+                forgotSuccess.textContent = "Password updated successfully. Redirecting to sign in...";
+
+                setTimeout(function () {
+                    window.location.href = "signin.html";
+                }, 1400);
+            } catch (error) {
+                console.error(error);
+                forgotError.textContent = error.message || "Failed to reset password.";
+            }
+        });
+    }
+});
 
 async function sendRecoveryCodeToEmail(email) {
     await apiRequest('/admin/forgot-password/send-code', 'POST', {

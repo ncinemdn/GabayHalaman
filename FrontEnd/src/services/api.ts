@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5007/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7178/api';
 
 export const apiClient = {
   // Generic fetch wrapper
