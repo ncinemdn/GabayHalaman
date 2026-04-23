@@ -1,0 +1,8 @@
+﻿/ProjectName.sln
+/ProjectName.sln
+
+bin/
+obj/
+.vs/
+*.user
+*.suo
