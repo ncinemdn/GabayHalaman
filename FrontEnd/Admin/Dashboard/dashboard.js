@@ -1,4 +1,4 @@
-//// Page content templates
+// Page content templates
 const pages = {
     dashboard: `
         <div class="page-header">
@@ -11,8 +11,8 @@ const pages = {
             <div class="user-info">
                 <div class="user-avatar"></div>
                 <div class="user-details">
-                    <div class="user-name" id="dashboardUserName">Admin</div>
-                    <div class="user-role">Admin</div>
+                    <div class="user-name" id="dashboardUserName"></div>
+                    <div class="user-role" id="dashboardUserRole"></div>
                 </div>
             </div>
         </div>
@@ -21,7 +21,7 @@ const pages = {
                 <h1 class="page-title">Dashboard Overview</h1>
                 <p class="page-subtitle" id="dashboardGreeting">Welcome back! Here's your store summary.</p>
             </div>
-            
+           
             <div class="stats-grid" id="dashboardStats">
                 <!-- Dynamic stats will be inserted here -->
             </div>
@@ -78,8 +78,8 @@ const pages = {
             <div class="user-info">
                 <div class="user-avatar"></div>
                 <div class="user-details">
-                    <div class="user-name">Trisha Timog</div>
-                    <div class="user-role">Admin</div>
+                    <div class="user-name"></div>
+                    <div class="user-role"></div>
                 </div>
             </div>
         </div>
@@ -87,7 +87,7 @@ const pages = {
             <div class="section-card">
                 <h2 class="page-title">Manage Your Plant Catalog</h2>
                 <p class="page-subtitle" style="margin-bottom: 40px;">Add, edit, or remove plants from your inventory.</p>
-                
+               
                 <div class="btn-group">
                     <button class="btn btn-primary">+ Add New Plant</button>
                     <button class="btn btn-secondary">Import Plants</button>
@@ -108,8 +108,8 @@ const pages = {
             <div class="user-info">
                 <div class="user-avatar"></div>
                 <div class="user-details">
-                    <div class="user-name">Trisha Timog</div>
-                    <div class="user-role">Admin</div>
+                    <div class="user-name"></div>
+                    <div class="user-role"></div>
                 </div>
             </div>
         </div>
@@ -117,19 +117,19 @@ const pages = {
             <div class="section-card">
                 <h2 class="page-title">Order Management</h2>
                 <p class="page-subtitle" style="margin-bottom: 40px;">Manage customer purchases and reservations.</p>
-                
+               
                 <div class="stats-row">
                     <div class="mini-stat green">
                         <p class="mini-stat-label">New Orders</p>
-                        <p class="mini-stat-value">24</p>
+                        <p class="mini-stat-value"></p>
                     </div>
                     <div class="mini-stat yellow">
                         <p class="mini-stat-label">Processing</p>
-                        <p class="mini-stat-value">12</p>
+                        <p class="mini-stat-value"></p>
                     </div>
                     <div class="mini-stat blue">
                         <p class="mini-stat-label">Completed</p>
-                        <p class="mini-stat-value">156</p>
+                        <p class="mini-stat-value"></p>
                     </div>
                 </div>
 
@@ -148,8 +148,8 @@ const pages = {
             <div class="user-info">
                 <div class="user-avatar"></div>
                 <div class="user-details">
-                    <div class="user-name">Trisha Timog</div>
-                    <div class="user-role">Admin</div>
+                    <div class="user-name"></div>
+                    <div class="user-role"></div>
                 </div>
             </div>
         </div>
@@ -157,17 +157,17 @@ const pages = {
             <div class="section-card">
                 <h2 class="page-title">Schedule Deliveries</h2>
                 <p class="page-subtitle" style="margin-bottom: 40px;">Manage and track delivery schedules for plant orders.</p>
-                
+               
                 <div style="margin-bottom: 40px;">
                     <h3 style="font-size: 24px; font-weight: bold; color: black; margin-bottom: 20px;">Today's Deliveries</h3>
                     <div class="stats-row-2">
                         <div class="mini-stat-2 green">
                             <p class="mini-stat-label">Scheduled</p>
-                            <p class="mini-stat-value">8</p>
+                            <p class="mini-stat-value"></p>
                         </div>
                         <div class="mini-stat-2 orange">
                             <p class="mini-stat-label">Pending</p>
-                            <p class="mini-stat-value">3</p>
+                            <p class="mini-stat-value"></p>
                         </div>
                     </div>
                 </div>
@@ -187,8 +187,8 @@ const pages = {
             <div class="user-info">
                 <div class="user-avatar"></div>
                 <div class="user-details">
-                    <div class="user-name">Trisha Timog</div>
-                    <div class="user-role">Admin</div>
+                    <div class="user-name"></div>
+                    <div class="user-role"></div>
                 </div>
             </div>
         </div>
@@ -196,21 +196,21 @@ const pages = {
             <div class="section-card">
                 <h2 class="page-title">Your Profile</h2>
                 <p class="page-subtitle" style="margin-bottom: 40px;">Manage your account settings and preferences.</p>
-                
+               
                 <div class="profile-section">
                     <div class="profile-avatar"></div>
                     <div class="profile-form">
                         <div class="form-group">
                             <label class="form-label">Full Name</label>
-                            <input type="text" class="form-input" value="Trisha Timog">
+                            <input type="text" class="form-input" value="" placeholder="Enter your full name">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-input" value="trisha.timog@gabayhalaman.com">
+                            <input type="email" class="form-input" value="" placeholder="Enter your email">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Role</label>
-                            <input type="text" class="form-input" value="Admin" disabled>
+                            <input type="text" class="form-input" value="" placeholder="Administrator" disabled>
                         </div>
                     </div>
                 </div>
@@ -231,8 +231,8 @@ const pages = {
             <div class="user-info">
                 <div class="user-avatar"></div>
                 <div class="user-details">
-                    <div class="user-name">Trisha Timog</div>
-                    <div class="user-role">Admin</div>
+                    <div class="user-name"></div>
+                    <div class="user-role"></div>
                 </div>
             </div>
         </div>
@@ -240,7 +240,7 @@ const pages = {
             <div class="section-card">
                 <h2 class="page-title">How Can We Help You?</h2>
                 <p class="page-subtitle" style="margin-bottom: 40px;">Find answers to common questions and get support.</p>
-                
+               
                 <div class="help-topics">
                     <div class="help-topic">
                         <h3 class="help-topic-title">Getting Started</h3>
@@ -280,20 +280,20 @@ let currentDashboardData = null;
 
 // Default dashboard data
 const defaultDashboardData = {
-    totalPlants: 324,
-    totalOrders: 1458,
-    pendingOrders: 12,
-    totalClients: 8,
+    totalPlants: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    totalClients: 0,
     clientsData: [],
-    monthlyGrowth: 12.5,
+    monthlyGrowth: 0,
     salesData: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        data: [100, 120, 150, 140, 210, 220, 180, 150, 200, 260, 230, 210]
+        data: Array(12).fill(0)
     }
 };
 
 
-// Get dashboard data from API or localStorage
+// Get dashboard data from API
 function resolveClientName(request) {
     return request.full_name || request.name || request.customer_name || request.customerName || '';
 }
@@ -320,31 +320,48 @@ function resolveOrderQuantity(request) {
 
 async function getDashboardData() {
     try {
-        // Try to fetch from backend
         const plants = await plantsAPI.getAll();
         const requests = await requestsAPI.getAll();
-        
-        const clientNames = new Set();
         const validRequests = Array.isArray(requests) ? requests : [];
+        const clientNames = new Set();
+        const monthlyCounts = Array(12).fill(0);
+
+
         validRequests.forEach(request => {
             const name = resolveClientName(request);
-            if (name) clientNames.add(name.trim());
+            if (name) {
+                clientNames.add(name.trim());
+            }
+
+
+            const requestDate = new Date(request.request_date || request.requestDate || request.created_at || request.createdAt || null);
+            if (!Number.isNaN(requestDate.getTime())) {
+                monthlyCounts[requestDate.getMonth()] += 1;
+            }
         });
-        
-        // If no real clients, use example count for display
-        const totalClients = clientNames.size > 0 ? clientNames.size : 8; // 8 example clients
-        
+
+
+        const currentMonth = new Date().getMonth();
+        const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const monthlyGrowth = monthlyCounts[previousMonth]
+            ? Math.round((monthlyCounts[currentMonth] - monthlyCounts[previousMonth]) / monthlyCounts[previousMonth] * 100)
+            : monthlyCounts[currentMonth] > 0 ? 100 : 0;
+
+
         return {
-            totalPlants: plants ? plants.length : 0,
+            totalPlants: Array.isArray(plants) ? plants.length : 0,
             totalOrders: validRequests.length,
-            pendingOrders: validRequests.filter(r => (r.status || '').toLowerCase() === 'pending').length,
-            totalClients: totalClients,
+            pendingOrders: validRequests.filter(r => (r.request_status || r.status || '').toLowerCase() === 'pending').length,
+            totalClients: clientNames.size,
             clientsData: validRequests,
-            monthlyGrowth: 12.5,
-            salesData: defaultDashboardData.salesData
+            monthlyGrowth,
+            salesData: {
+                labels: defaultDashboardData.salesData.labels,
+                data: monthlyCounts
+            }
         };
     } catch (error) {
-        console.warn('Using default dashboard data:', error);
+        console.warn('Unable to load dashboard data:', error);
         return defaultDashboardData;
     }
 }
@@ -388,13 +405,23 @@ const clientsIconSvg = '<svg width="56" height="59" fill="none" viewBox="0 0 56 
 // Populate dashboard with dynamic data
 async function populateDashboard() {
     const data = await getDashboardData();
-    
-    // Update user info
-    const admin = JSON.parse(localStorage.getItem('admin') || '{}');
-    const userName = admin.full_name || admin.name || 'Admin';
+   
+    // Update user info from backend if possible
+    let userName = 'Admin';
+    try {
+        const currentAdmin = JSON.parse(localStorage.getItem('admin') || 'null');
+        if (currentAdmin?.admin_id) {
+            const adminData = await adminAPI.getById(currentAdmin.admin_id);
+            userName = adminData?.full_name || adminData?.name || userName;
+        }
+    } catch (error) {
+        console.warn('Unable to load admin user data:', error);
+    }
+
+
     document.getElementById('dashboardUserName').textContent = userName;
     document.getElementById('dashboardGreeting').textContent = `Welcome back, ${userName}! Here's your store summary.`;
-    
+   
     // Create stat cards
     const statsHtml = `
         ${createStatCard('Total Plants', data.totalPlants, 'Active Listings', plantIconSvg)}
@@ -402,12 +429,12 @@ async function populateDashboard() {
         ${createStatCard('Pending Orders', data.pendingOrders, 'Needs Attention', pendingIconSvg)}
         ${createStatCard('Total Clients', data.totalClients, 'Unique Customers', clientsIconSvg, 'showClientsPopup()')}
     `;
-    
+   
     const statsContainer = document.getElementById('dashboardStats');
     if (statsContainer) {
         statsContainer.innerHTML = statsHtml;
     }
-    
+   
     // Cache the loaded dashboard data so popups can reuse it
     currentDashboardData = data;
 
@@ -424,21 +451,6 @@ async function populateDashboard() {
 function showClientsPopup() {
     const data = currentDashboardData || defaultDashboardData;
     let clientNames = Array.from(new Set(data.clientsData?.map(resolveClientName).filter(name => !!name))).sort();
-
-
-    // If no real clients, show example data for reference
-    if (clientNames.length === 0) {
-        clientNames = [
-            'Maria Santos',
-            'Juan dela Cruz',
-            'Ana Reyes',
-            'Carlos Mendoza',
-            'Elena Garcia',
-            'Roberto Torres',
-            'Isabella Lopez',
-            'Miguel Fernandez'
-        ];
-    }
 
 
     const clientsList = document.getElementById('clientsList');
@@ -459,24 +471,6 @@ function showClientsPopup() {
 function showClientDetailsPopup(clientName) {
     const data = currentDashboardData || defaultDashboardData;
     let clientOrders = (data.clientsData || []).filter(request => resolveClientName(request) === clientName);
-
-
-    // If no real client data, show example data for reference
-    if (clientOrders.length === 0) {
-        const examplePlants = ['Calamansi Tree', 'Mango Seedling', 'Banana Plant', 'Coconut Palm'];
-        const exampleOrders = [
-            { plant: examplePlants[Math.floor(Math.random() * examplePlants.length)], amount: Math.floor(Math.random() * 5000) + 1000, quantity: Math.floor(Math.random() * 5) + 1 },
-            { plant: examplePlants[Math.floor(Math.random() * examplePlants.length)], amount: Math.floor(Math.random() * 5000) + 1000, quantity: Math.floor(Math.random() * 5) + 1 },
-            { plant: examplePlants[Math.floor(Math.random() * examplePlants.length)], amount: Math.floor(Math.random() * 5000) + 1000, quantity: Math.floor(Math.random() * 5) + 1 }
-        ];
-
-
-        clientOrders = exampleOrders.map(order => ({
-            plant_name: order.plant,
-            amount: order.amount,
-            quantity: order.quantity
-        }));
-    }
 
 
     const orderQuantities = clientOrders
@@ -585,12 +579,12 @@ function updateImportantSection(data) {
 function initializeSalesChart(salesData) {
     const chartCanvas = document.getElementById('salesChart');
     if (!chartCanvas) return;
-    
+   
     // Destroy existing chart if it exists
     if (salesChart) {
         salesChart.destroy();
     }
-    
+   
     const ctx = chartCanvas.getContext('2d');
     salesChart = new Chart(ctx, {
         type: 'line',
@@ -673,12 +667,12 @@ function loadPage(pageName) {
     currentPage = pageName;
     const mainContent = document.getElementById('mainContent');
     mainContent.innerHTML = pages[pageName] || pages.dashboard;
-    
+   
     // Populate dashboard if it's the dashboard page
     if (pageName === 'dashboard') {
         populateDashboard();
     }
-    
+   
     // Update active nav item
     document.querySelectorAll('.nav-item, .bottom-action').forEach(item => {
         item.classList.remove('active');
