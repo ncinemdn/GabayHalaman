@@ -39,7 +39,7 @@ namespace API.Controllers
 			return plantServices.Updatet(p);
 		}
 
-		[HttpDelete]
+		[HttpDelete("{id}")]
 		public bool Delete(int id)
 		{
 			return plantServices.Delete(id);

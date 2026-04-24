@@ -1,5 +1,7 @@
 // Plant data storage
 let plants = [];
+let categories = [];
+let categoryMap = {};
 
 let editingPlantId = null;
 let currentImagePreview = null;
@@ -17,42 +19,53 @@ const categoryFilter = document.getElementById('categoryFilter');
 const tableBody = document.getElementById('tableBody');
 const cardsContainer = document.getElementById('cardsContainer');
 
-const DEFAULT_SIZE_OPTIONS = ['Medium', 'Extra Large'];
-
 function getPlantSelectedSize(plant) {
-    return plant.selectedSize || 'Medium';
+    if (plant.selectedSize && plant.sizes?.[plant.selectedSize]) {
+        return plant.selectedSize;
+    }
+    const sizeKeys = Object.keys(plant.sizes || {});
+    return sizeKeys.length ? sizeKeys[0] : 'Medium';
 }
 
 function getPlantSizeData(plant) {
     const selectedSize = getPlantSelectedSize(plant);
     const sizes = plant.sizes || {};
-    return sizes[selectedSize] || { price: Number(plant.price) || 0, stock: Number(plant.stock) || 0 };
+    return sizes[selectedSize] || { price: 0, stock: 0, available: false };
 }
 
 function normalizePlantData(plant) {
     const normalized = { ...plant };
-    const basePrice = Number(plant.sizes?.Medium?.price) || 0;
-    const baseStock = Number(plant.sizes?.Medium?.stock) || 0;
     normalized.sizes = normalized.sizes || {};
-    normalized.sizes.Medium = normalized.sizes.Medium || { price: basePrice, stock: baseStock };
-    normalized.sizes['Extra Large'] = normalized.sizes['Extra Large'] || { price: basePrice, stock: baseStock };
-    normalized.selectedSize = normalized.selectedSize || 'Medium';
+    if (!Object.keys(normalized.sizes).length) {
+        normalized.sizes = {
+            Medium: { price: 0, stock: 0, available: false }
+        };
+    }
+    normalized.selectedSize = getPlantSelectedSize(normalized);
+    const anySizeInStock = Object.values(normalized.sizes).some(size => Number(size.stock) > 0 && Boolean(size.available));
+    normalized.available = typeof normalized.available === 'boolean' ? normalized.available : anySizeInStock;
     return normalized;
 }
 
 function changePlantSize(id, size) {
     const plant = plants.find(p => p.id === id);
-    if (!plant) return;
-
-    if (!plant.sizes) {
-        plant.sizes = {
-            Medium: { price: Number(plant.price) || 0, stock: Number(plant.stock) || 0 },
-            'Extra Large': { price: Number(plant.price) || 0, stock: 0 }
-        };
+    if (!plant || !plant.sizes) return;
+    if (!plant.sizes[size]) {
+        plant.sizes[size] = { price: 0, stock: 0, available: false };
     }
-
     plant.selectedSize = size;
     renderPlants();
+}
+
+function getCategoryName(categoryId) {
+    return categoryMap[categoryId] || 'General';
+}
+
+function renderSizeOptions(plant) {
+    const selectedSize = getPlantSelectedSize(plant);
+    return Object.keys(plant.sizes || {}).map(sizeName => `
+        <option value="${sizeName}" ${selectedSize === sizeName ? 'selected' : ''}>${sizeName}</option>
+    `).join('');
 }
 
 // Modal elements
@@ -102,36 +115,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPlantInventory() {
     try {
-        const allPlants = await plantsAPI.getAll();
-        const allSizes = await plantSizesAPI.getAll();
-        const sizesByPlant = {};
+        const [allPlants, allSizes, allCategories] = await Promise.all([
+            plantsAPI.getAll(),
+            plantSizesAPI.getAll(),
+            categoriesAPI.getAll()
+        ]);
 
+        categories = Array.isArray(allCategories) ? allCategories : [];
+        categoryMap = categories.reduce((map, cat) => {
+            if (cat && cat.category_id != null) {
+                map[cat.category_id] = cat.category_name || 'General';
+            }
+            return map;
+        }, {});
+
+        const sizesByPlant = {};
         (Array.isArray(allSizes) ? allSizes : []).forEach(s => {
             if (!sizesByPlant[s.plant_id]) {
                 sizesByPlant[s.plant_id] = {};
             }
             sizesByPlant[s.plant_id][s.size_name] = {
                 price: Number(s.price) || 0,
-                stock: Number(s.stock_quantity) || 0
+                stock: Number(s.stock_quantity) || 0,
+                available: String(s.is_available || '').toLowerCase() === 'true' || String(s.is_available || '').trim() === '1'
             };
         });
 
-        plants = allPlants.map(plant => ({
-            id: plant.plant_id,
-            name: plant.plant_name,
-            category: plant.category_name || 'General',
-            description: plant.description,
-            image: plant.image_path,
+        plants = (Array.isArray(allPlants) ? allPlants : []).map(plant => ({
+            id: String(plant.plant_id),
+            name: plant.plant_name || '',
+            category: getCategoryName(plant.category_id),
+            description: plant.description || '',
+            image: plant.image_path || '',
             sizes: sizesByPlant[plant.plant_id] || {}
-        }));
-
-        plants = plants.map(normalizePlantData);
+        })).map(normalizePlantData);
     } catch (error) {
         console.error('Failed to load plant inventory:', error);
         plants = [];
+        categories = [];
+        categoryMap = {};
     }
 
-    customCategories = new Set(plants.map(plant => plant.category));
+    customCategories = new Set([
+        ...plants.map(plant => plant.category),
+        ...categories.map(cat => cat.category_name || 'General')
+    ]);
 }
 
 function syncPlantInventory() {
@@ -202,18 +230,23 @@ function attachEventListeners() {
 
 // Initialize categories
 function initializeCategories() {
-    const categories = ['All', ...Array.from(customCategories).sort()];
-    categoryFilter.innerHTML = categories.map(cat => 
+    const categoryNames = Array.from(new Set([
+        ...customCategories,
+        ...categories.map(cat => cat.category_name || 'General')
+    ]));
+
+    const filterOptions = ['All', ...categoryNames.sort()];
+    categoryFilter.innerHTML = filterOptions.map(cat => 
         `<option value="${cat}">${cat}</option>`
     ).join('');
-    
+
     // Also update the plant category select in the modal
     updateCategorySelect();
 }
 
 // Get stock status
 function getStockStatus(stock, available) {
-    if (!available || stock === 0) return { label: 'Out of Stock', class: 'stock-out' };
+    if (!available || stock <= 0) return { label: 'Out of Stock', class: 'stock-out' };
     if (stock <= 15) return { label: 'Low Stock', class: 'stock-low' };
     return { label: 'In Stock', class: 'stock-in' };
 }
@@ -238,7 +271,8 @@ function renderDesktopTable(filteredPlants) {
     tableBody.innerHTML = filteredPlants.map(plant => {
         const selectedSize = getPlantSelectedSize(plant);
         const sizeData = getPlantSizeData(plant);
-        const stockStatus = getStockStatus(sizeData.stock, plant.available);
+        const effectiveAvailable = plant.available && Boolean(sizeData.available);
+        const stockStatus = getStockStatus(sizeData.stock, effectiveAvailable);
         return `
             <div class="table-row">
                 <div class="table-cell">
@@ -248,8 +282,7 @@ function renderDesktopTable(filteredPlants) {
                 <div class="table-cell plant-category">${plant.category}</div>
                 <div class="table-cell">
                     <select class="size-select" onchange="changePlantSize('${plant.id}', this.value)">
-                        <option value="Medium" ${selectedSize === 'Medium' ? 'selected' : ''}>Medium</option>
-                        <option value="Extra Large" ${selectedSize === 'Extra Large' ? 'selected' : ''}>Extra Large</option>
+                        ${renderSizeOptions(plant)}
                     </select>
                 </div>
                 <div class="table-cell plant-price">₱${sizeData.price.toFixed(2)}</div>
@@ -286,7 +319,8 @@ function renderMobileCards(filteredPlants) {
     cardsContainer.innerHTML = filteredPlants.map(plant => {
         const selectedSize = getPlantSelectedSize(plant);
         const sizeData = getPlantSizeData(plant);
-        const stockStatus = getStockStatus(sizeData.stock, plant.available);
+        const effectiveAvailable = plant.available && Boolean(sizeData.available);
+        const stockStatus = getStockStatus(sizeData.stock, effectiveAvailable);
         return `
             <div class="plant-card">
                 <div class="card-header">
@@ -360,6 +394,8 @@ function editPlant(id) {
     const sizeData = getPlantSizeData(plant);
 
     plantName.value = plant.name;
+    updateCategorySelect(plant.category);
+    updateSizeOptions(Object.keys(plant.sizes), selectedSize);
     plantCategory.value = plant.category;
     plantSize.value = selectedSize;
     plantPrice.value = `₱ ${sizeData.price.toFixed(2)}`;
@@ -405,12 +441,23 @@ function closeConfirmationModal() {
 }
 
 // Update category select in modal
-function updateCategorySelect() {
-    const categories = Array.from(customCategories).sort();
+function updateCategorySelect(selectedCategory = '') {
+    const categoryNames = Array.from(new Set([
+        ...categories.map(cat => cat.category_name || ''),
+        ...customCategories
+    ])).filter(Boolean).sort();
+
     plantCategory.innerHTML = `<option value="">Select category</option>` + 
-        categories.map(cat => 
-            `<option value="${cat}">${cat}</option>`
+        categoryNames.map(cat => 
+            `<option value="${cat}" ${cat === selectedCategory ? 'selected' : ''}>${cat}</option>`
         ).join('');
+}
+
+function updateSizeOptions(sizeOptions = [], selectedSize = 'Medium') {
+    const normalized = Array.isArray(sizeOptions) && sizeOptions.length ? sizeOptions : ['Medium', 'Extra Large'];
+    plantSize.innerHTML = normalized.map(size => 
+        `<option value="${size}" ${size === selectedSize ? 'selected' : ''}>${size}</option>`
+    ).join('');
 }
 
 // Open category management modal
@@ -428,47 +475,64 @@ function closeCategoryManagementModal() {
 }
 
 // Add new category
-function addNewCategory() {
+async function addNewCategory() {
     const newCategory = newCategoryInput.value.trim();
     if (!newCategory) return;
-    
+
     if (customCategories.has(newCategory)) {
-        confirmationMessage.textContent = 'This category already exists.';
-        confirmationModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        btnConfirmDelete.style.display = 'none';
-        btnConfirmCancel.textContent = 'Close';
-        btnConfirmCancel.addEventListener('click', function closeErrorModal() {
-            closeConfirmationModal();
-            btnConfirmDelete.style.display = '';
-            btnConfirmCancel.textContent = 'Cancel';
-            btnConfirmCancel.removeEventListener('click', closeErrorModal);
-        }, { once: true });
+        showErrorMessage('This category already exists.');
         return;
     }
-    
-    customCategories.add(newCategory);
-    newCategoryInput.value = '';
-    renderCategoriesList();
-    initializeCategories();
-    renderPlants();
+
+    try {
+        const created = await categoriesAPI.create({ category_name: newCategory });
+        if (created) {
+            await refreshCategories();
+            customCategories.add(newCategory);
+            newCategoryInput.value = '';
+            renderCategoriesList();
+            initializeCategories();
+            renderPlants();
+        } else {
+            showErrorMessage('Could not add category. Please try again.');
+        }
+    } catch (error) {
+        console.error('Failed to add category:', error);
+        showErrorMessage('Failed to add category. Please try again.');
+    }
 }
 
 // Delete category
-function deleteCategory(category) {
-    customCategories.delete(category);
-    renderCategoriesList();
-    initializeCategories();
-    renderPlants();
+async function deleteCategory(categoryId, categoryName) {
+    if (!categoryId) {
+        return;
+    }
+
+    try {
+        const removed = await categoriesAPI.delete(categoryId);
+        if (removed) {
+            await refreshCategories();
+            customCategories.delete(categoryName);
+            renderCategoriesList();
+            initializeCategories();
+            renderPlants();
+        } else {
+            showErrorMessage('Could not delete category.');
+        }
+    } catch (error) {
+        console.error('Failed to delete category:', error);
+        showErrorMessage('Failed to delete category.');
+    }
 }
 
 // Render categories list in management modal
 function renderCategoriesList() {
-    const categories = Array.from(customCategories).sort();
-    categoriesList.innerHTML = categories.map(cat => `
+    categoriesList.innerHTML = (categories || []).sort((a, b) => {
+        return (a.category_name || '').localeCompare(b.category_name || '');
+    }).map(cat => `
         <div class="category-item">
-            <span class="category-item-name">${cat}</span>
-            <button class="category-item-delete" onclick="deleteCategory('${cat}')">Delete</button>
+            <span class="category-item-name">${cat.category_name}</span>
+            <button class="category-item-delete" onclick="deleteCategory(${cat.category_id}, '${String(cat.category_name).replace(/'/g, "\\'")}')">Delete</button>
         </div>
     `).join('');
 }
@@ -483,68 +547,50 @@ function savePlant() {
     const stock = parseInt(plantStock.value) || 0;
     const description = plantDescription.value.trim();
 
-    if (!name || !category || !price || price <= 0 || stock < 0) {
-        confirmationMessage.textContent = 'Please fill in all required fields with valid data.';
-        confirmationModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        btnConfirmDelete.style.display = 'none';
-        btnConfirmCancel.textContent = 'Close';
-        btnConfirmCancel.addEventListener('click', function closeErrorModal() {
-            closeConfirmationModal();
-            btnConfirmDelete.style.display = '';
-            btnConfirmCancel.textContent = 'Cancel';
-            btnConfirmCancel.removeEventListener('click', closeErrorModal);
-        }, { once: true });
+    if (!name || !category || isNaN(price) || price <= 0 || stock < 0) {
+        showErrorMessage('Please fill in all required fields with valid data.');
         return;
     }
+
+    const newSizeData = {
+        price,
+        stock,
+        available: stock > 0
+    };
 
     if (editingPlantId) {
         const index = plants.findIndex(p => p.id === editingPlantId);
         if (index !== -1) {
             const existing = plants[index];
-            const existingSizes = existing.sizes || {
-                Medium: { price: Number(existing.price) || 0, stock: Number(existing.stock) || 0 },
-                'Extra Large': { price: Number(existing.price) || 0, stock: 0 }
-            };
-            const updatedSizes = {
-                Medium: existingSizes.Medium || { price: 0, stock: 0 },
-                'Extra Large': existingSizes['Extra Large'] || { price: 0, stock: 0 }
-            };
-            updatedSizes[selectedSize] = { price, stock };
-            const hasAnyStock = updatedSizes.Medium.stock > 0 || updatedSizes['Extra Large'].stock > 0;
+            const updatedSizes = { ...existing.sizes };
+            updatedSizes[selectedSize] = newSizeData;
+            const hasAnyStock = Object.values(updatedSizes).some(size => Number(size.stock) > 0 && Boolean(size.available));
 
-            plants[index] = {
+            plants[index] = normalizePlantData({
                 ...existing,
                 name,
                 category,
                 description,
-                image: currentImagePreview || existing.image || (window.GHPlantData ? window.GHPlantData.DEFAULT_PLANT_IMAGE : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'),
+                image: currentImagePreview || existing.image || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400',
                 selectedSize,
                 sizes: updatedSizes,
-                price,
-                stock,
-                available: existing.available && hasAnyStock
-            };
+                available: hasAnyStock
+            });
         }
     } else {
         const sizes = {
-            Medium: { price: selectedSize === 'Medium' ? price : 0, stock: selectedSize === 'Medium' ? stock : 0 },
-            'Extra Large': { price: selectedSize === 'Extra Large' ? price : 0, stock: selectedSize === 'Extra Large' ? stock : 0 }
+            [selectedSize]: newSizeData
         };
-        const hasAnyStock = sizes.Medium.stock > 0 || sizes['Extra Large'].stock > 0;
-
-        const plantData = {
+        const plantData = normalizePlantData({
             id: Date.now().toString(),
             name,
             category,
             description,
-            image: currentImagePreview || (window.GHPlantData ? window.GHPlantData.DEFAULT_PLANT_IMAGE : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'),
+            image: currentImagePreview || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400',
             selectedSize,
             sizes,
-            price,
-            stock,
-            available: hasAnyStock
-        };
+            available: stock > 0
+        });
         plants.push(plantData);
     }
 
@@ -552,8 +598,8 @@ function savePlant() {
     syncPlantInventory();
 
     closeAddModal();
-    renderPlants();
     initializeCategories();
+    renderPlants();
     
     if (!editingPlantId) {
         successModal.classList.add('active');
@@ -565,6 +611,39 @@ function closeAddModal() {
     addPlantModal.classList.remove('active');
     document.body.style.overflow = '';
     resetForm();
+}
+
+function refreshCategories() {
+    return categoriesAPI.getAll().then(allCategories => {
+        categories = Array.isArray(allCategories) ? allCategories : [];
+        categoryMap = categories.reduce((map, cat) => {
+            if (cat && cat.category_id != null) {
+                map[cat.category_id] = cat.category_name || 'General';
+            }
+            return map;
+        }, {});
+        customCategories = new Set([
+            ...customCategories,
+            ...categories.map(cat => cat.category_name || '')
+        ]);
+    }).catch(error => {
+        console.error('Failed to refresh categories:', error);
+    });
+}
+
+function showErrorMessage(message) {
+    confirmationMessage.textContent = message;
+    confirmationModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    btnConfirmDelete.style.display = 'none';
+    btnConfirmCancel.textContent = 'Close';
+    const closeErrorModal = () => {
+        closeConfirmationModal();
+        btnConfirmDelete.style.display = '';
+        btnConfirmCancel.textContent = 'Cancel';
+        btnConfirmCancel.removeEventListener('click', closeErrorModal);
+    };
+    btnConfirmCancel.addEventListener('click', closeErrorModal, { once: true });
 }
 
 // Close success modal

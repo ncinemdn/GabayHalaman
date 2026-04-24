@@ -16,11 +16,11 @@ const PLANT_API = {
     async getPlantInventory() {
         try {
             // Fetch all plants
-            const plants = await fetch('http://localhost:5007/api/plant').then(r => r.json());
+            const plants = await plantsAPI.getAll();
             // Fetch all plant sizes (for pricing and stock)
-            const sizes = await fetch('http://localhost:5007/api/plantsize').then(r => r.json());
+            const sizes = await plantSizesAPI.getAll();
             // Fetch all categories (for category names)
-            const categories = await fetch('http://localhost:5007/api/category').then(r => r.json());
+            const categories = await categoriesAPI.getAll();
             
             // Create a map of category_id to category_name
             const categoryMap = {};

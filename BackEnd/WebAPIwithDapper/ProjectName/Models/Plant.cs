@@ -13,17 +13,23 @@ namespace ProjectName.Models
 	{
 		[Key]
 		public int plant_id { get; set; }
+
 		[Column("category_id")]
 		public int category_id { get; set; }
+
 		[Column("plant_name")]
-		public string plant_name { get; set; }
+		public string plant_name { get; set; } = string.Empty;
+
 		[Column("description")]
-		public string description { get; set; }
+		public string description { get; set; } = string.Empty;
+
 		[Column("image_path")]
-		public string image_path { get; set; }
+		public string image_path { get; set; } = string.Empty;
+
 		[Column("created_at")]
-		public DateTime created_at { get; set; }
+		public DateTime? CreatedAt { get; set; }
+
 		[Column("updated_at")]
-		public DateTime updated_at { get; set; }
+		public DateTime? UpdatedAt { get; set; }
 	}
 }
