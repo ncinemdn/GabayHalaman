@@ -17,7 +17,7 @@ namespace ProjectName.Repositories
 
 		public GenericRepository()
 		{
-			connectionString = "Server=LAPTOP-21JQHQ4T\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;";
+			connectionString = "Server=.\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;";
 			connection = new SqlConnection(connectionString);
 		}
 
