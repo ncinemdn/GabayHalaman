@@ -2,6 +2,7 @@
 let plants = [];
 let categories = [];
 let categoryMap = {};
+let categoryNameToId = {};
 
 let editingPlantId = null;
 let currentImagePreview = null;
@@ -135,11 +136,19 @@ async function loadPlantInventory() {
                 sizesByPlant[s.plant_id] = {};
             }
             sizesByPlant[s.plant_id][s.size_name] = {
+                id: s.plant_size_id,
                 price: Number(s.price) || 0,
                 stock: Number(s.stock_quantity) || 0,
                 available: String(s.is_available || '').toLowerCase() === 'true' || String(s.is_available || '').trim() === '1'
             };
         });
+
+        categoryNameToId = categories.reduce((map, cat) => {
+            if (cat && cat.category_name != null) {
+                map[String(cat.category_name)] = cat.category_id;
+            }
+            return map;
+        }, {});
 
         plants = (Array.isArray(allPlants) ? allPlants : []).map(plant => ({
             id: String(plant.plant_id),
@@ -538,7 +547,7 @@ function renderCategoriesList() {
 }
 
 // Save plant
-function savePlant() {
+async function savePlant() {
     const name = plantName.value.trim();
     const category = plantCategory.value;
     const selectedSize = plantSize.value || 'Medium';
@@ -563,15 +572,67 @@ function savePlant() {
         if (index !== -1) {
             const existing = plants[index];
             const updatedSizes = { ...existing.sizes };
-            updatedSizes[selectedSize] = newSizeData;
+            updatedSizes[selectedSize] = { ...updatedSizes[selectedSize], ...newSizeData };
             const hasAnyStock = Object.values(updatedSizes).some(size => Number(size.stock) > 0 && Boolean(size.available));
+            const categoryId = categoryNameToId[category] ?? null;
+
+            if (!categoryId) {
+                showErrorMessage('Selected category is invalid.');
+                return;
+            }
+
+            const plantPayload = {
+                plant_id: Number(editingPlantId),
+                plant_name: name,
+                category_id: categoryId,
+                description,
+                image_path: currentImagePreview || existing.image || ''
+            };
+
+            let plantUpdated = false;
+            try {
+                plantUpdated = await plantsAPI.update(plantPayload);
+            } catch (error) {
+                console.error('Failed to update plant:', error);
+            }
+
+            if (!plantUpdated) {
+                showErrorMessage('Failed to save changes to database.');
+                return;
+            }
+
+            const sizeEntry = existing.sizes?.[selectedSize];
+            const plantSizePayload = {
+                plant_id: Number(editingPlantId),
+                size_name: selectedSize,
+                price: Math.round(price),
+                stock_quantity: stock,
+                is_available: stock > 0 ? '1' : '0',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            try {
+                let sizeSaved = false;
+                if (sizeEntry?.id) {
+                    plantSizePayload.plant_size_id = Number(sizeEntry.id);
+                    sizeSaved = await plantSizesAPI.update(plantSizePayload);
+                } else {
+                    sizeSaved = await plantSizesAPI.create(plantSizePayload);
+                }
+                if (!sizeSaved) {
+                    console.warn('Plant size save did not persist to database.');
+                }
+            } catch (error) {
+                console.error('Failed to save plant size:', error);
+            }
 
             plants[index] = normalizePlantData({
                 ...existing,
                 name,
                 category,
                 description,
-                image: currentImagePreview || existing.image || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400',
+                image: currentImagePreview || existing.image || '',
                 selectedSize,
                 sizes: updatedSizes,
                 available: hasAnyStock
@@ -622,12 +683,20 @@ function refreshCategories() {
             }
             return map;
         }, {});
+        categoryNameToId = categories.reduce((map, cat) => {
+            if (cat && cat.category_name != null) {
+                map[String(cat.category_name)] = cat.category_id;
+            }
+            return map;
+        }, {});
         customCategories = new Set([
             ...customCategories,
             ...categories.map(cat => cat.category_name || '')
         ]);
+        return categories;
     }).catch(error => {
         console.error('Failed to refresh categories:', error);
+        return categories;
     });
 }
 
