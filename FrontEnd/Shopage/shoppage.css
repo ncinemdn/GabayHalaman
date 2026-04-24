@@ -511,6 +511,17 @@ body {
     background-color: #78a240;
 }
 
+.size-btn:disabled,
+.size-btn.unavailable {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border-color: #d1d5db;
+    box-shadow: none;
+}
+
 .size-btn.active {
     background-color: #78a240;
     color: #000000;

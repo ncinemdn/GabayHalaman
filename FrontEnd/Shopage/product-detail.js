@@ -5,7 +5,8 @@ const state = {
     selectedSize: 'medium',
     selectedTab: 'additional',
     currentMoreProductIndex: 0,
-    currentPlant: null
+    currentPlant: null,
+    currentSizeData: null
 };
 
 let moreProducts = [];
@@ -33,9 +34,22 @@ const PLANT_API = {
             const plantSizeMap = {};
             if (Array.isArray(sizes)) {
                 sizes.forEach(size => {
-                    if (size.plant_id && !plantSizeMap[size.plant_id]) {
-                        plantSizeMap[size.plant_id] = size;
+                    if (!size.plant_id) {
+                        return;
                     }
+
+                    if (!plantSizeMap[size.plant_id]) {
+                        plantSizeMap[size.plant_id] = [];
+                    }
+
+                    plantSizeMap[size.plant_id].push({
+                        id: size.plant_size_id,
+                        plantId: size.plant_id,
+                        name: String(size.size_name || '').trim(),
+                        price: Number(size.price) || 0,
+                        stock: Number(size.stock_quantity) || 0,
+                        available: String(size.is_available || '').toLowerCase() === 'true' || String(size.is_available || '').trim() === '1'
+                    });
                 });
             }
             
@@ -43,15 +57,17 @@ const PLANT_API = {
             
             // Combine plant and size data
             return plants.map(p => {
-                const sizeData = plantSizeMap[p.plant_id] || { price: 0, stock_quantity: 0 };
+                const sizeData = plantSizeMap[p.plant_id] || [];
                 const categoryName = categoryMap[p.category_id] || 'General';
                 return {
                     id: p.plant_id,
                     name: p.plant_name,
-                    price: sizeData.price || 0,
+                    description: p.description || '',
+                    sizes: sizeData,
+                    price: sizeData[0]?.price || 0,
                     category: categoryName,
                     image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
-                    stock: sizeData.stock_quantity || 0
+                    stock: sizeData[0]?.stock || 0
                 };
             });
         } catch (error) {
@@ -60,8 +76,12 @@ const PLANT_API = {
         }
     },
 
-    getPlantById(id, list) {
-        return list.find(p => String(p.id) === String(id));
+    getPlantById(id, list = []) {
+        if (!Array.isArray(list)) {
+            return null;
+        }
+
+        return list.find(p => String(p.id) === String(id)) || null;
     },
 
     getEffectiveStock(plant) {
@@ -83,17 +103,138 @@ async function getInventory() {
     return await PLANT_API.getPlantInventory();
 }
 
-function getPlantStockState(plant) {
+function getPlantStockState(plant, inventory = []) {
     if (!PLANT_API) {
         return { inStock: true, stock: 1 };
     }
 
-    const latest = PLANT_API.getPlantById(plant.id) || plant;
-    const stock = PLANT_API.getEffectiveStock(latest);
+    const latest = PLANT_API.getPlantById(plant.id, inventory) || plant;
+    const sizeData = getCurrentSizeData(latest);
+    const stock = sizeData ? Number(sizeData.stock || 0) : PLANT_API.getEffectiveStock(latest);
     return {
         inStock: stock > 0,
         stock
     };
+}
+
+function normalizeSizeName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function isSizeSelectable(size) {
+    if (!size) {
+        return false;
+    }
+
+    const available = String(size.available ?? '').toLowerCase();
+    const hasStock = Number(size.stock || 0) > 0;
+    const hasPrice = Number(size.price || 0) > 0;
+
+    if (available === 'false' || available === '0') {
+        return false;
+    }
+
+    return hasStock && hasPrice;
+}
+
+function getAvailableSizes(plant) {
+    if (!plant || !Array.isArray(plant.sizes)) {
+        return [];
+    }
+
+    return plant.sizes.filter(isSizeSelectable);
+}
+
+function getSizeDataByName(plant, sizeName) {
+    if (!plant || !Array.isArray(plant.sizes) || !plant.sizes.length) {
+        return null;
+    }
+
+    const normalizedRequestedSize = normalizeSizeName(sizeName);
+    return plant.sizes.find((size) => normalizeSizeName(size.name) === normalizedRequestedSize) || null;
+}
+
+function getCurrentSizeData(plant, selectedSize = state.selectedSize) {
+    if (!plant || !Array.isArray(plant.sizes) || !plant.sizes.length) {
+        return null;
+    }
+
+    const matched = getSizeDataByName(plant, selectedSize);
+    if (isSizeSelectable(matched)) {
+        return matched;
+    }
+
+    return getAvailableSizes(plant)[0] || null;
+}
+
+function updateSizeButtonAvailability(plant) {
+    const sizeButtons = document.querySelectorAll('.size-btn');
+
+    sizeButtons.forEach((button) => {
+        const sizeData = getSizeDataByName(plant, button.dataset.size || button.textContent);
+        const selectable = isSizeSelectable(sizeData);
+
+        button.disabled = !selectable;
+        button.setAttribute('aria-disabled', String(!selectable));
+        button.classList.toggle('unavailable', !selectable);
+        if (!selectable) {
+            button.classList.remove('active');
+        }
+    });
+}
+
+function applyPlantSizeView(plant, sizeData) {
+    const plantPrice = document.getElementById('plantPrice');
+    const plantStockStatus = document.getElementById('plantStockStatus');
+    const incrementBtn = document.getElementById('incrementBtn');
+    const buyNowBtn = document.querySelector('.buy-now-btn');
+    const reserveBtn = document.querySelector('.reserve-btn');
+    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+
+    if (!plant || !sizeData) {
+        return;
+    }
+
+    state.currentSizeData = sizeData;
+
+    if (plantPrice) {
+        plantPrice.textContent = `₱${Number(sizeData.price || 0).toLocaleString('en-PH')}.00`;
+    }
+
+    if (plantStockStatus) {
+        const stock = Number(sizeData.stock || 0);
+        plantStockStatus.textContent = stock > 0 ? `${stock} available stock` : 'Out of Stock';
+        plantStockStatus.classList.toggle('out', stock <= 0);
+    }
+
+    const inStock = Number(sizeData.stock || 0) > 0;
+    if (addToCartBtn) addToCartBtn.disabled = !inStock;
+    if (buyNowBtn) buyNowBtn.disabled = !inStock;
+    if (reserveBtn) {
+        reserveBtn.disabled = !inStock;
+        reserveBtn.textContent = inStock ? 'Reserve Now' : 'Out of Stock';
+    }
+    if (incrementBtn) incrementBtn.disabled = !inStock;
+
+    state.quantity = Math.min(Math.max(1, state.quantity), Math.max(1, Number(sizeData.stock || 1)));
+    const quantityValue = document.getElementById('quantityValue');
+    if (quantityValue) {
+        quantityValue.textContent = state.quantity;
+    }
+}
+
+function setActiveSizeButton(selectedSizeName) {
+    const normalizedSelected = normalizeSizeName(selectedSizeName);
+    const sizeButtons = document.querySelectorAll('.size-btn');
+
+    sizeButtons.forEach((button) => {
+        const buttonSize = normalizeSizeName(button.dataset.size || button.textContent);
+        button.classList.toggle('active', buttonSize === normalizedSelected);
+    });
 }
 
 function buildPlantFromQuery(urlParams) {
@@ -174,43 +315,36 @@ async function loadPlantData() {
         return;
     }
     
-    state.currentPlant = foundPlant;
-    const stockState = getPlantStockState(foundPlant);
+    const stockState = getPlantStockState(foundPlant, inventory);
+    state.currentPlant = {
+        ...foundPlant,
+        stock: stockState.stock
+    };
     const numericPlantId = Number(foundPlant.id);
     
     // Update page title and meta
     document.title = `${foundPlant.name} - Gabay Halaman`;
+
+    updateSizeButtonAvailability(state.currentPlant);
+
+    const initialSizeData = getCurrentSizeData(state.currentPlant);
+    if (initialSizeData) {
+        state.selectedSize = normalizeSizeName(initialSizeData.name) || state.selectedSize;
+        applyPlantSizeView(state.currentPlant, initialSizeData);
+        setActiveSizeButton(initialSizeData.name);
+    }
     
     // Update plant details
     document.getElementById('plantName').textContent = foundPlant.name;
-    document.getElementById('plantPrice').textContent = `₱${foundPlant.price.toLocaleString()}.00`;
     document.getElementById('plantDescription').textContent = foundPlant.description || 'No description available'
-    const stockStatus = document.getElementById('plantStockStatus');
-    stockStatus.textContent = stockState.inStock ? `${stockState.stock} available stock` : 'Out of Stock';
-    stockStatus.classList.toggle('out', !stockState.inStock);
     document.getElementById('additionalInfo').innerHTML = `
         <p><strong>Category:</strong> ${foundPlant.category}</p>
-        <p><strong>Price:</strong> ₱${foundPlant.price.toLocaleString()}.00</p>
-        <p><strong>Stock:</strong> ${stockState.inStock ? `${stockState.stock} available` : 'Out of Stock'}</p>
+        <p><strong>Price:</strong> fetched from tblPlantSize for the selected size</p>
+        <p><strong>Stock:</strong> fetched from tblPlantSize for the selected size</p>
         <p>${foundPlant.description || 'Premium plant selection.'}</p>
         <p><strong>Caring Tips:</strong> Water regularly, ensure proper drainage, and provide appropriate sunlight based on the plant type. Most tropical plants thrive in warm, humid conditions.</p>
         <p><strong>Shipping:</strong> Carefully packaged to ensure safe delivery. Plants arrive in excellent condition.</p>
     `;
-
-    const addToCartBtn = document.querySelector('.add-to-cart-btn');
-    const buyNowBtn = document.querySelector('.buy-now-btn');
-    const reserveBtn = document.querySelector('.reserve-btn');
-    const incrementBtn = document.getElementById('incrementBtn');
-
-    if (!stockState.inStock) {
-        if (addToCartBtn) addToCartBtn.disabled = true;
-        if (buyNowBtn) buyNowBtn.disabled = true;
-        if (reserveBtn) {
-            reserveBtn.disabled = true;
-            reserveBtn.textContent = 'Out of Stock';
-        }
-        if (incrementBtn) incrementBtn.disabled = true;
-    }
     
     state.productImages = PLANT_API
         ? PLANT_API.getPlantGallery(foundPlant.category, foundPlant.name, foundPlant.image)
@@ -300,8 +434,8 @@ function initQuantityControls() {
     };
     
     incrementBtn.onclick = () => {
-        const stockState = state.currentPlant ? getPlantStockState(state.currentPlant) : { stock: 99 };
-        state.quantity = Math.min(stockState.stock || 1, state.quantity + 1);
+        const stockLimit = state.currentSizeData ? Number(state.currentSizeData.stock || 1) : 99;
+        state.quantity = Math.min(stockLimit || 1, state.quantity + 1);
         quantityValue.textContent = state.quantity;
     };
 }
@@ -311,9 +445,20 @@ function initSizeButtons() {
     const sizeButtons = document.querySelectorAll('.size-btn');
     sizeButtons.forEach(btn => {
         btn.onclick = function() {
+            if (this.disabled) {
+                return;
+            }
+
             sizeButtons.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            state.selectedSize = this.dataset.size;
+            state.selectedSize = this.dataset.size || this.textContent;
+
+            if (state.currentPlant) {
+                const sizeData = getCurrentSizeData(state.currentPlant, state.selectedSize);
+                if (isSizeSelectable(sizeData)) {
+                    applyPlantSizeView(state.currentPlant, sizeData);
+                }
+            }
         };
     });
 }
