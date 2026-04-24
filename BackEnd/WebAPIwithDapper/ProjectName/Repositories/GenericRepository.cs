@@ -90,15 +90,23 @@ namespace ProjectName.Repositories
 			return keyProp.Name; // e.g. "plant_id"
 		}
 
-		// ✅ UPDATE SET CLAUSE (EXCLUDES KEY)
 		private string GetSetClause()
 		{
 			var keyName = GetKeyName();
 
 			var properties = typeof(T).GetProperties()
-				.Where(p => p.Name != keyName);
+				.Where(p =>
+					p.Name != keyName &&
+					(!p.PropertyType.IsClass || p.PropertyType == typeof(string))
+				);
 
-			return string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
+			return string.Join(", ", properties.Select(p =>
+			{
+				var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
+				var columnName = columnAttr != null ? columnAttr.Name : p.Name;
+
+				return $"{columnName} = @{p.Name}";
+			}));
 		}
 
 		// ✅ TABLE NAME
