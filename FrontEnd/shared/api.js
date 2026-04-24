@@ -1,5 +1,5 @@
 // API Configuration for vanilla JavaScript files
-const API_BASE_URL = 'https://localhost:7178/api';
+const API_BASE_URL = 'http://localhost:5007/api';
 
 // Generic fetch wrapper
 async function apiRequest(endpoint, method = 'GET', body = null) {
@@ -63,6 +63,7 @@ const adminAPI = {
   create: (data) => apiRequest('/admin', 'POST', data),
   update: (data) => apiRequest('/admin', 'PUT', data),
   delete: (id) => apiRequest(`/admin/${id}`, 'DELETE'),
+  changePassword: (id, data) => apiRequest(`/admin/change-password/${id}`, 'PUT', data),
 };
 
 // Plant endpoints

@@ -1,5 +1,3 @@
-const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
-
 let deliveries = [];
 let activeSearchQuery = '';
 let activeStatusFilter = 'all';
@@ -83,113 +81,23 @@ function getNextDeliveryId(existingDeliveries) {
     return '#DEL-' + String(maxNumber + 1);
 }
 
-function saveDeliveries() {
-    localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(deliveries));
-}
-
-function removeOrderFromUserStores(orderId) {
-    const targetOrderId = String(orderId || '').trim();
-    if (!targetOrderId) {
-        return;
+async function loadDeliveries() {
+    try {
+        const allDeliveries = await deliveriesAPI.getAll();
+        deliveries = (Array.isArray(allDeliveries) ? allDeliveries : []).map(d => ({
+            id: d.delivery_id,
+            deliveryId: '#DEL-' + d.delivery_id,
+            orderId: d.request_id ? String(d.request_id) : '',
+            customerName: d.client_name || d.full_name || 'Customer',
+            deliveryAddress: d.delivery_address || 'Address not provided',
+            scheduledDate: d.scheduled_date,
+            status: mapTrackingToDeliveryStatus(d.delivery_status || d.status),
+            trackingStatus: normalizeTrackingStatus(d.delivery_status || d.status)
+        }));
+    } catch (error) {
+        console.error('Failed to load deliveries:', error);
+        deliveries = [];
     }
-
-    const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
-    const nextPurchases = Array.isArray(purchases)
-        ? purchases.filter(order => String(order && order.orderId || '').trim() !== targetOrderId)
-        : [];
-    localStorage.setItem('purchaseOrders', JSON.stringify(nextPurchases));
-
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-    const nextReservations = Array.isArray(reservations)
-        ? reservations.filter(order => String(order && order.orderId || '').trim() !== targetOrderId)
-        : [];
-    localStorage.setItem('reservations', JSON.stringify(nextReservations));
-}
-
-function getPurchaseOrders() {
-    const stored = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
-    return Array.isArray(stored) ? stored : [];
-}
-
-function getReservationOrders() {
-    const stored = JSON.parse(localStorage.getItem('reservations') || '[]');
-    if (!Array.isArray(stored)) {
-        return [];
-    }
-
-    return stored.filter((order) => {
-        if (!order || typeof order !== 'object') {
-            return false;
-        }
-
-        if (order.isPlacedOrder === true) {
-            return true;
-        }
-
-        return String(order.orderId || '').indexOf('#RES-') === 0;
-    });
-}
-
-function getDeliverableOrders() {
-    return getPurchaseOrders().concat(getReservationOrders());
-}
-
-function syncPurchaseOrdersToDeliveries() {
-    const purchaseOrders = getDeliverableOrders();
-
-    purchaseOrders.forEach((order) => {
-        const orderId = String(order.orderId || '').trim();
-        if (!orderId) {
-            return;
-        }
-
-        const alreadyExists = deliveries.some((delivery) => String(delivery.orderId || '') === orderId);
-        if (alreadyExists) {
-            return;
-        }
-
-        const trackingStatus = normalizeTrackingStatus(order.trackingStatus || 'confirmed');
-        const createdDate = order.createdAt ? new Date(order.createdAt) : new Date();
-        const scheduledDate = createdDate.toISOString().slice(0, 10);
-
-        deliveries.push({
-            id: String(Date.now()) + '-' + Math.floor(Math.random() * 100000),
-            deliveryId: getNextDeliveryId(deliveries),
-            orderId: orderId,
-            customerName: String(order.customerName || order.deliveryDetails?.fullName || 'Guest Customer'),
-            deliveryAddress: buildDeliveryAddress(order.deliveryDetails),
-            scheduledDate: scheduledDate,
-            status: mapTrackingToDeliveryStatus(trackingStatus),
-            trackingStatus: trackingStatus
-        });
-    });
-}
-
-function loadDeliveries() {
-    const stored = JSON.parse(localStorage.getItem(DELIVERY_STORAGE_KEY) || '[]');
-    deliveries = Array.isArray(stored) ? stored : [];
-
-    const purchaseOrders = getDeliverableOrders();
-    const validOrderIds = new Set(
-        purchaseOrders
-            .map((order) => String(order.orderId || '').trim())
-            .filter(Boolean)
-    );
-
-    // Keep only rows that are still connected to buyer-side purchase orders.
-    deliveries = deliveries.filter((delivery) => validOrderIds.has(String(delivery.orderId || '').trim()));
-
-    deliveries = deliveries.map((delivery) => {
-        const normalizedTracking = normalizeTrackingStatus(delivery.trackingStatus);
-        return {
-            ...delivery,
-            trackingStatus: normalizedTracking,
-            status: mapTrackingToDeliveryStatus(normalizedTracking)
-        };
-    });
-
-    syncPurchaseOrdersToDeliveries();
-    saveDeliveries();
 }
 
 function getFilteredDeliveries() {
@@ -214,8 +122,8 @@ function applyFiltersAndRender() {
 }
 
 // Initialize the page
-function init() {
-    loadDeliveries();
+async function init() {
+    await loadDeliveries();
     updateStats();
     renderDeliveries();
     setupEventListeners();
@@ -378,13 +286,10 @@ function handleDelete(event) {
     const id = event.currentTarget.getAttribute('data-id');
     const delivery = deliveries.find(d => d.id === id);
     
-    if (confirm(`Are you sure you want to delete delivery ${delivery.deliveryId}?`)) {
-        // Find and remove delivery
+    if (delivery && confirm(`Are you sure you want to delete delivery ${delivery.deliveryId}?`)) {
         const index = deliveries.findIndex(d => d.id === id);
         if (index !== -1) {
-            removeOrderFromUserStores(delivery.orderId);
             deliveries.splice(index, 1);
-            saveDeliveries();
             updateStats();
             renderDeliveries();
         }
@@ -407,7 +312,6 @@ function handleTrackingStatusChange(event) {
     if (delivery) {
         delivery.trackingStatus = normalizeTrackingStatus(newTrackingStatus);
         delivery.status = mapTrackingToDeliveryStatus(delivery.trackingStatus);
-        saveDeliveries();
         updateStats();
         renderDeliveries();
     }

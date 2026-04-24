@@ -10,7 +10,9 @@ async function login(email, password) {
             return;
         }
 
-        const user = admins.find(a => a.email === email);
+        // Trim email for case-insensitive and whitespace-safe comparison
+        const trimmedEmail = email.trim().toLowerCase();
+        const user = admins.find(a => (a.email || '').trim().toLowerCase() === trimmedEmail);
         console.log('User found:', user);
 
         if (!user) {
@@ -22,7 +24,8 @@ async function login(email, password) {
         console.log('Stored hash:', user.password_hash);
         console.log('Entered password:', password);
 
-        if (user.password_hash !== password) {
+        if ((user.password_hash || '').trim() !== (password || '').trim()) {
+            console.error('Password mismatch. Stored:', user.password_hash, 'Entered:', password);
             document.getElementById("signInError").textContent = "Incorrect password";
             return;
         }
@@ -38,6 +41,7 @@ async function login(email, password) {
 
     } catch (error) {
         console.error('Login error:', error);
+        console.error('Full error stack:', error.stack);
         document.getElementById("signInError").textContent = "Server error: " + error.message;
     }
 }

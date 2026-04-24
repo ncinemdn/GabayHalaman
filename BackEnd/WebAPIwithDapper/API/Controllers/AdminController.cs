@@ -41,5 +41,11 @@ namespace API.Controllers
 			return adminServices.Delete(id);
 		}
 
+		[HttpPut("change-password/{id}")]
+		public bool ChangePassword(int id, [FromBody] ChangePasswordRequest request)
+		{
+			return adminServices.ChangePassword(id, request.CurrentPassword, request.NewPassword);
+		}
+
 	}
 }

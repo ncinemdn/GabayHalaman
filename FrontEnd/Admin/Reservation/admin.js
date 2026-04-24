@@ -1,7 +1,6 @@
 let purchaseOrders = [];
 let reservationOrders = [];
 let expandedTable = null;
-const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
 let activeSearchQuery = '';
 let activeStatusFilter = 'all';
 let activeTypeFilter = 'all';
@@ -101,96 +100,50 @@ function isLegacyDemoPurchase(order) {
     return false;
 }
 
-function loadPurchaseOrders() {
-    const stored = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
-    purchaseOrders = stored.filter(order => !isLegacyDemoPurchase(order)).map(order => ({
-        ...order,
-        paymentStatus: normalizePaymentStatus(order.paymentStatus),
-        orderStatus: normalizeStatus(order.orderStatus)
-    }));
-
-    if (purchaseOrders.length !== stored.length) {
-        persistPurchaseOrders();
+async function loadPurchaseOrders() {
+    try {
+        const allRequests = await requestsAPI.getAll();
+        purchaseOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'purchase').map(order => ({
+            ...order,
+            id: String(order.request_id || ''),
+            orderId: order.request_id ? String(order.request_id) : '',
+            customerName: order.client_name || 'Customer',
+            paymentStatus: normalizePaymentStatus(order.payment_status),
+            orderStatus: normalizeStatus(order.request_status)
+        }));
+    } catch (error) {
+        console.error('Failed to load purchase orders:', error);
+        purchaseOrders = [];
     }
 }
 
-function loadReservationOrders() {
-    const stored = JSON.parse(localStorage.getItem('reservations') || '[]');
-    const reservationRecords = stored.filter((order) => {
-        if (!order || typeof order !== 'object') {
-            return false;
-        }
-
-        if (order.isPlacedOrder === true) {
-            return true;
-        }
-
-        const hasAdminReservationId = String(order.adminReservationId || '').trim().length > 0;
-        const hasReservationOrderId = String(order.orderId || '').trim().indexOf('#RES-') === 0;
-        return hasAdminReservationId || hasReservationOrderId;
-    });
-
-    reservationOrders = reservationRecords.map((order, index) => {
-        const computedQuantity = getQuantity(order) || Number(order.quantity || 0);
-        const computedItemsTotal = Array.isArray(order.items)
-            ? order.items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0)
-            : 0;
-        const computedTotalAmount = Number.isFinite(Number(order.totalAmount))
-            ? Number(order.totalAmount)
-            : (computedItemsTotal || ((Number(order.price) || 0) * computedQuantity));
-
-        let computedPlantOrdered = order.plantOrdered || order.name || '';
-        if (!computedPlantOrdered && Array.isArray(order.items) && order.items.length) {
-            computedPlantOrdered = order.items.length === 1
-                ? String(order.items[0].name || 'N/A')
-                : String(order.items[0].name || 'N/A') + ' +' + (order.items.length - 1) + ' more';
-        }
-
-        return {
+async function loadReservationOrders() {
+    try {
+        const allRequests = await requestsAPI.getAll();
+        reservationOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'reservation').map((order, index) => ({
             ...order,
-            id: String(order.adminReservationId || order.id || ('reservation-' + index)),
-            adminReservationId: String(order.adminReservationId || order.id || ('reservation-' + index)),
-            orderId: order.orderId || ('#RES-' + String(index + 1).padStart(4, '0')),
-            customerName: order.customerName || 'Reservation Customer',
-            plantOrdered: computedPlantOrdered || 'N/A',
-            quantity: computedQuantity,
-            totalAmount: computedTotalAmount,
-            paymentStatus: normalizePaymentStatus(order.paymentStatus),
-            orderStatus: normalizeStatus(order.orderStatus)
-        };
-    });
+            id: String(order.request_id || ''),
+            adminReservationId: String(order.request_id || ''),
+            orderId: order.request_id ? String(order.request_id) : '',
+            customerName: order.client_name || 'Customer',
+            plantOrdered: order.plant_name || 'N/A',
+            quantity: order.quantity || 0,
+            totalAmount: order.total_amount || 0,
+            paymentStatus: normalizePaymentStatus(order.payment_status),
+            orderStatus: normalizeStatus(order.request_status)
+        }));
+    } catch (error) {
+        console.error('Failed to load reservation orders:', error);
+        reservationOrders = [];
+    }
 }
 
-function persistPurchaseOrders() {
-    localStorage.setItem('purchaseOrders', JSON.stringify(purchaseOrders));
-}
-
-function persistReservationOrders() {
-    const stored = JSON.parse(localStorage.getItem('reservations') || '[]');
-    const keepNonOrderReservations = Array.isArray(stored)
-        ? stored.filter((order) => {
-            if (!order || typeof order !== 'object') {
-                return false;
-            }
-
-            if (order.isPlacedOrder === true) {
-                return false;
-            }
-
-            const hasAdminReservationId = String(order.adminReservationId || '').trim().length > 0;
-            const hasReservationOrderId = String(order.orderId || '').trim().indexOf('#RES-') === 0;
-
-            return !(hasAdminReservationId || hasReservationOrderId);
-        })
-        : [];
-
-    localStorage.setItem('reservations', JSON.stringify(keepNonOrderReservations.concat(reservationOrders)));
-}
+// Orders are loaded from the backend and not persisted to localStorage.
 
 // Initialize the page
-function init() {
-    loadPurchaseOrders();
-    loadReservationOrders();
+async function init() {
+    await loadPurchaseOrders();
+    await loadReservationOrders();
     updateStats();
     renderMiniTables();
     setupEventListeners();
@@ -354,7 +307,6 @@ function setOrderStatus(orderId, status) {
     }
 
     order.orderStatus = normalizeStatus(status);
-    persistPurchaseOrders();
     updateStats();
     if (expandedTable) {
         expandTable(expandedTable);
@@ -370,7 +322,6 @@ function setPaymentStatus(orderId, status) {
     }
 
     order.paymentStatus = normalizePaymentStatus(status);
-    persistPurchaseOrders();
     if (expandedTable) {
         expandTable(expandedTable);
     } else {
@@ -390,7 +341,6 @@ function setOrderStatusByType(type, orderId, status) {
     }
 
     order.orderStatus = normalizeStatus(status);
-    persistReservationOrders();
     updateStats();
     if (expandedTable) {
         expandTable(expandedTable);
@@ -411,7 +361,6 @@ function setPaymentStatusByType(type, orderId, status) {
     }
 
     order.paymentStatus = normalizePaymentStatus(status);
-    persistReservationOrders();
     if (expandedTable) {
         expandTable(expandedTable);
     } else {
@@ -437,20 +386,9 @@ function deleteOrder(type, orderId) {
     if (type === 'purchase') {
         deletedOrderRecord = purchaseOrders.find(o => o.id === orderId) || null;
         purchaseOrders = purchaseOrders.filter(o => o.id !== orderId);
-        persistPurchaseOrders();
     } else {
         deletedOrderRecord = reservationOrders.find(o => o.id === orderId) || null;
         reservationOrders = reservationOrders.filter(o => o.id !== orderId);
-        persistReservationOrders();
-    }
-
-    const deletedOrderId = String(deletedOrderRecord && deletedOrderRecord.orderId || '').trim();
-    if (deletedOrderId) {
-        const storedDeliveries = JSON.parse(localStorage.getItem(DELIVERY_STORAGE_KEY) || '[]');
-        const nextDeliveries = Array.isArray(storedDeliveries)
-            ? storedDeliveries.filter(delivery => String(delivery && delivery.orderId || '').trim() !== deletedOrderId)
-            : [];
-        localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(nextDeliveries));
     }
 
     if (expandedTable) {

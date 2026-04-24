@@ -6,23 +6,29 @@ function logout() {
     window.location.href = '../../Admin/Auth/signin.html';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const ADMIN_KEY = 'admin';
-    const PROFILE_KEY = 'gh_admin_profile_data';
-    const PASSWORD_KEY = 'gh_admin_profile_password';
 
-    const defaultProfile = {
-        fullName: 'Bae Suzy',
-        role: 'Administrator',
-        email: 'baesuzy22@gmail.com',
-        phone: '0912-987-6543'
-    };
-
-    const profile = loadProfile();
     const currentAdmin = loadAdminSession();
     if (!currentAdmin) {
         window.location.href = '../../Admin/Auth/signin.html';
         return;
+    }
+
+    let profile = {
+        fullName: 'Admin',
+        role: 'Administrator',
+        email: '',
+        phone: ''
+    };
+
+    try {
+        const adminData = await adminAPI.getById(currentAdmin.admin_id);
+        profile.fullName = adminData.full_name || adminData.name || profile.fullName;
+        profile.email = adminData.email || profile.email;
+        profile.phone = adminData.phone || profile.phone;
+    } catch (error) {
+        console.error('Failed to fetch admin data:', error);
     }
 
     const heroName = document.getElementById('heroName');
@@ -52,11 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordError = document.getElementById('passwordError');
 
     const profileToast = document.getElementById('profileToast');
-
     const logSearchInput = document.getElementById('logSearchInput');
-    const tableRows = document.querySelectorAll('.transaction-table tbody tr');
+    const transactionLogBody = document.getElementById('transactionLogBody');
 
     renderProfile(profile);
+    await loadAdminLogs();
 
     if (editProfileBtn && profileEditForm) {
         editProfileBtn.addEventListener('click', () => {
@@ -78,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (profileEditForm) {
-        profileEditForm.addEventListener('submit', (event) => {
+        profileEditForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             profileEditError.textContent = '';
 
@@ -99,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             profile.fullName = fullName;
             profile.email = email;
             profile.phone = phone;
-            saveProfile(profile);
+            await saveProfile(profile);
             renderProfile(profile);
             profileEditForm.classList.add('hidden');
             showToast('Profile updated successfully.');
@@ -135,17 +141,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (passwordForm) {
-        passwordForm.addEventListener('submit', (event) => {
+        passwordForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             passwordError.textContent = '';
 
             const current = currentPassword.value;
             const nextPass = newPassword.value;
             const confirmPass = confirmPassword.value;
-            const storedPassword = localStorage.getItem(PASSWORD_KEY) || 'admin123';
 
-            if (current !== storedPassword) {
-                passwordError.textContent = 'Current password is incorrect.';
+            if (nextPass !== confirmPass) {
+                passwordError.textContent = 'New passwords do not match.';
                 return;
             }
 
@@ -154,31 +159,79 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (nextPass !== confirmPass) {
-                passwordError.textContent = 'New password and confirmation do not match.';
-                return;
-            }
+            try {
+                const success = await adminAPI.changePassword(currentAdmin.admin_id, {
+                    currentPassword: current,
+                    newPassword: nextPass
+                });
 
-            if (nextPass === current) {
-                passwordError.textContent = 'New password must be different from current password.';
-                return;
+                if (success) {
+                    passwordForm.reset();
+                    closePasswordModal();
+                    showToast('Password changed successfully.');
+                } else {
+                    passwordError.textContent = 'Current password is incorrect.';
+                }
+            } catch (error) {
+                console.error('Password change error:', error);
+                passwordError.textContent = 'Error changing password: ' + error.message;
             }
-
-            localStorage.setItem(PASSWORD_KEY, nextPass);
-            closePasswordModal();
-            showToast('Password changed successfully.');
         });
     }
 
-    if (logSearchInput && tableRows.length > 0) {
+    if (logSearchInput) {
         logSearchInput.addEventListener('keyup', (e) => {
-            const term = e.target.value.toLowerCase();
-
-            tableRows.forEach(row => {
+            const term = (e.target.value || '').toLowerCase();
+            const rows = transactionLogBody ? transactionLogBody.querySelectorAll('tr') : [];
+            rows.forEach(row => {
                 const text = row.innerText.toLowerCase();
                 row.style.display = text.includes(term) ? '' : 'none';
             });
         });
+    }
+
+    async function loadAdminLogs() {
+        if (!transactionLogBody) {
+            return;
+        }
+
+        try {
+            const logs = await adminLogsAPI.getAll();
+            if (!Array.isArray(logs) || logs.length === 0) {
+                transactionLogBody.innerHTML = '<tr><td colspan="5" class="placeholder">No transaction logs available.</td></tr>';
+                return;
+            }
+
+            transactionLogBody.innerHTML = logs.map(log => `
+                <tr>
+                    <td><strong>${log.admin_log_id ? '#LOG-' + log.admin_log_id : 'N/A'}</strong></td>
+                    <td>${log.created_at || log.createdAt || ''}</td>
+                    <td>${log.action || log.description || 'No details'}</td>
+                    <td>${log.module || ''}</td>
+                    <td><span class="status-badge ${String(log.status || '').toLowerCase() === 'success' ? 'success' : 'warning'}">${log.status || 'Unknown'}</span></td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error('Failed to load admin logs:', error);
+            transactionLogBody.innerHTML = '<tr><td colspan="5" class="placeholder">Unable to load transaction logs.</td></tr>';
+        }
+    }
+
+    async function saveProfile(data) {
+        if (!currentAdmin || !currentAdmin.admin_id) {
+            return;
+        }
+
+        try {
+            await adminAPI.update({
+                ...currentAdmin,
+                full_name: data.fullName,
+                email: data.email,
+                phone: data.phone
+            });
+        } catch (error) {
+            console.warn('Failed to save profile to backend:', error);
+        }
     }
 
     function renderProfile(data) {
@@ -195,51 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return JSON.parse(localStorage.getItem(ADMIN_KEY) || 'null');
         } catch (error) {
             return null;
-        }
-    }
-
-    function loadProfile() {
-        const savedProfile = (() => {
-            try {
-                const saved = localStorage.getItem(PROFILE_KEY);
-                if (!saved) return null;
-                return JSON.parse(saved);
-            } catch (error) {
-                return null;
-            }
-        })();
-
-        const admin = loadAdminSession();
-        const baseProfile = savedProfile ? {
-            fullName: savedProfile.fullName || defaultProfile.fullName,
-            role: savedProfile.role || defaultProfile.role,
-            email: savedProfile.email || defaultProfile.email,
-            phone: savedProfile.phone || defaultProfile.phone
-        } : { ...defaultProfile };
-
-        if (!admin) {
-            return baseProfile;
-        }
-
-        const mergedProfile = {
-            fullName: admin.full_name || admin.name || baseProfile.fullName,
-            role: admin.role || baseProfile.role || 'Administrator',
-            email: admin.email || baseProfile.email,
-            phone: admin.phone || baseProfile.phone
-        };
-
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(mergedProfile));
-        return mergedProfile;
-    }
-
-    function saveProfile(data) {
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
-        const admin = loadAdminSession();
-        if (admin) {
-            admin.full_name = data.fullName;
-            admin.email = data.email;
-            admin.phone = data.phone;
-            localStorage.setItem(ADMIN_KEY, JSON.stringify(admin));
         }
     }
 

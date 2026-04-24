@@ -43,6 +43,18 @@ namespace ProjectName.Services
 			return adminRepository.Update(ad);
 		}
 
+		public bool ChangePassword(int id, string currentPassword, string newPassword)
+		{
+			AdminRepository adminRepository = new AdminRepository();
+			var admin = adminRepository.GetbyId(id);
+			if (admin == null || admin.password_hash != currentPassword)
+			{
+				return false;
+			}
+			admin.password_hash = newPassword;
+			return adminRepository.Update(admin);
+		}
+
 
 	}
 }
