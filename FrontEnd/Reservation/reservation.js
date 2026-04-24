@@ -101,6 +101,9 @@ const plantsByCategory = {
 // State management
 let selectedPlants = [];
 const RESERVATION_PREFILL_KEY = 'reservationPrefillPlant';
+const REQUIRED_CATEGORIES = ['Citrus', 'Coconut', 'Cuttings', 'Flowering', 'Forest', 'Grafted', 'Guava', 'Mango'];
+let backendPlantsByCategory = null;
+
 const GH_CATEGORY_BY_UI_CATEGORY = {
     'Citrus Variety': 'Citrus',
     'Mangga Variety': 'Mango',
@@ -110,15 +113,125 @@ const GH_CATEGORY_BY_UI_CATEGORY = {
     'Forest Trees': 'Forest'
 };
 
+function normalizeText(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
+function mapToRequiredCategory(categoryName) {
+    const normalized = normalizeText(categoryName);
+    if (!normalized) {
+        return '';
+    }
+
+    const exact = REQUIRED_CATEGORIES.find((name) => normalizeText(name) === normalized);
+    if (exact) {
+        return exact;
+    }
+
+    if (normalized.includes('citrus')) return 'Citrus';
+    if (normalized.includes('coconut')) return 'Coconut';
+    if (normalized.includes('cutting')) return 'Cuttings';
+    if (normalized.includes('flower')) return 'Flowering';
+    if (normalized.includes('forest')) return 'Forest';
+    if (normalized.includes('graft')) return 'Grafted';
+    if (normalized.includes('guava') || normalized.includes('guapple')) return 'Guava';
+    if (normalized.includes('mango') || normalized.includes('mangga')) return 'Mango';
+
+    return '';
+}
+
+function populateCategoryChoices() {
+    const categoryField = document.getElementById('category');
+    if (!categoryField) {
+        return;
+    }
+
+    categoryField.innerHTML = '<option value="">Category</option>' + REQUIRED_CATEGORIES
+        .map((category) => `<option value="${category}">${category}</option>`)
+        .join('');
+}
+
+async function loadBackendPlants() {
+    try {
+        const [plants, categories, sizes] = await Promise.all([
+            plantsAPI.getAll(),
+            categoriesAPI.getAll(),
+            plantSizesAPI.getAll()
+        ]);
+
+        const categoryIdToName = {};
+        if (Array.isArray(categories)) {
+            categories.forEach((category) => {
+                categoryIdToName[category.category_id] = category.category_name || category.name || '';
+            });
+        }
+
+        const sizeMap = {};
+        if (Array.isArray(sizes)) {
+            sizes.forEach((size) => {
+                const plantId = size.plant_id;
+                if (!plantId) {
+                    return;
+                }
+
+                if (!sizeMap[plantId]) {
+                    sizeMap[plantId] = [];
+                }
+
+                sizeMap[plantId].push({
+                    sizeName: String(size.size_name || '').trim(),
+                    price: Number(size.price) || 0,
+                    stock: Number(size.stock_quantity) || 0
+                });
+            });
+        }
+
+        const grouped = REQUIRED_CATEGORIES.reduce((acc, category) => {
+            acc[category] = [];
+            return acc;
+        }, {});
+
+        if (Array.isArray(plants)) {
+            plants.forEach((plant) => {
+                const rawCategory = categoryIdToName[plant.category_id] || '';
+                const requiredCategory = mapToRequiredCategory(rawCategory);
+                if (!requiredCategory) {
+                    return;
+                }
+
+                const plantSizes = sizeMap[plant.plant_id] || [];
+                const stock = plantSizes.reduce((sum, s) => sum + Number(s.stock || 0), 0);
+                const priced = plantSizes.filter((s) => Number(s.price) > 0);
+                const price = priced.length ? Math.min(...priced.map((s) => s.price)) : 0;
+                const sizeOptions = [...new Set(plantSizes.map((s) => s.sizeName).filter(Boolean))];
+
+                grouped[requiredCategory].push({
+                    id: plant.plant_id,
+                    name: plant.plant_name,
+                    price,
+                    image: plant.image_path || plant.image || DEFAULT_PLANT_IMAGE,
+                    stock,
+                    sizeOptions
+                });
+            });
+        }
+
+        backendPlantsByCategory = grouped;
+    } catch (error) {
+        console.error('Failed to load reservation plants from backend:', error);
+        backendPlantsByCategory = {};
+    }
+}
+
 function getLocalPlantsByCategory() {
     return plantsByCategory;
 }
 
 function getSourcePlantsByCategory() {
-    if (window.GHPlantData) {
-        return window.GHPlantData.getPlantsByCategory();
-    }
-    return getLocalPlantsByCategory();
+    return backendPlantsByCategory || {};
 }
 
 function getPlantsForCategory(category) {
@@ -132,14 +245,11 @@ function getPlantsForCategory(category) {
         return sourceByCategory[mappedCategory];
     }
 
-    const localByCategory = getLocalPlantsByCategory();
-    return Array.isArray(localByCategory[category]) ? localByCategory[category] : [];
+    return [];
 }
 
 function getAllSourcePlants() {
-    const sourcePlants = Object.values(getSourcePlantsByCategory() || {}).flat();
-    const localPlants = Object.values(getLocalPlantsByCategory() || {}).flat();
-    return [...sourcePlants, ...localPlants];
+    return Object.values(getSourcePlantsByCategory() || {}).flat();
 }
 
 function getAvailableStock(plant) {
@@ -147,6 +257,14 @@ function getAvailableStock(plant) {
         return window.GHPlantData.getEffectiveStock(plant);
     }
     return Math.max(0, Number(plant.stock) || 0);
+}
+
+function getSizeOptionsForPlant(plant) {
+    if (Array.isArray(plant?.sizeOptions) && plant.sizeOptions.length) {
+        return plant.sizeOptions;
+    }
+
+    return ['Medium', 'XL'];
 }
 
 function isPlantAvailable(plant) {
@@ -271,9 +389,12 @@ function applyReservationPrefill() {
 }
 
 // Initialize the display
-function init() {
+async function init() {
     const categoryField = document.getElementById('category');
     const plantDisplay = document.getElementById('plantDisplay');
+
+    populateCategoryChoices();
+    await loadBackendPlants();
 
     updatePlantDisplay();
 
@@ -308,6 +429,18 @@ function updatePlantDisplay() {
     const allPlants = getPlantsForCategory(category);
     // Limit to maximum 8 plants per category to reduce scrolling
     const plants = allPlants.slice(0, 8);
+
+    if (!plants.length) {
+        displayArea.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-text">
+                    No plants available yet under ${category}.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
     const plantsHTML = plants.map(plant => {
         const selectedPlantData = getSelectedPlant(plant.id);
         const isSelected = Boolean(selectedPlantData);
@@ -315,6 +448,10 @@ function updatePlantDisplay() {
         const isAvailable = isPlantAvailable(plant);
         const plantQty = selectedPlantData ? Math.min(selectedPlantData.quantity, Math.max(1, maxStock)) : 1;
         const plantSize = selectedPlantData ? selectedPlantData.size : '';
+        const sizeOptions = getSizeOptionsForPlant(plant);
+        const sizeOptionsHtml = sizeOptions
+            .map((size) => `<option value="${size}" ${plantSize === size ? 'selected' : ''}>${size}</option>`)
+            .join('');
 
         return `
         <div class="plant-card ${isSelected ? 'selected' : ''} ${isAvailable ? '' : 'unavailable'}" data-plant-id="${plant.id}" data-category="${category}">
@@ -354,8 +491,7 @@ function updatePlantDisplay() {
                         <label for="size-${plant.id}" class="plant-size-label">Size:</label>
                         <select id="size-${plant.id}" class="plant-size" ${isAvailable ? '' : 'disabled'} onchange="onPlantSizeChange(${plant.id}, this.value)">
                             <option value="">Select</option>
-                            <option value="Medium" ${plantSize === 'Medium' ? 'selected' : ''}>Medium</option>
-                            <option value="XL" ${(plantSize === 'XL' || plantSize === 'Extra Large') ? 'selected' : ''}>Extra Large (XL)</option>
+                            ${sizeOptionsHtml}
                         </select>
                     </div>
                 </div>
