@@ -6,137 +6,134 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Dapper;
-using ProjectName.Models;
-using Microsoft.Extensions.Configuration;
 
 namespace ProjectName.Repositories
 {
-    public class GenericRepository<T>: IGenericRepository<T> where T : class
-    {
-        IDbConnection connection;
-        readonly string connectionString;
+	public class GenericRepository<T> : IGenericRepository<T> where T : class
+	{
+		IDbConnection connection;
+		readonly string connectionString;
+
 		public GenericRepository()
 		{
 			connectionString = "Server=LAPTOP-21JQHQ4T\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;";
 			connection = new SqlConnection(connectionString);
 		}
 
+		// ✅ GET ALL
 		public IEnumerable<T> GetAll()
-        {
-            string tableName = GetTableName();
+		{
+			string tableName = GetTableName();
+			string query = $"SELECT * FROM {tableName}";
+			return connection.Query<T>(query);
+		}
 
-            string query = $"SELECT * FROM {tableName}";
-            return connection.Query<T>(query);
-        }
+		// ✅ GET BY ID (FIXED)
+		public T GetbyId(int id)
+		{
+			string tableName = GetTableName();
+			string keyName = GetKeyName();
 
+			string query = $"SELECT * FROM {tableName} WHERE {keyName} = @Id";
 
+			return connection.QueryFirstOrDefault<T>(query, new { Id = id });
+		}
 
-        public T GetbyId(int id)
-        {
-            string tableName = GetTableName();
-            string columns = GetColumnNames();
-            string values = GetColumnValues();
+		// ✅ INSERT
+		public bool Add(T Entity)
+		{
+			string tableName = GetTableName();
+			string columns = GetColumnNames();
+			string values = GetColumnValues();
 
-            string query = $"SELECT * FROM {tableName} WHERE Id = @Id";
+			string query = $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
 
-            return connection.QueryFirstOrDefault<T>(query, new { Id = id });
-        }
+			int affectedRow = connection.Execute(query, Entity);
+			return affectedRow == 1;
+		}
 
-        public bool Add(T Entity)
-        {
-            string tableName = GetTableName();
-            string columns = GetColumnNames();
-            string values = GetColumnValues();
+		// ✅ UPDATE (FIXED)
+		public bool Update(T Entity)
+		{
+			string tableName = GetTableName();
+			string keyName = GetKeyName();
+			string setClause = GetSetClause();
 
-            string query = $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
+			string query = $"UPDATE {tableName} SET {setClause} WHERE {keyName} = @{keyName}";
 
-            int affectedRow = 0;
-            affectedRow = connection.Execute(query, Entity);
-            return affectedRow == 1;
-        }
+			int affectedRow = connection.Execute(query, Entity);
+			return affectedRow == 1;
+		}
 
-        public bool Update(T Entity)
-        {
-            string tableName = GetTableName();
-            string setClause = GetSetClause(Entity);
-            string query = $"UPDATE {tableName} SET {setClause} WHERE Id = @Id";
+		// ✅ DELETE (FIXED)
+		public bool Delete(int id)
+		{
+			string tableName = GetTableName();
+			string keyName = GetKeyName();
 
-            int affectedRow = 0;
-            affectedRow = connection.Execute(query, Entity);
-            return affectedRow == 1;
-        }
+			string query = $"DELETE FROM {tableName} WHERE {keyName} = @Id";
 
-        private string GetSetClause(T entity)
-        {
-            var properties = typeof(T).GetProperties()
-                .Where(p => p.Name != "Id");
+			int affectedRow = connection.Execute(query, new { Id = id });
+			return affectedRow == 1;
+		}
 
-            var setClause = string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
-            return setClause;
-        }
+		// ✅ GET PRIMARY KEY NAME
+		private string GetKeyName()
+		{
+			var keyProp = typeof(T).GetProperties()
+				.FirstOrDefault(p => p.GetCustomAttributes(typeof(KeyAttribute), true).Any());
 
+			if (keyProp == null)
+				throw new Exception($"No [Key] found in {typeof(T).Name}");
 
-        public bool Delete(int id)
-        {
-            string tableName = GetTableName();
-            string query = $"DELETE FROM {tableName} WHERE Id = @Id";
+			return keyProp.Name; // e.g. "plant_id"
+		}
 
-            int affectedRow = 0;
-            affectedRow = connection.Execute(query, new { Id = id });
-            return affectedRow == 1;
-        }
+		// ✅ UPDATE SET CLAUSE (EXCLUDES KEY)
+		private string GetSetClause()
+		{
+			var keyName = GetKeyName();
 
-        public string GetTableName()
-        {
-            string tableName = "";
-            var type = typeof(T);
-            var tableAttr = type.GetCustomAttribute<TableAttribute>();
-            if (tableAttr != null)
-            {
-                tableName = $"[{tableAttr.Name}]";
-            }
-            return tableName;
-        }
+			var properties = typeof(T).GetProperties()
+				.Where(p => p.Name != keyName);
 
-        public string GetColumnNames(bool excludeKey = true)
-        {
-            var type = typeof(T);
-            var columns = string.Join(",", type.GetProperties()
-                .Where(p => !excludeKey || !p.IsDefined(typeof(KeyAttribute)))
-                .Select(p =>
-                {
-                    var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
-                    return columnAttr != null ? columnAttr.Name : p.Name;
-                }));
-            return columns;
-        }
+			return string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
+		}
 
-        public string GetColumnValues(bool excludeKey = true)
-        {
+		// ✅ TABLE NAME
+		public string GetTableName()
+		{
+			var type = typeof(T);
+			var tableAttr = type.GetCustomAttribute<TableAttribute>();
 
-            var columnValues = typeof(T).GetProperties()
-                .Where(p => !excludeKey || p.GetCustomAttribute<KeyAttribute>() == null);
-            var values = string.Join(",", columnValues.Select(p =>
-            {
-                return $"@{p.Name}";
-            }));
+			if (tableAttr == null)
+				throw new Exception($"No [Table] attribute found in {type.Name}");
 
-            return values;
-        }
+			return $"[{tableAttr.Name}]";
+		}
 
-        /*IEnumerable<T> IGenericRepository<T>.GetAll()
-        {
-            throw new NotImplementedException();
-        }
-        public IEnumerable<Book> GetAll()
-        {
-            return connection.Query<Book>(
-                "spBooks_GetAll",
-                commandType: CommandType.StoredProcedure);
-        }*/
+		// ✅ COLUMN NAMES (EXCLUDES KEY)
+		public string GetColumnNames(bool excludeKey = true)
+		{
+			var type = typeof(T);
 
-    }
+			return string.Join(",", type.GetProperties()
+				.Where(p => !excludeKey || !p.IsDefined(typeof(KeyAttribute)))
+				.Select(p =>
+				{
+					var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
+					return columnAttr != null ? columnAttr.Name : p.Name;
+				}));
+		}
+
+		// ✅ COLUMN VALUES
+		public string GetColumnValues(bool excludeKey = true)
+		{
+			var properties = typeof(T).GetProperties()
+				.Where(p => !excludeKey || !p.IsDefined(typeof(KeyAttribute)));
+
+			return string.Join(",", properties.Select(p => $"@{p.Name}"));
+		}
+	}
 }
