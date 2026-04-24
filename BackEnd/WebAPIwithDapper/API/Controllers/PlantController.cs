@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProjectName.Models;
 using ProjectName.Services;
+using System.Data.SqlClient;
+using System.Data;
+using Dapper;
 
 namespace API.Controllers
 {
@@ -9,6 +12,7 @@ namespace API.Controllers
 	public class PlantController : Controller
 	{
 		PlantService plantServices = new PlantService();
+		private readonly string _connectionString = "Server=localhost;Database=GabayHalamanDB;Trusted_Connection=True;"; // Update with your connection string
 
 		[HttpGet]
 		public ActionResult GetAll()
@@ -41,5 +45,28 @@ namespace API.Controllers
 			return plantServices.Delete(id);
 		}
 
+		// SP7: GetPlantTotal
+		[HttpGet("total/{plantId}")]
+		public async Task<IActionResult> GetPlantTotal(int plantId)
+		{
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				var parameters = new { plant_id = plantId };
+				var result = await connection.QueryFirstOrDefaultAsync("SP_GetPlantTotal", parameters, commandType: CommandType.StoredProcedure);
+				return Ok(result);
+			}
+		}
+
+		// SP9: GetPopularPlants
+		[HttpGet("popular/{minQuantity}")]
+		public async Task<IActionResult> GetPopularPlants(int minQuantity)
+		{
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				var parameters = new { min_quantity = minQuantity };
+				var result = await connection.QueryAsync("SP_GetPopularPlants", parameters, commandType: CommandType.StoredProcedure);
+				return Ok(result);
+			}
+		}
 	}
 }

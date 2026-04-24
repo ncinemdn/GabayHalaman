@@ -108,11 +108,11 @@
                 </div>
                 <div class="user-info">
                     <div class="user-avatar">
-                        <img src="cc.jpg" alt="Bae Suzy">
+                        <img src="cc.jpg" alt="Admin Profile Picture">
                     </div>
                     <div class="user-details">
-                        <div class="user-name">Bae Suzy</div>
-                        <div class="user-role">Admin</div>
+                        <div class="user-name">Admin</div>
+                        <div class="user-role">Administrator</div>
                     </div>
                 </div>
             </div>
@@ -131,7 +131,7 @@
                             </div>
                             <div class="profile-hero-copy">
                                 <p class="profile-eyebrow">Admin Account</p>
-                                <h2 id="heroName">Bae Suzy</h2>
+                                <h2 id="heroName">Admin</h2>
                                 <p class="profile-role-line">Administrator for catalog, reservations, and delivery operations</p>
                                 <div class="profile-chip-row">
                                     <span class="profile-chip">Active</span>
@@ -148,7 +148,7 @@
                     <div class="profile-details-grid">
                         <article class="detail-card">
                             <span class="detail-label">Full Name</span>
-                            <p id="detailFullName" class="detail-value">Bae Suzy</p>
+                            <p id="detailFullName" class="detail-value">Admin</p>
                         </article>
                         <article class="detail-card">
                             <span class="detail-label">Role</span>
@@ -156,11 +156,11 @@
                         </article>
                         <article class="detail-card">
                             <span class="detail-label">Email Address</span>
-                            <p id="detailEmail" class="detail-value">baesuzy22@gmail.com</p>
+                            <p id="detailEmail" class="detail-value">admin@example.com</p>
                         </article>
                         <article class="detail-card">
                             <span class="detail-label">Phone</span>
-                            <p id="detailPhone" class="detail-value">0912-987-6543</p>
+                            <p id="detailPhone" class="detail-value">Not set</p>
                         </article>
                     </div>
 
@@ -217,34 +217,9 @@
                                     <th>STATUS</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="transactionLogBody">
                                 <tr>
-                                    <td><strong>#LOG-1001</strong></td>
-                                    <td>2026-02-10 11:39 AM</td>
-                                    <td>Add new plant: African Talisay</td>
-                                    <td>Plant Catalog</td>
-                                    <td><span class="status-badge success">Success</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>#LOG-1002</strong></td>
-                                    <td>2026-02-10 11:45 AM</td>
-                                    <td>Update quantity of plant: Mangosteen</td>
-                                    <td>Plant Catalog</td>
-                                    <td><span class="status-badge success">Success</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>#LOG-1003</strong></td>
-                                    <td>2026-02-10 01:18 PM</td>
-                                    <td>Confirmed reservation for Carabao Mango</td>
-                                    <td>Purchase / Reservation</td>
-                                    <td><span class="status-badge success">Success</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>#LOG-1004</strong></td>
-                                    <td>2026-02-10 03:02 PM</td>
-                                    <td>Updated delivery schedule for Palm Tree order</td>
-                                    <td>Delivery Scheduling</td>
-                                    <td><span class="status-badge success">Success</span></td>
+                                    <td colspan="5" class="placeholder">Loading activity log...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -284,6 +259,7 @@
 
     <div id="profileToast" class="profile-toast hidden" role="status" aria-live="polite"></div>
 
+    <script src="../shared/api.js"></script>
     <script src="profilestyle.js"></script>
 </body>
 </html>

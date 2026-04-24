@@ -20,93 +20,53 @@ namespace ProjectName.Repositories
         readonly string connectionString;
 		public GenericRepository()
 		{
-			connectionString = "Server=.\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;";
+			connectionString = "Server=LAPTOP-21JQHQ4T\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;";
 			connection = new SqlConnection(connectionString);
 		}
 
 		public IEnumerable<T> GetAll()
         {
-            try
-            {
-                if (connection.State == ConnectionState.Closed)
-                    connection.Open();
+            string tableName = GetTableName();
 
-                string tableName = GetTableName();
-                string query = $"SELECT * FROM {tableName}";
-                return connection.Query<T>(query);
-            }
-            finally
-            {
-                if (connection.State == ConnectionState.Open)
-                    connection.Close();
-            }
+            string query = $"SELECT * FROM {tableName}";
+            return connection.Query<T>(query);
         }
 
 
 
         public T GetbyId(int id)
         {
-            try
-            {
-                if (connection.State == ConnectionState.Closed)
-                    connection.Open();
+            string tableName = GetTableName();
+            string columns = GetColumnNames();
+            string values = GetColumnValues();
 
-                string tableName = GetTableName();
-                string query = $"SELECT * FROM {tableName} WHERE Id = @Id";
+            string query = $"SELECT * FROM {tableName} WHERE Id = @Id";
 
-                return connection.QueryFirstOrDefault<T>(query, new { Id = id });
-            }
-            finally
-            {
-                if (connection.State == ConnectionState.Open)
-                    connection.Close();
-            }
+            return connection.QueryFirstOrDefault<T>(query, new { Id = id });
         }
 
         public bool Add(T Entity)
         {
-            try
-            {
-                if (connection.State == ConnectionState.Closed)
-                    connection.Open();
+            string tableName = GetTableName();
+            string columns = GetColumnNames();
+            string values = GetColumnValues();
 
-                string tableName = GetTableName();
-                string columns = GetColumnNames();
-                string values = GetColumnValues();
+            string query = $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
 
-                string query = $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
-
-                int affectedRow = 0;
-                affectedRow = connection.Execute(query, Entity);
-                return affectedRow == 1;
-            }
-            finally
-            {
-                if (connection.State == ConnectionState.Open)
-                    connection.Close();
-            }
+            int affectedRow = 0;
+            affectedRow = connection.Execute(query, Entity);
+            return affectedRow == 1;
         }
 
         public bool Update(T Entity)
         {
-            try
-            {
-                if (connection.State == ConnectionState.Closed)
-                    connection.Open();
+            string tableName = GetTableName();
+            string setClause = GetSetClause(Entity);
+            string query = $"UPDATE {tableName} SET {setClause} WHERE Id = @Id";
 
-                string tableName = GetTableName();
-                string setClause = GetSetClause(Entity);
-                string query = $"UPDATE {tableName} SET {setClause} WHERE Id = @Id";
-
-                int affectedRow = 0;
-                affectedRow = connection.Execute(query, Entity);
-                return affectedRow == 1;
-            }
-            finally
-            {
-                if (connection.State == ConnectionState.Open)
-                    connection.Close();
-            }
+            int affectedRow = 0;
+            affectedRow = connection.Execute(query, Entity);
+            return affectedRow == 1;
         }
 
         private string GetSetClause(T entity)
@@ -121,23 +81,12 @@ namespace ProjectName.Repositories
 
         public bool Delete(int id)
         {
-            try
-            {
-                if (connection.State == ConnectionState.Closed)
-                    connection.Open();
+            string tableName = GetTableName();
+            string query = $"DELETE FROM {tableName} WHERE Id = @Id";
 
-                string tableName = GetTableName();
-                string query = $"DELETE FROM {tableName} WHERE Id = @Id";
-
-                int affectedRow = 0;
-                affectedRow = connection.Execute(query, new { Id = id });
-                return affectedRow == 1;
-            }
-            finally
-            {
-                if (connection.State == ConnectionState.Open)
-                    connection.Close();
-            }
+            int affectedRow = 0;
+            affectedRow = connection.Execute(query, new { Id = id });
+            return affectedRow == 1;
         }
 
         public string GetTableName()

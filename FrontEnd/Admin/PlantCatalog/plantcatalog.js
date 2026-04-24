@@ -31,18 +31,11 @@ function getPlantSizeData(plant) {
 
 function normalizePlantData(plant) {
     const normalized = { ...plant };
-    const basePrice = Number(plant.price) || 0;
-    const baseStock = Number(plant.stock) || 0;
-    normalized.sizes = normalized.sizes || {
-        Medium: { price: basePrice, stock: baseStock },
-        'Extra Large': { price: basePrice, stock: 0 }
-    };
-    if (!normalized.sizes.Medium) {
-        normalized.sizes.Medium = { price: basePrice, stock: baseStock };
-    }
-    if (!normalized.sizes['Extra Large']) {
-        normalized.sizes['Extra Large'] = { price: basePrice, stock: 0 };
-    }
+    const basePrice = Number(plant.sizes?.Medium?.price) || 0;
+    const baseStock = Number(plant.sizes?.Medium?.stock) || 0;
+    normalized.sizes = normalized.sizes || {};
+    normalized.sizes.Medium = normalized.sizes.Medium || { price: basePrice, stock: baseStock };
+    normalized.sizes['Extra Large'] = normalized.sizes['Extra Large'] || { price: basePrice, stock: baseStock };
     normalized.selectedSize = normalized.selectedSize || 'Medium';
     return normalized;
 }
@@ -100,16 +93,42 @@ function logout() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlantInventory();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadPlantInventory();
     initializeCategories();
     renderPlants();
     attachEventListeners();
 });
 
-function loadPlantInventory() {
-    if (window.GHPlantData) {
-        plants = (window.GHPlantData.getPlantInventory() || []).map(normalizePlantData);
+async function loadPlantInventory() {
+    try {
+        const allPlants = await plantsAPI.getAll();
+        const allSizes = await plantSizesAPI.getAll();
+        const sizesByPlant = {};
+
+        (Array.isArray(allSizes) ? allSizes : []).forEach(s => {
+            if (!sizesByPlant[s.plant_id]) {
+                sizesByPlant[s.plant_id] = {};
+            }
+            sizesByPlant[s.plant_id][s.size_name] = {
+                price: Number(s.price) || 0,
+                stock: Number(s.stock_quantity) || 0
+            };
+        });
+
+        plants = allPlants.map(plant => ({
+            id: plant.plant_id,
+            name: plant.plant_name,
+            category: plant.category_name || 'General',
+            description: plant.description,
+            image: plant.image_path,
+            sizes: sizesByPlant[plant.plant_id] || {}
+        }));
+
+        plants = plants.map(normalizePlantData);
+    } catch (error) {
+        console.error('Failed to load plant inventory:', error);
+        plants = [];
     }
 
     customCategories = new Set(plants.map(plant => plant.category));
