@@ -118,6 +118,7 @@ const requestsAPI = {
   create: (data) => apiRequest('/request', 'POST', data),
   update: (data) => apiRequest('/request', 'PUT', data),
   delete: (id) => apiRequest(`/request/${id}`, 'DELETE'),
+  updateStatus: (id, data) => apiRequest(`/request/status/${id}`, 'PUT', data),
   getDeliveryWindow: (clientId) => apiRequest(`/request/delivery-window/${clientId}`),
 };
 

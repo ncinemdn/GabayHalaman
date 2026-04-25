@@ -197,6 +197,125 @@ function loadOrderDetails() {
     loadDeliveryWindow(latestOrder);
 }
 
+function syncPurchaseOrderStatus(order, status) {
+    const orders = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const updatedOrders = orders.map(item => {
+        const itemId = String(item.id || item.orderId || '');
+        const orderId = String(order.id || order.orderId || '');
+        if (itemId === orderId) {
+            return {
+                ...item,
+                orderStatus: status
+            };
+        }
+        return item;
+    });
+    localStorage.setItem('purchaseOrders', JSON.stringify(updatedOrders));
+}
+
+async function updateBackendOrderStatus(order) {
+    if (typeof requestsAPI === 'undefined') {
+        return;
+    }
+
+    const requestId = Number(order.id);
+    if (!Number.isFinite(requestId)) {
+        return;
+    }
+
+    try {
+        await requestsAPI.updateStatus(requestId, {
+            request_status: order.orderStatus,
+            payment_status: order.paymentStatus || 'paid',
+            last_updated: new Date().toISOString()
+        });
+    } catch (error) {
+        console.warn('Unable to update order status on backend:', error);
+    }
+}
+
+function showCancelConfirmation() {
+    const overlay = document.getElementById('cancel-confirmation');
+    if (!overlay) return;
+
+    const messageEl = document.getElementById('cancelModalMessage');
+    if (messageEl) {
+        messageEl.textContent = 'Are you sure you want to cancel this order?';
+    }
+
+    const confirmBtn = document.getElementById('cancelConfirmBtn');
+    const dismissBtn = document.getElementById('cancelDismissBtn');
+    if (confirmBtn) {
+        confirmBtn.style.display = 'inline-block';
+    }
+    if (dismissBtn) {
+        dismissBtn.textContent = 'Keep order';
+    }
+
+    overlay.classList.add('active');
+}
+
+function hideCancelConfirmation() {
+    const overlay = document.getElementById('cancel-confirmation');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+}
+
+function confirmCancelOrder() {
+    const purchases = getPurchaseOrders();
+    const order = getSelectedOrLatestOrder(purchases);
+    if (!order) {
+        return;
+    }
+
+    const normalized = normalizeOrderStatus(order.orderStatus);
+    if (normalized === 'cancel') {
+        showCancelNotification('This order is already cancelled.');
+        return;
+    }
+
+    showCancelConfirmation();
+}
+
+async function cancelCurrentOrder() {
+    const purchases = getPurchaseOrders();
+    const order = getSelectedOrLatestOrder(purchases);
+    if (!order) {
+        hideCancelConfirmation();
+        return;
+    }
+
+    order.orderStatus = 'cancel';
+    syncPurchaseOrderStatus(order, 'cancel');
+    await updateBackendOrderStatus(order);
+    loadCurrentOrder();
+    loadOrderDetails();
+    hideCancelConfirmation();
+}
+
+function showCancelNotification(message) {
+    const overlay = document.getElementById('cancel-confirmation');
+    if (!overlay) {
+        return;
+    }
+
+    const messageEl = document.getElementById('cancelModalMessage');
+    if (messageEl) {
+        messageEl.textContent = message;
+    }
+
+    overlay.classList.add('active');
+    const confirmBtn = document.getElementById('cancelConfirmBtn');
+    const dismissBtn = document.getElementById('cancelDismissBtn');
+
+    if (confirmBtn) {
+        confirmBtn.style.display = 'none';
+    }
+    if (dismissBtn) {
+        dismissBtn.textContent = 'Close';
+    }
+}
+
 async function loadDeliveryWindow(order) {
     const earliestDeliveryElement = document.getElementById('detailsEarliestDelivery');
     const latestDeliveryElement = document.getElementById('detailsLatestDelivery');
@@ -205,7 +324,7 @@ async function loadDeliveryWindow(order) {
 
     try {
         // Get client ID from order (assuming it's stored in the order data)
-        const clientId = order.clientId || order.customerId;
+        const clientId = order?.deliveryDetails?.clientId || order.clientId || order.customerId;
 
         if (!clientId) {
             earliestDeliveryElement.textContent = 'N/A';
@@ -566,4 +685,33 @@ function loadTrackOrder(orderId) {
 document.addEventListener('DOMContentLoaded', () => {
   loadCurrentOrder();
   navigateTo('order-list');
+
+  const confirmBtn = document.getElementById('cancelConfirmBtn');
+  const dismissBtn = document.getElementById('cancelDismissBtn');
+  const overlay = document.getElementById('cancel-confirmation');
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', cancelCurrentOrder);
+  }
+
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', () => {
+      hideCancelConfirmation();
+      if (dismissBtn) {
+        dismissBtn.textContent = 'Keep order';
+      }
+      const messageEl = document.getElementById('cancelModalMessage');
+      if (messageEl) {
+        messageEl.textContent = 'Are you sure you want to cancel this order?';
+      }
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        hideCancelConfirmation();
+      }
+    });
+  }
 });

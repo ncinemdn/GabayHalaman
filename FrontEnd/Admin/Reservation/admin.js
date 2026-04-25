@@ -1,3 +1,5 @@
+const PURCHASE_ORDERS_KEY = 'purchaseOrders';
+const RESERVATIONS_KEY = 'reservations';
 let purchaseOrders = [];
 let reservationOrders = [];
 let expandedTable = null;
@@ -56,6 +58,18 @@ function getPlantOrdered(order) {
         return order.plantOrdered;
     }
 
+    if (order.plant_name) {
+        return order.plant_name;
+    }
+
+    if (order.plantName) {
+        return order.plantName;
+    }
+
+    if (order.request_type) {
+        return order.request_type.toLowerCase() === 'reservation' ? 'Reserved Plants' : 'Purchase Order';
+    }
+
     if (!Array.isArray(order.items) || !order.items.length) {
         return 'N/A';
     }
@@ -72,6 +86,10 @@ function getQuantity(order) {
         return Number(order.quantity);
     }
 
+    if (Number.isFinite(Number(order.total_amount))) {
+        return 1;
+    }
+
     if (!Array.isArray(order.items)) {
         return 0;
     }
@@ -80,11 +98,8 @@ function getQuantity(order) {
 }
 
 function getTotalAmount(order) {
-    if (typeof order.totalAmount === 'string') {
-        return order.totalAmount;
-    }
-
-    return formatPeso(order.totalAmount);
+    const amount = order.totalAmount ?? order.total_amount ?? (Array.isArray(order.items) ? order.items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0) : 0);
+    return formatPeso(amount);
 }
 
 function isLegacyDemoPurchase(order) {
@@ -100,27 +115,164 @@ function isLegacyDemoPurchase(order) {
     return false;
 }
 
+async function getLocalPurchaseOrders() {
+    const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    if (!Array.isArray(purchases)) {
+        return [];
+    }
+
+    return purchases.map(order => ({
+        ...order,
+        id: String(order.id || order.orderId || ''),
+        orderId: String(order.orderId || ''),
+        customerName: order.customerName || 'Customer',
+        paymentStatus: normalizePaymentStatus(order.paymentStatus),
+        orderStatus: normalizeStatus(order.orderStatus),
+        totalAmount: order.totalAmount || 0,
+        items: order.items || []
+    }));
+}
+
+async function getLocalReservationOrders() {
+    const reservations = JSON.parse(localStorage.getItem(RESERVATIONS_KEY) || '[]');
+    if (!Array.isArray(reservations)) {
+        return [];
+    }
+
+    return reservations.filter(order => order && order.isPlacedOrder === true).map(order => ({
+        ...order,
+        id: String(order.id || order.orderId || ''),
+        adminReservationId: String(order.adminReservationId || order.orderId || ''),
+        orderId: String(order.orderId || ''),
+        customerName: order.customerName || 'Customer',
+        plantOrdered: order.plantOrdered || 'N/A',
+        quantity: order.quantity || 0,
+        totalAmount: order.totalAmount || 0,
+        paymentStatus: normalizePaymentStatus(order.paymentStatus),
+        orderStatus: normalizeStatus(order.orderStatus),
+        items: order.items || []
+    }));
+}
+
+function mergeOrdersWithLocalOrders(backendOrders, localOrders) {
+    if (!Array.isArray(localOrders) || !localOrders.length) {
+        return backendOrders;
+    }
+
+    const backendIds = new Set(backendOrders.map(order => String(order.orderId || order.id || '')));
+    const merged = [...localOrders.filter(order => !backendIds.has(String(order.orderId || order.id || ''))), ...backendOrders];
+    return merged;
+}
+
+function getLocalPurchaseOrdersRaw() {
+    return JSON.parse(localStorage.getItem(PURCHASE_ORDERS_KEY) || '[]') || [];
+}
+
+function getLocalReservationOrdersRaw() {
+    return JSON.parse(localStorage.getItem(RESERVATIONS_KEY) || '[]') || [];
+}
+
+function saveLocalPurchaseOrders(orders) {
+    localStorage.setItem(PURCHASE_ORDERS_KEY, JSON.stringify(orders));
+}
+
+function saveLocalReservationOrders(orders) {
+    localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(orders));
+}
+
+function isBackendPersistedOrder(order) {
+    return order && order.id && !isNaN(Number(order.id));
+}
+
+async function updateBackendOrderStatus(order) {
+    if (typeof requestsAPI === 'undefined') {
+        return;
+    }
+
+    if (!isBackendPersistedOrder(order)) {
+        return;
+    }
+
+    try {
+        await requestsAPI.updateStatus(Number(order.id), {
+            request_status: order.orderStatus,
+            payment_status: order.paymentStatus,
+            last_updated: new Date().toISOString()
+        });
+    } catch (error) {
+        console.warn('Failed to update order status on backend:', error);
+    }
+}
+
+async function syncLocalPurchaseOrder(order) {
+    const orders = getLocalPurchaseOrdersRaw();
+    const updated = orders.map(item => {
+        if (String(item.id) === String(order.id) || String(item.orderId) === String(order.orderId)) {
+            return {
+                ...item,
+                paymentStatus: order.paymentStatus,
+                orderStatus: order.orderStatus
+            };
+        }
+        return item;
+    });
+
+    saveLocalPurchaseOrders(updated);
+}
+
+async function syncLocalReservationOrder(order) {
+    const orders = getLocalReservationOrdersRaw();
+    const updated = orders.map(item => {
+        if (String(item.id) === String(order.id) || String(item.orderId) === String(order.orderId)) {
+            return {
+                ...item,
+                paymentStatus: order.paymentStatus,
+                orderStatus: order.orderStatus
+            };
+        }
+        return item;
+    });
+
+    saveLocalReservationOrders(updated);
+}
+
 async function loadPurchaseOrders() {
+    const localOrders = await getLocalPurchaseOrders();
+
     try {
         const allRequests = await requestsAPI.getAll();
-        purchaseOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'purchase').map(order => ({
+        if (!Array.isArray(allRequests)) {
+            throw new Error('Invalid response from request API');
+        }
+
+        const backendOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'purchase').map(order => ({
             ...order,
             id: String(order.request_id || ''),
             orderId: order.request_id ? String(order.request_id) : '',
             customerName: order.client_name || 'Customer',
             paymentStatus: normalizePaymentStatus(order.payment_status),
-            orderStatus: normalizeStatus(order.request_status)
+            orderStatus: normalizeStatus(order.request_status),
+            totalAmount: order.total_amount || 0,
+            items: order.items || []
         }));
+
+        purchaseOrders = mergeOrdersWithLocalOrders(backendOrders, localOrders);
     } catch (error) {
         console.error('Failed to load purchase orders:', error);
-        purchaseOrders = [];
+        purchaseOrders = localOrders;
     }
 }
 
 async function loadReservationOrders() {
+    const localOrders = await getLocalReservationOrders();
+
     try {
         const allRequests = await requestsAPI.getAll();
-        reservationOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'reservation').map((order, index) => ({
+        if (!Array.isArray(allRequests)) {
+            throw new Error('Invalid response from request API');
+        }
+
+        const backendOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'reservation').map(order => ({
             ...order,
             id: String(order.request_id || ''),
             adminReservationId: String(order.request_id || ''),
@@ -130,11 +282,14 @@ async function loadReservationOrders() {
             quantity: order.quantity || 0,
             totalAmount: order.total_amount || 0,
             paymentStatus: normalizePaymentStatus(order.payment_status),
-            orderStatus: normalizeStatus(order.request_status)
+            orderStatus: normalizeStatus(order.request_status),
+            items: order.items || []
         }));
+
+        reservationOrders = mergeOrdersWithLocalOrders(backendOrders, localOrders);
     } catch (error) {
         console.error('Failed to load reservation orders:', error);
-        reservationOrders = [];
+        reservationOrders = localOrders;
     }
 }
 
@@ -300,13 +455,15 @@ function expandTable(type) {
     `;
 }
 
-function setOrderStatus(orderId, status) {
+async function setOrderStatus(orderId, status) {
     const order = purchaseOrders.find(item => item.id === orderId);
     if (!order) {
         return;
     }
 
     order.orderStatus = normalizeStatus(status);
+    await syncLocalPurchaseOrder(order);
+    await updateBackendOrderStatus(order);
     updateStats();
     if (expandedTable) {
         expandTable(expandedTable);
@@ -315,13 +472,15 @@ function setOrderStatus(orderId, status) {
     }
 }
 
-function setPaymentStatus(orderId, status) {
+async function setPaymentStatus(orderId, status) {
     const order = purchaseOrders.find(item => item.id === orderId);
     if (!order) {
         return;
     }
 
     order.paymentStatus = normalizePaymentStatus(status);
+    await syncLocalPurchaseOrder(order);
+    await updateBackendOrderStatus(order);
     if (expandedTable) {
         expandTable(expandedTable);
     } else {
@@ -329,9 +488,9 @@ function setPaymentStatus(orderId, status) {
     }
 }
 
-function setOrderStatusByType(type, orderId, status) {
+async function setOrderStatusByType(type, orderId, status) {
     if (type === 'purchase') {
-        setOrderStatus(orderId, status);
+        await setOrderStatus(orderId, status);
         return;
     }
 
@@ -341,6 +500,8 @@ function setOrderStatusByType(type, orderId, status) {
     }
 
     order.orderStatus = normalizeStatus(status);
+    await syncLocalReservationOrder(order);
+    await updateBackendOrderStatus(order);
     updateStats();
     if (expandedTable) {
         expandTable(expandedTable);
@@ -349,9 +510,9 @@ function setOrderStatusByType(type, orderId, status) {
     }
 }
 
-function setPaymentStatusByType(type, orderId, status) {
+async function setPaymentStatusByType(type, orderId, status) {
     if (type === 'purchase') {
-        setPaymentStatus(orderId, status);
+        await setPaymentStatus(orderId, status);
         return;
     }
 
@@ -361,6 +522,8 @@ function setPaymentStatusByType(type, orderId, status) {
     }
 
     order.paymentStatus = normalizePaymentStatus(status);
+    await syncLocalReservationOrder(order);
+    await updateBackendOrderStatus(order);
     if (expandedTable) {
         expandTable(expandedTable);
     } else {

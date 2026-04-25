@@ -682,7 +682,33 @@ function generatePurchaseOrderId(existingOrders) {
     return '#ORD-' + String(Math.max(fallbackNumber, maxExisting + 1));
 }
 
-function createPurchaseOrderFromCartItems(items) {
+async function createBackendRequest(requestType, order) {
+    if (typeof requestsAPI === 'undefined') {
+        console.warn('requestsAPI is not available; skipping backend persistence.');
+        return;
+    }
+
+    const deliveryDetails = order.deliveryDetails || {};
+    const clientId = Number(deliveryDetails.clientId || order.clientId || 0);
+
+    const requestPayload = {
+        client_id: Number.isFinite(clientId) ? clientId : 0,
+        request_type: requestType,
+        request_status: order.orderStatus || 'pending',
+        payment_status: order.paymentStatus || 'paid',
+        total_amount: Math.round(order.totalAmount || 0),
+        request_date: new Date().toISOString(),
+        last_updated: new Date().toISOString()
+    };
+
+    try {
+        await requestsAPI.create(requestPayload);
+    } catch (error) {
+        console.warn('Unable to persist order to backend:', error);
+    }
+}
+
+async function createPurchaseOrderFromCartItems(items) {
     const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
     const existingPurchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
 
@@ -705,6 +731,7 @@ function createPurchaseOrderFromCartItems(items) {
 
     existingPurchases.unshift(purchaseEntry);
     localStorage.setItem('purchaseOrders', JSON.stringify(existingPurchases));
+    await createBackendRequest('purchase', purchaseEntry);
 
     const selectedIndexes = new Set(items.map(item => Number(item.sourceIndex)));
     const existingCartItems = getCartItems();
@@ -712,7 +739,7 @@ function createPurchaseOrderFromCartItems(items) {
     saveCartItems(remainingItems);
 }
 
-function createReservationOrderFromCartItems(items) {
+async function createReservationOrderFromCartItems(items) {
     const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
     const existingReservations = JSON.parse(localStorage.getItem(RESERVATIONS_KEY) || '[]');
     const existingReservationOrders = existingReservations.filter(order => order && (order.isPlacedOrder === true || String(order.orderId || '').indexOf('#RES-') === 0));
@@ -751,6 +778,7 @@ function createReservationOrderFromCartItems(items) {
     remainingReservations.unshift(reservationEntry);
     localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(remainingReservations));
     localStorage.removeItem(SELECTED_RESERVATIONS_KEY);
+    await createBackendRequest('reservation', reservationEntry);
 }
 
 function placeOrder(){

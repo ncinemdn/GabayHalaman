@@ -39,10 +39,36 @@ namespace API.Controllers
 			return requestServices.Updatet(rq);
 		}
 
+		[HttpPut("status/{id}")]
+		public async Task<IActionResult> UpdateStatus(int id, [FromBody] RequestStatusUpdate update)
+		{
+			using (var connection = new SqlConnection(_connectionString))
+			{
+				var parameters = new
+				{
+					request_id = id,
+					request_status = update.request_status,
+					payment_status = update.payment_status,
+					last_updated = update.last_updated ?? DateTime.Now
+				};
+
+				var query = "UPDATE tblRequest SET request_status = @request_status, payment_status = @payment_status, last_updated = @last_updated WHERE request_id = @request_id";
+				var affectedRows = await connection.ExecuteAsync(query, parameters);
+				return affectedRows == 1 ? Ok(true) : NotFound(false);
+			}
+		}
+
 		[HttpDelete]
 		public bool Delete(int id)
 		{
 			return requestServices.Delete(id);
+		}
+
+		public class RequestStatusUpdate
+		{
+			public string request_status { get; set; }
+			public string payment_status { get; set; }
+			public DateTime? last_updated { get; set; }
 		}
 
 		// SP3: ComputeTotalAmount
