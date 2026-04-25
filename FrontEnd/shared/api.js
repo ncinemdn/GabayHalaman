@@ -56,7 +56,6 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
   }
 }
 
-// Admin endpoints
 const adminAPI = {
   getAll: () => apiRequest('/admin'),
   getById: (id) => apiRequest(`/admin/${id}`),
@@ -64,6 +63,15 @@ const adminAPI = {
   update: (data) => apiRequest('/admin', 'PUT', data),
   delete: (id) => apiRequest(`/admin/${id}`, 'DELETE'),
   changePassword: (id, data) => apiRequest(`/admin/change-password/${id}`, 'PUT', data),
+
+  // 🔥 ADD THESE (IMPORTANT)
+  signup: (data) => apiRequest('/admin/signup', 'POST', data),
+  verify: (data) => apiRequest('/admin/verify', 'POST', data),
+  login: (data) => apiRequest('/admin/login', 'POST', data),
+
+  sendResetCode: (data) => apiRequest('/admin/forgot-password/send-code', 'POST', data),
+  verifyResetCode: (data) => apiRequest('/admin/forgot-password/verify-code', 'POST', data),
+  resetPassword: (data) => apiRequest('/admin/forgot-password/reset-password', 'POST', data),
 };
 
 // Plant endpoints

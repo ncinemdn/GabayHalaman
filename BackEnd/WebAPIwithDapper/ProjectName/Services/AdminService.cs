@@ -26,6 +26,13 @@ namespace ProjectName.Services
 			AdminRepository adminRepository = new AdminRepository();
 			return adminRepository.GetbyId(id);
 		}
+
+		public Admin GetByEmail(string email)
+		{
+			AdminRepository adminRepository = new AdminRepository();
+			return adminRepository.GetAll()
+				.FirstOrDefault(a => a.email == email);
+		}
 		public bool Add(Admin ad)
 		{
 			AdminRepository adminRepository = new AdminRepository();
