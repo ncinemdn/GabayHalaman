@@ -492,10 +492,26 @@ function applyReservationPrefill() {
     localStorage.removeItem(RESERVATION_PREFILL_KEY);
 }
 
+function initializeStickyHeaderBlur() {
+    const header = document.querySelector('.header');
+    if (!header) {
+        return;
+    }
+
+    function syncHeaderState() {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+    }
+
+    syncHeaderState();
+    window.addEventListener('scroll', syncHeaderState, { passive: true });
+}
+
 // Initialize the display
 async function init() {
     const categoryField = document.getElementById('category');
     const plantDisplay = document.getElementById('plantDisplay');
+
+    initializeStickyHeaderBlur();
 
     populateCategoryChoices();
     await loadBackendPlants();

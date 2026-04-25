@@ -1,9 +1,13 @@
 let historyStack = [];
 let futureStack = [];
 const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
+const ADMIN_NURSERY_ADDRESS = 'Sampaloc, Talisay, Batangas, Philippines';
 let selectedOrderId = null;
 let pendingDeleteOrderId = null;
 let modalConfirmAction = null;
+let currentOrderFilter = 'all';
+let currentOrderPage = 1;
+const ORDER_PAGE_SIZE = 4;
 
 // Plant image mapping
 const plantImages = {
@@ -62,6 +66,31 @@ function openTrackOrder(orderId) {
   navigateTo('track-order');
 }
 
+function getHistoryPageItems(totalPages, currentPage) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const items = [1];
+  const left = Math.max(2, currentPage - 1);
+  const right = Math.min(totalPages - 1, currentPage + 1);
+
+  if (left > 2) {
+    items.push('ellipsis-left');
+  }
+
+  for (let page = left; page <= right; page += 1) {
+    items.push(page);
+  }
+
+  if (right < totalPages - 1) {
+    items.push('ellipsis-right');
+  }
+
+  items.push(totalPages);
+  return items;
+}
+
 function loadCurrentOrder() {
     const purchases = getPurchaseOrders();
 
@@ -92,51 +121,152 @@ function loadCurrentOrder() {
         return;
     }
 
-  container.innerHTML = orders.map(order => {
-    const itemsHTML = order.items.map(item => `<p>${item.name} (${item.qty} pcs)</p>`).join('');
-    const firstItem = order.items[0];
+  const counts = {
+    all: orders.length,
+    pending: orders.filter(order => normalizeOrderStatus(order.orderStatus) === 'pending').length,
+    delivered: orders.filter(order => normalizeOrderStatus(order.orderStatus) === 'delivered').length,
+    cancel: orders.filter(order => normalizeOrderStatus(order.orderStatus) === 'cancel').length
+  };
+
+  const filteredOrders = currentOrderFilter === 'all'
+    ? orders
+    : orders.filter(order => normalizeOrderStatus(order.orderStatus) === currentOrderFilter);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ORDER_PAGE_SIZE));
+  if (currentOrderPage > totalPages) {
+    currentOrderPage = totalPages;
+  }
+
+  const startIndex = (currentOrderPage - 1) * ORDER_PAGE_SIZE;
+  const pagedOrders = filteredOrders.slice(startIndex, startIndex + ORDER_PAGE_SIZE);
+
+  const rowsMarkup = pagedOrders.map(order => {
+    const firstItem = order.items[0] || { name: 'Plant', qty: 1, image: '' };
     const firstItemImage = firstItem.image || getPlantImage(firstItem.name);
     const totalPrice = Number(order.totalAmount || 0);
-    const orderId = order.orderId || '';
-    const trackingStatus = getResolvedTrackingStatus(order);
-    const trackingLabel = formatTrackingLabel(trackingStatus);
     const orderStatusClass = normalizeOrderStatus(order.orderStatus);
     const orderStatusLabel = formatOrderStatusLabel(order.orderStatus);
-    const isReservedOrder = Boolean(order.isReserved);
-    const reserveLabel = isReservedOrder ? 'Reserved' : 'Not Reserved';
-    const reserveClass = isReservedOrder ? 'reserved' : 'not-reserved';
+    const totalQty = order.items.reduce((sum, item) => sum + Number(item.qty || 0), 0) || 1;
+    const trackingLabel = formatTrackingLabel(getResolvedTrackingStatus(order));
 
     return `
-        <div class="order-card">
-            <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 20px; position: relative;">
-                <div class="product-image">
-                    <img alt="" src="${firstItemImage}" onerror="this.src='${DEFAULT_PLANT_IMAGE}'" />
-                </div>
-                <div style="flex: 1;">
-                    <p class="order-category">Order ${orderId}</p>
-                    <div class="order-items">
-                        ${itemsHTML}
-                    </div>
-                    <p class="order-total-row">
-                      <span class="order-total-label">Total</span>
-                      <span class="order-total-value">\u20B1${totalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
-                    </p>
-                    <p class="order-reserve-row">
-                      <span class="order-reserve-label">Reservation</span>
-                      <span class="order-reserve-badge ${reserveClass}">${reserveLabel}</span>
-                    </p>
-                </div>
-                <p class="order-status ${orderStatusClass}">${orderStatusLabel}</p>
+      <article class="order-history-row" role="row">
+        <div class="order-history-col item" role="cell">
+          <div class="order-history-item-wrap">
+            <img src="${firstItemImage}" alt="${firstItem.name}" class="order-history-item-image" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
+            <div>
+              <p class="order-history-item-name">${firstItem.name}</p>
+              <p class="order-history-item-meta">Qty: ${totalQty} • ${order.orderId || order.id || ''}</p>
             </div>
-            
-            <div class="button-container">
-                <button class="order-btn disabled">Order Received</button>
-                <button class="order-btn primary" onclick="openOrderDetails('${order.id || order.orderId}')">Order Details</button>
-                <button class="order-btn secondary delete-order-btn" onclick="confirmDeleteOrder('${order.id || order.orderId}')">Delete</button>
-            </div>
+          </div>
         </div>
-  `;
+        <div class="order-history-col status" role="cell">
+          <span class="history-status ${orderStatusClass}">${orderStatusLabel}</span>
+          ${orderStatusClass === 'pending' ? `<span class="history-status-note">- ${trackingLabel}</span>` : ''}
+        </div>
+        <div class="order-history-col total" role="cell">\u20B1${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+        <div class="order-history-col details" role="cell">
+          <button class="history-detail-btn" type="button" onclick="openOrderDetails('${order.id || order.orderId}')">Order Details</button>
+          <button class="history-delete-icon-btn" type="button" aria-label="Delete order" title="Delete order" onclick="confirmDeleteOrder('${order.id || order.orderId}')">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9 7V5h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 7l1 12h8l1-12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </article>
+    `;
   }).join('');
+
+  const pageItems = getHistoryPageItems(totalPages, currentOrderPage);
+
+  const paginationMarkup = `
+    <div class="order-history-pagination-wrap">
+      <nav class="order-history-pagination" aria-label="Order history pagination">
+        <button class="history-page-btn nav" type="button" ${currentOrderPage === 1 ? 'disabled' : ''} onclick="setOrderHistoryPage(${currentOrderPage - 1})" aria-label="Previous page">&lt;</button>
+        ${pageItems.map((item) => {
+          if (typeof item !== 'number') {
+            return '<span class="history-page-ellipsis" aria-hidden="true">...</span>';
+          }
+
+          return `<button class="history-page-btn ${item === currentOrderPage ? 'active' : ''}" type="button" onclick="setOrderHistoryPage(${item})" aria-label="Page ${item}" ${item === currentOrderPage ? 'aria-current="page"' : ''}>${item}</button>`;
+        }).join('')}
+        <button class="history-page-btn nav" type="button" ${currentOrderPage === totalPages ? 'disabled' : ''} onclick="setOrderHistoryPage(${currentOrderPage + 1})" aria-label="Next page">&gt;</button>
+      </nav>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <section class="order-history-panel" aria-live="polite">
+      <div class="order-history-topbar">
+        <div class="order-history-tabs" role="tablist" aria-label="Order status filters">
+          <button class="history-tab ${currentOrderFilter === 'all' ? 'active' : ''}" type="button" role="tab" aria-selected="${currentOrderFilter === 'all'}" onclick="setOrderHistoryFilter('all')">All Order(${counts.all})</button>
+          <button class="history-tab ${currentOrderFilter === 'pending' ? 'active' : ''}" type="button" role="tab" aria-selected="${currentOrderFilter === 'pending'}" onclick="setOrderHistoryFilter('pending')">Pending(${counts.pending})</button>
+          <button class="history-tab ${currentOrderFilter === 'delivered' ? 'active' : ''}" type="button" role="tab" aria-selected="${currentOrderFilter === 'delivered'}" onclick="setOrderHistoryFilter('delivered')">Completed(${counts.delivered})</button>
+          <button class="history-tab ${currentOrderFilter === 'cancel' ? 'active' : ''}" type="button" role="tab" aria-selected="${currentOrderFilter === 'cancel'}" onclick="setOrderHistoryFilter('cancel')">Cancelled(${counts.cancel})</button>
+        </div>
+      </div>
+
+      <div class="order-history-head" role="row">
+        <div class="order-history-col item" role="columnheader">Item</div>
+        <div class="order-history-col status" role="columnheader">Status</div>
+        <div class="order-history-col total" role="columnheader">Total</div>
+        <div class="order-history-col details" role="columnheader">Details</div>
+      </div>
+
+      <div class="order-history-list" role="rowgroup">
+        ${rowsMarkup || '<p class="order-history-empty">No orders found for this filter.</p>'}
+      </div>
+
+      ${paginationMarkup}
+    </section>
+  `;
+}
+
+function setOrderHistoryFilter(filter) {
+  currentOrderFilter = String(filter || 'all');
+  currentOrderPage = 1;
+  loadCurrentOrder();
+}
+
+function setOrderHistoryPage(page) {
+  const targetPage = Number(page);
+  if (!Number.isFinite(targetPage) || targetPage < 1) {
+    return;
+  }
+
+  currentOrderPage = targetPage;
+  loadCurrentOrder();
+}
+
+function setDetailsTab(tabName) {
+  const targetTab = String(tabName || 'summary');
+  const tabs = document.querySelectorAll('.details-tab[data-tab]');
+  const panels = document.querySelectorAll('.details-panel[data-panel]');
+
+  tabs.forEach((tab) => {
+    const isActive = tab.dataset.tab === targetTab;
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-selected', String(isActive));
+  });
+
+  panels.forEach((panel) => {
+    panel.classList.toggle('active', panel.dataset.panel === targetTab);
+  });
+}
+
+function initDetailsTabs() {
+  const tabs = document.querySelectorAll('.details-tab[data-tab]');
+  if (!tabs.length) {
+    return;
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      setDetailsTab(tab.dataset.tab);
+    });
+  });
 }
 
 function trackCurrentOrder() {
@@ -155,8 +285,17 @@ function loadOrderDetails() {
   const latestOrder = getSelectedOrLatestOrder(purchases);
 
     if (!latestOrder || !latestOrder.items || latestOrder.items.length === 0) {
+        const orderRefElement = document.getElementById('detailsOrderRef');
+        if (orderRefElement) {
+          orderRefElement.textContent = 'N/A';
+        }
         document.getElementById('detailsFullName').textContent = 'No Data';
         return;
+    }
+
+    const orderRefElement = document.getElementById('detailsOrderRef');
+    if (orderRefElement) {
+      orderRefElement.textContent = latestOrder.orderId || latestOrder.id || 'N/A';
     }
 
     const deliveryDetails = latestOrder.deliveryDetails || {};
@@ -444,6 +583,7 @@ function navigateTo(pageId, fromHistory = false) {
     window.scrollTo(0, 0);
 
     if (pageId === 'order-details') {
+      setDetailsTab('summary');
       loadOrderDetails();
     } else if (pageId === 'track-order') {
       loadTrackOrder(selectedOrderId);
@@ -637,21 +777,42 @@ function formatTrackingLabel(status) {
 }
 
 function getTrackingPayload(order) {
-  const states = ['Order Confirmed', 'Prepared by Seller', 'Out for Delivery', 'Delivered'];
+  const states = ['Placed Order', 'Order Confirmed', 'Shipped', 'Delivered'];
   const normalized = getResolvedTrackingStatus(order);
 
   const currentIndex = {
-    confirmed: 0,
-    prepared: 1,
+    confirmed: 1,
+    prepared: 2,
     out_for_delivery: 2,
     delivered: 3
   }[normalized] ?? 0;
+
+  const baseDate = new Date(order?.updatedAt || order?.createdAt || Date.now());
+  const timeline = states.map((label, idx) => {
+    const stepDate = new Date(baseDate);
+    stepDate.setDate(baseDate.getDate() + idx);
+    return {
+      label,
+      date: stepDate
+    };
+  });
+
+  const deliveredDate = timeline[timeline.length - 1].date;
+  const totalItems = Array.isArray(order?.items)
+    ? order.items.reduce((sum, item) => sum + Number(item.qty || 0), 0) || 1
+    : 1;
 
   return {
     orderId: order ? (order.orderId || 'N/A') : 'N/A',
     currentStatus: states[currentIndex],
     statusIndex: currentIndex,
-    statusLabels: states,
+    timeline,
+    originAddress: ADMIN_NURSERY_ADDRESS,
+    deliveryAddress: order?.deliveryDetails?.address || '',
+    summaryTitle: normalized === 'delivered' ? `${totalItems} Item Delivered` : `${totalItems} Item In Transit`,
+    summarySubtitle: normalized === 'delivered'
+      ? `Package Delivered on ${formatTimelineDate(deliveredDate)}`
+      : `Expected Delivery: ${formatTimelineDate(deliveredDate)}`,
     eta: normalized === 'delivered' ? 'Delivered' : '1-2 days',
     location: normalized === 'delivered' ? 'Delivered to customer' : 'Processing at nursery',
     routeMap: 'https://via.placeholder.com/1339x450.png?text=Delivery+Map+Preview',
@@ -659,88 +820,253 @@ function getTrackingPayload(order) {
   };
 }
 
-function renderTrackSteps(data) {
-  const trackSteps = document.getElementById('track-steps');
-  trackSteps.innerHTML = '';
+function formatTimelineDate(dateValue) {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) {
+    return 'N/A';
+  }
 
-  const trackLine = document.createElement('div');
-  trackLine.className = 'track-progress-line';
-  trackSteps.appendChild(trackLine);
-
-  const activeLine = document.createElement('div');
-  activeLine.className = 'track-progress-active';
-  const percent = ((data.statusIndex) / (data.statusLabels.length - 1)) * 100;
-  activeLine.style.width = `calc(8% + ${percent} * 0.84%)`;
-  trackSteps.appendChild(activeLine);
-
-  const icons = {
-    'Order Confirmed': '✅',
-    'Prepared by Seller': '✅',
-    'Out for Delivery': '🚚',
-    'Delivered': '📦'
-  };
-
-  data.statusLabels.forEach((label, idx) => {
-    const step = document.createElement('div');
-    step.className = 'track-step';
-
-    const circle = document.createElement('div');
-    circle.className = 'step-circle';
-    if (idx < data.statusIndex) {
-      circle.classList.add('active');
-      circle.textContent = '✓';
-    } else if (idx === data.statusIndex) {
-      circle.classList.add('active');
-      circle.textContent = icons[label] || '●';
-    } else {
-      circle.textContent = icons[label] || '○';
-    }
-
-    const title = document.createElement('div');
-    title.className = 'step-label';
-    title.innerText = label;
-
-    const stepContent = document.createElement('div');
-    stepContent.className = 'track-step-content';
-    stepContent.appendChild(circle);
-    stepContent.appendChild(title);
-
-    step.appendChild(stepContent);
-    trackSteps.appendChild(step);
+  return date.toLocaleDateString('en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
   });
 }
 
-function renderTrackInfo(data) {
-  document.getElementById('order-id').textContent = '#' + data.orderId;
-  document.getElementById('status-text').textContent = data.currentStatus;
-  document.getElementById('eta-text').textContent = data.eta;
-  document.getElementById('location-text').textContent = data.location;
+function renderTrackSteps(data) {
+  const trackSteps = document.getElementById('track-steps');
+  if (!trackSteps) {
+    return;
+  }
 
-  const mapImage = document.getElementById('map-image');
-  mapImage.onerror = () => {
-    mapImage.src = 'https://via.placeholder.com/1339x450.png?text=Map+currently+unavailable';
-  };
-  mapImage.src = data.routeMap;
-  const mapLink = document.getElementById('map-link');
-  mapLink.href = data.mapLink;
+  trackSteps.innerHTML = '';
+
+  const summary = document.createElement('div');
+  summary.className = 'track-summary';
+  summary.innerHTML = `
+    <div class="track-summary-text">
+      <p class="track-summary-title">${data.summaryTitle}</p>
+      <p class="track-summary-subtitle">${data.summarySubtitle}</p>
+    </div>
+    <span class="track-summary-chevron" aria-hidden="true">⌄</span>
+  `;
+  trackSteps.appendChild(summary);
+
+  const timeline = document.createElement('div');
+  timeline.className = 'track-timeline';
+
+  data.timeline.forEach((entry, idx) => {
+    const item = document.createElement('div');
+    item.className = 'track-timeline-item';
+
+    const marker = document.createElement('div');
+    marker.className = 'track-timeline-marker';
+    if (idx <= data.statusIndex) {
+      marker.classList.add('done');
+    }
+    marker.textContent = idx <= data.statusIndex ? '✓' : '';
+
+    const content = document.createElement('div');
+    content.className = 'track-timeline-content';
+    content.innerHTML = `
+      <p class="track-timeline-title">${entry.label}</p>
+      <p class="track-timeline-date">${formatTimelineDate(entry.date)}</p>
+    `;
+
+    item.appendChild(marker);
+    item.appendChild(content);
+    timeline.appendChild(item);
+  });
+
+  trackSteps.appendChild(timeline);
 }
 
-function loadTrackOrder(orderId) {
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildGoogleDirectionsLink(originAddress, destinationAddress) {
+  const origin = encodeURIComponent(originAddress || '');
+  const destination = encodeURIComponent(destinationAddress || '');
+  return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+}
+
+function formatDistance(distanceMeters) {
+  const km = Number(distanceMeters || 0) / 1000;
+  if (km < 1) {
+    return `${Math.max(1, Math.round(km * 1000))} m`;
+  }
+  return `${km.toFixed(km >= 10 ? 0 : 1)} km`;
+}
+
+function formatDuration(durationSeconds) {
+  const totalMinutes = Math.max(1, Math.round(Number(durationSeconds || 0) / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (!hours) {
+    return `${totalMinutes} min`;
+  }
+
+  if (!minutes) {
+    return `${hours} hr`;
+  }
+
+  return `${hours} hr ${minutes} min`;
+}
+
+async function geocodeAddress(address) {
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(address)}`);
+  if (!response.ok) {
+    throw new Error('Unable to geocode address');
+  }
+
+  const matches = await response.json();
+  if (!Array.isArray(matches) || !matches.length) {
+    throw new Error('No geocode result');
+  }
+
+  return {
+    lat: Number(matches[0].lat),
+    lon: Number(matches[0].lon)
+  };
+}
+
+async function getRouteEstimate(originCoords, destinationCoords) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${originCoords.lon},${originCoords.lat};${destinationCoords.lon},${destinationCoords.lat}?overview=false`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Unable to load route');
+  }
+
+  const payload = await response.json();
+  const route = payload?.routes?.[0];
+  if (!route) {
+    throw new Error('Route unavailable');
+  }
+
+  return {
+    distanceMeters: route.distance,
+    durationSeconds: route.duration
+  };
+}
+
+function renderRouteEstimateLoading() {
+  const container = document.getElementById('track-route-estimate');
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = '<p class="track-route-loading">Calculating route, distance, and travel time...</p>';
+}
+
+function renderRouteEstimateContent(data) {
+  const container = document.getElementById('track-route-estimate');
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = `
+    <p class="track-route-title">Route Estimate</p>
+    <div class="track-route-stats">
+      <div class="track-route-stat">
+        <span class="track-route-stat-label">Estimated Distance</span>
+        <span class="track-route-stat-value">${escapeHtml(data.distanceText)}</span>
+      </div>
+      <div class="track-route-stat">
+        <span class="track-route-stat-label">Estimated Travel Time</span>
+        <span class="track-route-stat-value">${escapeHtml(data.durationText)}</span>
+      </div>
+    </div>
+    <p class="track-route-line"><strong>From:</strong> ${escapeHtml(data.originAddress)}</p>
+    <p class="track-route-line"><strong>To:</strong> ${escapeHtml(data.destinationAddress)}</p>
+    <div class="track-route-actions">
+      <a class="track-route-link" href="${escapeHtml(data.directionsUrl)}" target="_blank" rel="noopener noreferrer">View Path on Map</a>
+    </div>
+    <p class="track-route-note">Time may vary based on traffic and road conditions.</p>
+  `;
+}
+
+function renderRouteEstimateFallback(originAddress, destinationAddress) {
+  const directionsUrl = buildGoogleDirectionsLink(originAddress, destinationAddress);
+  renderRouteEstimateContent({
+    distanceText: 'Unavailable right now',
+    durationText: 'Unavailable right now',
+    originAddress,
+    destinationAddress,
+    directionsUrl
+  });
+}
+
+async function renderTrackRouteEstimate(trackPayload) {
+  const destinationAddress = String(trackPayload?.deliveryAddress || '').trim();
+  const originAddress = String(trackPayload?.originAddress || ADMIN_NURSERY_ADDRESS).trim();
+
+  if (!destinationAddress) {
+    renderRouteEstimateContent({
+      distanceText: 'Not available',
+      durationText: 'Not available',
+      originAddress,
+      destinationAddress: 'No delivery address on this order',
+      directionsUrl: buildGoogleDirectionsLink(originAddress, originAddress)
+    });
+    return;
+  }
+
+  renderRouteEstimateLoading();
+
+  try {
+    const [originCoords, destinationCoords] = await Promise.all([
+      geocodeAddress(originAddress),
+      geocodeAddress(destinationAddress)
+    ]);
+
+    const route = await getRouteEstimate(originCoords, destinationCoords);
+    renderRouteEstimateContent({
+      distanceText: formatDistance(route.distanceMeters),
+      durationText: formatDuration(route.durationSeconds),
+      originAddress,
+      destinationAddress,
+      directionsUrl: buildGoogleDirectionsLink(originAddress, destinationAddress)
+    });
+  } catch (error) {
+    console.warn('Route estimate failed:', error);
+    renderRouteEstimateFallback(originAddress, destinationAddress);
+  }
+}
+
+async function loadTrackOrder(orderId) {
   const purchases = getPurchaseOrders();
   const order = purchases.find(item => String(item.id || '') === String(orderId || '')) || getSelectedOrLatestOrder(purchases);
+  const trackSteps = document.getElementById('track-steps');
 
   if (!order) {
-    document.getElementById('status-text').textContent = 'No tracking available';
+    if (trackSteps) {
+      trackSteps.innerHTML = '<p class="order-history-empty">No tracking available</p>';
+    }
+    renderRouteEstimateContent({
+      distanceText: 'Not available',
+      durationText: 'Not available',
+      originAddress: ADMIN_NURSERY_ADDRESS,
+      destinationAddress: 'No tracking available',
+      directionsUrl: buildGoogleDirectionsLink(ADMIN_NURSERY_ADDRESS, ADMIN_NURSERY_ADDRESS)
+    });
     return;
   }
 
   const payload = getTrackingPayload(order);
   renderTrackSteps(payload);
-  renderTrackInfo(payload);
+  await renderTrackRouteEstimate(payload);
 }
 
 // Initialize - show order list by default
 document.addEventListener('DOMContentLoaded', () => {
+  initDetailsTabs();
   loadCurrentOrder();
   navigateTo('order-list');
 

@@ -58,9 +58,31 @@
 
     <main class="info-page">
         <section class="hero-panel">
-            <p class="hero-kicker">Guides & Story</p>
-            <h1>Users Manual and About Us</h1>
-            <p>Simple guide so you can browse, reserve, and contact us with ease.</p>
+            <div class="hero-shell">
+                <div class="hero-copy">
+                    <p class="hero-kicker">Guides & Story</p>
+                    <h1>Users Manual and About Us</h1>
+                    <p class="hero-lead">Simple guide so you can browse, reserve, and contact us with ease.</p>
+                    <div class="hero-actions">
+                        <a href="#users-manual" class="hero-btn hero-btn-primary">Open Users Manual</a>
+                        <a href="#about-us" class="hero-btn hero-btn-secondary">Read About Us</a>
+                    </div>
+                </div>
+                <div class="hero-highlights" aria-label="Info highlights">
+                    <article class="hero-highlight-card">
+                        <h3>6 Clear Steps</h3>
+                        <p>From discovery to reservation confirmation.</p>
+                    </article>
+                    <article class="hero-highlight-card">
+                        <h3>Practical Guidance</h3>
+                        <p>Simple instructions designed for first-time buyers.</p>
+                    </article>
+                    <article class="hero-highlight-card">
+                        <h3>Local Trusted Nursery</h3>
+                        <p>Focused on healthy plants, fair pricing, and safe delivery.</p>
+                    </article>
+                </div>
+            </div>
         </section>
 
         <section class="info-section" id="users-manual">
@@ -125,5 +147,20 @@
     </footer>
 
     <script src="../shared/navbar-dropdown.js"></script>
+    <script>
+        (function () {
+            const header = document.querySelector('.header');
+            if (!header) {
+                return;
+            }
+
+            const updateHeaderState = () => {
+                header.classList.toggle('is-scrolled', window.scrollY > 10);
+            };
+
+            updateHeaderState();
+            window.addEventListener('scroll', updateHeaderState, { passive: true });
+        })();
+    </script>
 </body>
 </html>

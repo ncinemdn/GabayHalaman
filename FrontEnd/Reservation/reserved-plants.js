@@ -1,5 +1,19 @@
 const DEFAULT_PLANT_IMAGE = "https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
 
+function initializeStickyHeaderBlur() {
+    const header = document.querySelector('.header');
+    if (!header) {
+        return;
+    }
+
+    function syncHeaderState() {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+    }
+
+    syncHeaderState();
+    window.addEventListener('scroll', syncHeaderState, { passive: true });
+}
+
 function toSafeNumber(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
@@ -196,4 +210,7 @@ function goToDeliveryDetails(date) {
     window.location.href = '../CartPage/details.html';
 }
 
-window.addEventListener('DOMContentLoaded', loadReservations);
+window.addEventListener('DOMContentLoaded', function() {
+    initializeStickyHeaderBlur();
+    loadReservations();
+});

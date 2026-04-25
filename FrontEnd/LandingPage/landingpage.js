@@ -402,6 +402,20 @@ function initializeButtons() {
     }
 }
 
+function initializeStickyHeaderBlur() {
+    const header = document.querySelector('.header');
+    if (!header) {
+        return;
+    }
+
+    function syncHeaderState() {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+    }
+
+    syncHeaderState();
+    window.addEventListener('scroll', syncHeaderState, { passive: true });
+}
+
 function initializeReviewModals() {
     const reviewsBtn = document.querySelector('.reviews-btn');
     const reviewModal = document.querySelector('#reviewModal');
@@ -711,6 +725,7 @@ function initializeFooter() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadLandingData();
+    initializeStickyHeaderBlur();
     initializeTabs();
     initializeTrendingCarousel();
     initializeCategoryShopByCategory();
