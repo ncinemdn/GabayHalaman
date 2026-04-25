@@ -755,8 +755,7 @@ function handleReserve() {
     }
 
     localStorage.removeItem('deliveryDetails');
-
-    window.location.href = 'confirmation.html';
+    window.location.href = 'reserved-plants.html';
 }
 
 

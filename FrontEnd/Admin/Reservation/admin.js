@@ -3,6 +3,10 @@ const RESERVATIONS_KEY = 'reservations';
 let purchaseOrders = [];
 let reservationOrders = [];
 let expandedTable = null;
+let selectedDeletionIds = {
+    purchase: new Set(),
+    reservation: new Set()
+};
 let activeSearchQuery = '';
 let activeStatusFilter = 'all';
 let activeTypeFilter = 'all';
@@ -54,7 +58,7 @@ function formatPeso(value) {
 }
 
 function getPlantOrdered(order) {
-    if (order.plantOrdered) {
+    if (order.plantOrdered && order.plantOrdered !== 'N/A') {
         return order.plantOrdered;
     }
 
@@ -74,11 +78,17 @@ function getPlantOrdered(order) {
         return 'N/A';
     }
 
-    if (order.items.length === 1) {
-        return order.items[0].name;
+    const firstItem = order.items[0];
+    const itemName = firstItem?.name || firstItem?.plant_name || firstItem?.plantName || '';
+    if (!itemName) {
+        return 'N/A';
     }
 
-    return order.items[0].name + ' +' + (order.items.length - 1) + ' more';
+    if (order.items.length === 1) {
+        return itemName;
+    }
+
+    return itemName + ' +' + (order.items.length - 1) + ' more';
 }
 
 function getQuantity(order) {
@@ -145,7 +155,7 @@ async function getLocalReservationOrders() {
         adminReservationId: String(order.adminReservationId || order.orderId || ''),
         orderId: String(order.orderId || ''),
         customerName: order.customerName || 'Customer',
-        plantOrdered: order.plantOrdered || 'N/A',
+        plantOrdered: order.plantOrdered || order.plant_name || undefined,
         quantity: order.quantity || 0,
         totalAmount: order.totalAmount || 0,
         paymentStatus: normalizePaymentStatus(order.paymentStatus),
@@ -159,9 +169,33 @@ function mergeOrdersWithLocalOrders(backendOrders, localOrders) {
         return backendOrders;
     }
 
-    const backendIds = new Set(backendOrders.map(order => String(order.orderId || order.id || '')));
-    const merged = [...localOrders.filter(order => !backendIds.has(String(order.orderId || order.id || ''))), ...backendOrders];
-    return merged;
+    const localOrderMap = new Map();
+    localOrders.forEach(order => {
+        const key = String(order.orderId || order.id || '');
+        if (key) {
+            localOrderMap.set(key, order);
+        }
+    });
+
+    const merged = backendOrders.map(order => {
+        const key = String(order.orderId || order.id || '');
+        const localOrder = localOrderMap.get(key);
+        if (!localOrder) {
+            return order;
+        }
+
+        localOrderMap.delete(key);
+
+        return {
+            ...order,
+            ...localOrder,
+            items: Array.isArray(localOrder.items) && localOrder.items.length ? localOrder.items : order.items,
+            plantOrdered: localOrder.plantOrdered || order.plantOrdered || order.plant_name || (Array.isArray(order.items) && order.items.length ? order.items[0].name : 'N/A')
+        };
+    });
+
+    const remainingLocalOrders = Array.from(localOrderMap.values());
+    return [...remainingLocalOrders, ...merged];
 }
 
 function getLocalPurchaseOrdersRaw() {
@@ -278,7 +312,7 @@ async function loadReservationOrders() {
             adminReservationId: String(order.request_id || ''),
             orderId: order.request_id ? String(order.request_id) : '',
             customerName: order.client_name || 'Customer',
-            plantOrdered: order.plant_name || 'N/A',
+            plantOrdered: order.plant_name || undefined,
             quantity: order.quantity || 0,
             totalAmount: order.total_amount || 0,
             paymentStatus: normalizePaymentStatus(order.payment_status),
@@ -366,6 +400,7 @@ function renderMiniTables() {
 // Render individual mini table
 function renderMiniTable(containerId, orders) {
     const container = document.getElementById(containerId);
+    const type = containerId === 'purchaseTable' ? 'purchase' : 'reservation';
 
     if (orders.length === 0) {
         container.innerHTML = '<p style="padding: 1rem; text-align: center; color: #666;">No orders</p>';
@@ -380,17 +415,29 @@ function renderMiniTable(containerId, orders) {
                     <th>Plant</th>
                     <th>Payment</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                ${orders.map(order => `
+                ${orders.map(order => {
+                    const orderId = String(order.id);
+                    const selected = selectedDeletionIds[type].has(orderId);
+                    return `
                     <tr>
                         <td><strong>${order.customerName}</strong></td>
                         <td>${getPlantOrdered(order)}</td>
                         <td><span class="status-badge ${normalizePaymentStatus(order.paymentStatus)}">${formatPaymentStatusLabel(order.paymentStatus)}</span></td>
                         <td><span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span></td>
+                        <td class="action-cell">
+                            <label class="delete-checkbox">
+                                <input type="checkbox" onchange="toggleDeleteSelection('${type}', '${orderId}', this.checked)" ${selected ? 'checked' : ''}>
+                                <span class="checkmark"></span>
+                            </label>
+                            <button class="delete-btn row-delete-btn" onclick="deleteOrder('${type}', '${orderId}')" style="display: ${selected ? 'inline-flex' : 'none'};">Delete</button>
+                        </td>
                     </tr>
-                `).join('')}
+                    `;
+                }).join('')}
             </tbody>
         </table>
     `;
@@ -547,11 +594,15 @@ function deleteOrder(type, orderId) {
     let deletedOrderRecord = null;
 
     if (type === 'purchase') {
-        deletedOrderRecord = purchaseOrders.find(o => o.id === orderId) || null;
-        purchaseOrders = purchaseOrders.filter(o => o.id !== orderId);
+        deletedOrderRecord = purchaseOrders.find(o => String(o.id) === orderId) || null;
+        purchaseOrders = purchaseOrders.filter(o => String(o.id) !== orderId);
     } else {
-        deletedOrderRecord = reservationOrders.find(o => o.id === orderId) || null;
-        reservationOrders = reservationOrders.filter(o => o.id !== orderId);
+        deletedOrderRecord = reservationOrders.find(o => String(o.id) === orderId) || null;
+        reservationOrders = reservationOrders.filter(o => String(o.id) !== orderId);
+    }
+
+    if (selectedDeletionIds[type]) {
+        selectedDeletionIds[type].delete(orderId);
     }
 
     if (expandedTable) {
@@ -561,6 +612,20 @@ function deleteOrder(type, orderId) {
     }
 
     updateStats();
+}
+
+function toggleDeleteSelection(type, orderId, isSelected) {
+    if (!selectedDeletionIds[type]) {
+        return;
+    }
+
+    if (isSelected) {
+        selectedDeletionIds[type].add(orderId);
+    } else {
+        selectedDeletionIds[type].delete(orderId);
+    }
+
+    renderMiniTables();
 }
 
 // Setup event listeners

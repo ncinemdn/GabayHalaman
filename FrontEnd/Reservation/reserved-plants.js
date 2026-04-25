@@ -192,6 +192,7 @@ function goToDeliveryDetails(date) {
     const selected = reservations.filter(item => item.deliveryDate === date);
 
     localStorage.setItem('selectedReservations', JSON.stringify(selected));
+    localStorage.setItem('checkoutSource', 'reservation');
     window.location.href = '../CartPage/details.html';
 }
 

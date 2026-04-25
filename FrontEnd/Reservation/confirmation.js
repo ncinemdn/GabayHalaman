@@ -85,6 +85,14 @@ function showNegotiationPrompt(pendingPlatform) {
     document.body.appendChild(overlay);
 
     document.getElementById('gh-confirm-ok').addEventListener('click', function () {
+        // Mark reservations as placed
+        const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+        const updatedReservations = reservations.map(reservation => ({
+            ...reservation,
+            isPlacedOrder: true
+        }));
+        localStorage.setItem('reservations', JSON.stringify(updatedReservations));
+
         overlay.remove();
         isContinuePromptOpen = false;
         localStorage.removeItem('pendingContactPlatform');

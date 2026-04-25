@@ -411,6 +411,16 @@ body {
   background: #6a8f38;
 }
 
+.delete-order-btn {
+  background: #dc2626;
+  width: auto;
+  min-width: 170px;
+}
+
+.delete-order-btn:hover {
+  background: #b91c1c;
+}
+
 .button-container {
   display: flex;
   gap: 20px;

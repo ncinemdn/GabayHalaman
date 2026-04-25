@@ -2,6 +2,8 @@ let historyStack = [];
 let futureStack = [];
 const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
 let selectedOrderId = null;
+let pendingDeleteOrderId = null;
+let modalConfirmAction = null;
 
 // Plant image mapping
 const plantImages = {
@@ -129,7 +131,8 @@ function loadCurrentOrder() {
             
             <div class="button-container">
                 <button class="order-btn disabled">Order Received</button>
-        <button class="order-btn primary" onclick="openOrderDetails('${order.id}')">Order Details</button>
+                <button class="order-btn primary" onclick="openOrderDetails('${order.id || order.orderId}')">Order Details</button>
+                <button class="order-btn secondary delete-order-btn" onclick="confirmDeleteOrder('${order.id || order.orderId}')">Delete</button>
             </div>
         </div>
   `;
@@ -234,30 +237,38 @@ async function updateBackendOrderStatus(order) {
     }
 }
 
-function showCancelConfirmation() {
+function showConfirmationModal(message, confirmLabel, dismissLabel, confirmAction) {
     const overlay = document.getElementById('cancel-confirmation');
     if (!overlay) return;
 
+    const titleEl = document.getElementById('cancelModalTitle');
     const messageEl = document.getElementById('cancelModalMessage');
-    if (messageEl) {
-        messageEl.textContent = 'Are you sure you want to cancel this order?';
-    }
-
     const confirmBtn = document.getElementById('cancelConfirmBtn');
     const dismissBtn = document.getElementById('cancelDismissBtn');
+
+    if (titleEl) {
+        titleEl.textContent = confirmLabel === 'Yes, delete order' ? 'Delete Order' : 'Cancel Order';
+    }
+    if (messageEl) {
+        messageEl.textContent = message;
+    }
     if (confirmBtn) {
+        confirmBtn.textContent = confirmLabel;
         confirmBtn.style.display = 'inline-block';
     }
     if (dismissBtn) {
-        dismissBtn.textContent = 'Keep order';
+        dismissBtn.textContent = dismissLabel;
     }
 
+    modalConfirmAction = confirmAction;
     overlay.classList.add('active');
 }
 
 function hideCancelConfirmation() {
     const overlay = document.getElementById('cancel-confirmation');
     if (!overlay) return;
+    modalConfirmAction = null;
+    pendingDeleteOrderId = null;
     overlay.classList.remove('active');
 }
 
@@ -274,7 +285,54 @@ function confirmCancelOrder() {
         return;
     }
 
-    showCancelConfirmation();
+    showConfirmationModal(
+      'Are you sure you want to cancel this order?',
+      'Yes, cancel order',
+      'Keep order',
+      cancelCurrentOrder
+    );
+}
+
+function confirmDeleteOrder(orderId) {
+    if (!orderId) return;
+    pendingDeleteOrderId = orderId;
+    showConfirmationModal(
+      'Are you sure you want to delete this order? This action cannot be undone.',
+      'Yes, delete order',
+      'Keep order',
+      deleteCurrentOrder
+    );
+}
+
+function orderMatchesId(order, orderId) {
+    const targetId = String(orderId || '');
+    return String(order?.id || '') === targetId || String(order?.orderId || '') === targetId;
+}
+
+async function deleteCurrentOrder() {
+    if (!pendingDeleteOrderId) {
+        hideCancelConfirmation();
+        return;
+    }
+
+    const purchaseOrders = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+
+    const filteredPurchases = Array.isArray(purchaseOrders)
+      ? purchaseOrders.filter(order => !orderMatchesId(order, pendingDeleteOrderId))
+      : [];
+    const filteredReservations = Array.isArray(reservations)
+      ? reservations.filter(order => !orderMatchesId(order, pendingDeleteOrderId))
+      : [];
+
+    localStorage.setItem('purchaseOrders', JSON.stringify(filteredPurchases));
+    localStorage.setItem('reservations', JSON.stringify(filteredReservations));
+    pendingDeleteOrderId = null;
+    modalConfirmAction = null;
+
+    loadCurrentOrder();
+    navigateTo('order-list');
+    hideCancelConfirmation();
 }
 
 async function cancelCurrentOrder() {
@@ -691,20 +749,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const overlay = document.getElementById('cancel-confirmation');
 
   if (confirmBtn) {
-    confirmBtn.addEventListener('click', cancelCurrentOrder);
+    confirmBtn.addEventListener('click', () => {
+      if (typeof modalConfirmAction === 'function') {
+        modalConfirmAction();
+      }
+    });
   }
 
   if (dismissBtn) {
-    dismissBtn.addEventListener('click', () => {
-      hideCancelConfirmation();
-      if (dismissBtn) {
-        dismissBtn.textContent = 'Keep order';
-      }
-      const messageEl = document.getElementById('cancelModalMessage');
-      if (messageEl) {
-        messageEl.textContent = 'Are you sure you want to cancel this order?';
-      }
-    });
+    dismissBtn.addEventListener('click', hideCancelConfirmation);
   }
 
   if (overlay) {

@@ -610,6 +610,75 @@ body {
     border-bottom: none;
 }
 
+.action-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.delete-checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+}
+
+.delete-checkbox input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.delete-checkbox .checkmark {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background 0.2s ease;
+    position: relative;
+}
+
+.delete-checkbox input:checked + .checkmark {
+    background: #78a240;
+}
+
+.delete-checkbox input:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.row-delete-btn {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid #dc2626;
+    border-radius: 9999px;
+    background: #fff;
+    color: #dc2626;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-delete-btn:hover {
+    background: #fee2e2;
+}
+
 /* Status Badges */
 .status-badge {
     display: inline-flex;
