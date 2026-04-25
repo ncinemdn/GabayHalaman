@@ -102,37 +102,26 @@
         <div class="main-content">
             <!-- Header -->
             <header class="header">
-                <!-- Search Bar -->
-                <div class="header-search">
-                    <svg class="search-icon-header" width="20" height="20" viewBox="0 0 18 18" fill="none">
-                        <path d="M16.6 18L10.3 11.7C9.8 12.1 9.225 12.4167 8.575 12.65C7.925 12.8833 7.23333 13 6.5 13C4.68333 13 3.14583 12.3708 1.8875 11.1125C0.629167 9.85417 0 8.31667 0 6.5C0 4.68333 0.629167 3.14583 1.8875 1.8875C3.14583 0.629167 4.68333 0 6.5 0C8.31667 0 9.85417 0.629167 11.1125 1.8875C12.3708 3.14583 13 4.68333 13 6.5C13 7.23333 12.8833 7.925 12.65 8.575C12.4167 9.225 12.1 9.8 11.7 10.3L18 16.6L16.6 18ZM6.5 11C7.75 11 8.8125 10.5625 9.6875 9.6875C10.5625 8.8125 11 7.75 11 6.5C11 5.25 10.5625 4.1875 9.6875 3.3125C8.8125 2.4375 7.75 2 6.5 2C5.25 2 4.1875 2.4375 3.3125 3.3125C2.4375 4.1875 2 5.25 2 6.5C2 7.75 2.4375 8.8125 3.3125 9.6875C4.1875 10.5625 5.25 11 6.5 11Z" fill="#8B8989"/>
-                    </svg>
-                    <input 
-                        type="text" 
-                        class="header-search-input" 
-                        placeholder="Search plants, orders ..."
-                    >
+                <div class="header-title-group">
+                    <h1 class="dashboard-topbar-title">Purchase / Reservation</h1>
+                    <p class="top-subtitle">View and manage customer orders and reservation</p>
                 </div>
 
                 <!-- User Profile -->
                 <div class="header-profile">
+                    <div class="profile-avatar">
+                        <img src="../Profile/cc.jpg" alt="Admin Profile Picture">
+                    </div>
                     <div class="profile-info">
                         <p class="profile-name">Admin</p>
-                        <p class="profile-role">Admin</p>
+                        <p class="profile-role">Administrator</p>
                     </div>
-                    <div class="profile-avatar"></div>
                 </div>
             </header>
 
             <!-- Page Content -->
             <div class="page-container" id="pageContent">
                 <div class="content-wrapper">
-                    <!-- Page Header -->
-                    <div class="page-header">
-                        <h1>Purchase / Reservation</h1>
-                        <p class="subtitle">View and manage customer orders and reservation</p>
-                    </div>
-
                     <!-- Stats Cards -->
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -205,20 +194,6 @@
                                         <button type="button" class="filter-option" data-filter="status" data-value="pending">Pending</button>
                                         <button type="button" class="filter-option" data-filter="status" data-value="delivered">Delivered</button>
                                         <button type="button" class="filter-option" data-filter="status" data-value="cancel">Cancel</button>
-                                    </div>
-                                </div>
-
-                                <div class="filter-dropdown" id="typesFilterDropdown">
-                                    <button class="filter-btn" id="typesBtn" type="button" aria-haspopup="true" aria-expanded="false">
-                                        <span id="typesBtnLabel">Types: All</span>
-                                        <svg class="chevron-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                                            <path d="M6 8L0 1.51351L1.4 0L6 4.97297L10.6 0L12 1.51351L6 8Z" fill="black"/>
-                                        </svg>
-                                    </button>
-                                    <div class="filter-menu" id="typesMenu" role="menu" aria-label="Filter by type">
-                                        <button type="button" class="filter-option active" data-filter="type" data-value="all">All</button>
-                                        <button type="button" class="filter-option" data-filter="type" data-value="purchase">Purchase</button>
-                                        <button type="button" class="filter-option" data-filter="type" data-value="reservation">Reservation</button>
                                     </div>
                                 </div>
                             </div>

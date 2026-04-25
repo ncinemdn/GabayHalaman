@@ -106,8 +106,36 @@ function logout() {
     window.location.href = '../../Admin/Auth/signin.html';
 }
 
+async function populateSignedInAdminHeader() {
+    let userName = 'Admin';
+    let userRole = 'Administrator';
+
+    try {
+        const currentAdmin = JSON.parse(localStorage.getItem('admin') || 'null');
+        if (currentAdmin) {
+            userName = currentAdmin.full_name || currentAdmin.name || userName;
+            userRole = currentAdmin.role || userRole;
+
+            if (typeof adminAPI !== 'undefined' && Number.isFinite(Number(currentAdmin.admin_id))) {
+                const adminData = await adminAPI.getById(currentAdmin.admin_id);
+                userName = adminData?.full_name || adminData?.name || userName;
+                userRole = adminData?.role || userRole;
+            }
+        }
+    } catch (error) {
+        console.warn('Unable to load admin user data:', error);
+    }
+
+    const userNameEl = document.querySelector('.user-name');
+    const userRoleEl = document.querySelector('.user-role');
+
+    if (userNameEl) userNameEl.textContent = userName;
+    if (userRoleEl) userRoleEl.textContent = userRole;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    await populateSignedInAdminHeader();
     await loadPlantInventory();
     initializeCategories();
     renderPlants();

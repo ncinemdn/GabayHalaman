@@ -3,10 +3,6 @@ const RESERVATIONS_KEY = 'reservations';
 let purchaseOrders = [];
 let reservationOrders = [];
 let expandedTable = null;
-let selectedDeletionIds = {
-    purchase: new Set(),
-    reservation: new Set()
-};
 let activeSearchQuery = '';
 let activeStatusFilter = 'all';
 let activeTypeFilter = 'all';
@@ -218,6 +214,47 @@ function isBackendPersistedOrder(order) {
     return order && order.id && !isNaN(Number(order.id));
 }
 
+function removeOrderFromLocalCache(type, order) {
+    if (!order) {
+        return;
+    }
+
+    if (type === 'purchase') {
+        const orders = getLocalPurchaseOrdersRaw();
+        const updated = orders.filter(item =>
+            String(item.id) !== String(order.id) &&
+            String(item.orderId) !== String(order.orderId)
+        );
+        saveLocalPurchaseOrders(updated);
+        return;
+    }
+
+    const reservations = getLocalReservationOrdersRaw();
+    const updated = reservations.filter(item =>
+        String(item.id) !== String(order.id) &&
+        String(item.orderId) !== String(order.orderId)
+    );
+    saveLocalReservationOrders(updated);
+}
+
+async function deleteBackendOrder(order) {
+    if (typeof requestsAPI === 'undefined') {
+        return true;
+    }
+
+    if (!isBackendPersistedOrder(order)) {
+        return true;
+    }
+
+    try {
+        await requestsAPI.delete(Number(order.id));
+        return true;
+    } catch (error) {
+        console.error('Failed to delete order from backend:', error);
+        return false;
+    }
+}
+
 async function updateBackendOrderStatus(order) {
     if (typeof requestsAPI === 'undefined') {
         return;
@@ -329,8 +366,36 @@ async function loadReservationOrders() {
 
 // Orders are loaded from the backend and not persisted to localStorage.
 
+async function populateSignedInAdminHeader() {
+    let userName = 'Admin';
+    let userRole = 'Administrator';
+
+    try {
+        const currentAdmin = JSON.parse(localStorage.getItem('admin') || 'null');
+        if (currentAdmin) {
+            userName = currentAdmin.full_name || currentAdmin.name || userName;
+            userRole = currentAdmin.role || userRole;
+
+            if (typeof adminAPI !== 'undefined' && Number.isFinite(Number(currentAdmin.admin_id))) {
+                const adminData = await adminAPI.getById(currentAdmin.admin_id);
+                userName = adminData?.full_name || adminData?.name || userName;
+                userRole = adminData?.role || userRole;
+            }
+        }
+    } catch (error) {
+        console.warn('Unable to load admin user data:', error);
+    }
+
+    const userNameEl = document.querySelector('.profile-name');
+    const userRoleEl = document.querySelector('.profile-role');
+
+    if (userNameEl) userNameEl.textContent = userName;
+    if (userRoleEl) userRoleEl.textContent = userRole;
+}
+
 // Initialize the page
 async function init() {
+    await populateSignedInAdminHeader();
     await loadPurchaseOrders();
     await loadReservationOrders();
     updateStats();
@@ -421,7 +486,6 @@ function renderMiniTable(containerId, orders) {
             <tbody>
                 ${orders.map(order => {
                     const orderId = String(order.id);
-                    const selected = selectedDeletionIds[type].has(orderId);
                     return `
                     <tr>
                         <td><strong>${order.customerName}</strong></td>
@@ -429,11 +493,11 @@ function renderMiniTable(containerId, orders) {
                         <td><span class="status-badge ${normalizePaymentStatus(order.paymentStatus)}">${formatPaymentStatusLabel(order.paymentStatus)}</span></td>
                         <td><span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span></td>
                         <td class="action-cell">
-                            <label class="delete-checkbox">
-                                <input type="checkbox" onchange="toggleDeleteSelection('${type}', '${orderId}', this.checked)" ${selected ? 'checked' : ''}>
-                                <span class="checkmark"></span>
-                            </label>
-                            <button class="delete-btn row-delete-btn" onclick="deleteOrder('${type}', '${orderId}')" style="display: ${selected ? 'inline-flex' : 'none'};">Delete</button>
+                            <button class="delete-btn row-delete-btn" onclick="deleteOrder('${type}', '${orderId}')" title="Delete order" aria-label="Delete order">
+                                <svg viewBox="0 0 16 19" fill="currentColor" width="16" height="16" aria-hidden="true">
+                                    <path d="M3.45775 18.6345C2.75908 18.6345 2.17475 18.3996 1.70475 17.9298C1.23492 17.4598 1 16.8754 1 16.1768V3.2345H0V1.0845H5.2V0H11.35V1.0845H16.55V3.2345H15.55V16.1768C15.55 16.8606 15.3113 17.4412 14.834 17.9185C14.3567 18.3958 13.7761 18.6345 13.0923 18.6345H3.45775ZM13.4 3.2345H3.15V16.1768C3.15 16.2666 3.17883 16.3403 3.2365 16.398C3.29417 16.4557 3.36792 16.4845 3.45775 16.4845H13.0923C13.1693 16.4845 13.2398 16.4524 13.3038 16.3883C13.3679 16.3243 13.4 16.2538 13.4 16.1768V3.2345ZM5.129 14.4595H7.27875V5.2595H5.129V14.4595ZM9.27125 14.4595H11.421V5.2595H9.27125V14.4595Z"/>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                     `;
@@ -465,6 +529,7 @@ function expandTable(type) {
                 <div class="expanded-header-cell">TOTAL<br>AMOUNT</div>
                 <div class="expanded-header-cell">PAYMENT<br>STATUS</div>
                 <div class="expanded-header-cell">STATUS</div>
+                <div class="expanded-header-cell">ACTION</div>
             </div>
         </div>
         <div class="expanded-body">
@@ -488,6 +553,13 @@ function expandTable(type) {
                             <option value="cancel" ${normalizeStatus(order.orderStatus) === 'cancel' ? 'selected' : ''}>Cancel</option>
                             <option value="delivered" ${normalizeStatus(order.orderStatus) === 'delivered' ? 'selected' : ''}>Delivered</option>
                         </select>
+                    </div>
+                    <div class="expanded-cell action-cell">
+                        <button class="delete-btn row-delete-btn" onclick="deleteOrder('${type}', '${order.id}')" title="Delete order" aria-label="Delete order">
+                            <svg viewBox="0 0 16 19" fill="currentColor" width="16" height="16" aria-hidden="true">
+                                <path d="M3.45775 18.6345C2.75908 18.6345 2.17475 18.3996 1.70475 17.9298C1.23492 17.4598 1 16.8754 1 16.1768V3.2345H0V1.0845H5.2V0H11.35V1.0845H16.55V3.2345H15.55V16.1768C15.55 16.8606 15.3113 17.4412 14.834 17.9185C14.3567 18.3958 13.7761 18.6345 13.0923 18.6345H3.45775ZM13.4 3.2345H3.15V16.1768C3.15 16.2666 3.17883 16.3403 3.2365 16.398C3.29417 16.4557 3.36792 16.4845 3.45775 16.4845H13.0923C13.1693 16.4845 13.2398 16.4524 13.3038 16.3883C13.3679 16.3243 13.4 16.2538 13.4 16.1768V3.2345ZM5.129 14.4595H7.27875V5.2595H5.129V14.4595ZM9.27125 14.4595H11.421V5.2595H9.27125V14.4595Z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             `).join('')}
@@ -586,7 +658,7 @@ function minimizeTable() {
 }
 
 // Delete order
-function deleteOrder(type, orderId) {
+async function deleteOrder(type, orderId) {
     if (!confirm('Are you sure you want to delete this order?')) {
         return;
     }
@@ -595,14 +667,26 @@ function deleteOrder(type, orderId) {
 
     if (type === 'purchase') {
         deletedOrderRecord = purchaseOrders.find(o => String(o.id) === orderId) || null;
-        purchaseOrders = purchaseOrders.filter(o => String(o.id) !== orderId);
     } else {
         deletedOrderRecord = reservationOrders.find(o => String(o.id) === orderId) || null;
-        reservationOrders = reservationOrders.filter(o => String(o.id) !== orderId);
     }
 
-    if (selectedDeletionIds[type]) {
-        selectedDeletionIds[type].delete(orderId);
+    if (!deletedOrderRecord) {
+        return;
+    }
+
+    const backendDeleted = await deleteBackendOrder(deletedOrderRecord);
+    if (!backendDeleted) {
+        alert('Unable to delete order from server. Please try again.');
+        return;
+    }
+
+    removeOrderFromLocalCache(type, deletedOrderRecord);
+
+    if (type === 'purchase') {
+        purchaseOrders = purchaseOrders.filter(o => String(o.id) !== orderId);
+    } else {
+        reservationOrders = reservationOrders.filter(o => String(o.id) !== orderId);
     }
 
     if (expandedTable) {
@@ -612,20 +696,6 @@ function deleteOrder(type, orderId) {
     }
 
     updateStats();
-}
-
-function toggleDeleteSelection(type, orderId, isSelected) {
-    if (!selectedDeletionIds[type]) {
-        return;
-    }
-
-    if (isSelected) {
-        selectedDeletionIds[type].add(orderId);
-    } else {
-        selectedDeletionIds[type].delete(orderId);
-    }
-
-    renderMiniTables();
 }
 
 // Setup event listeners
@@ -638,17 +708,12 @@ function setupEventListeners() {
 
 function setupFilterDropdowns() {
     const statusBtn = document.getElementById('statusBtn');
-    const typesBtn = document.getElementById('typesBtn');
     const statusDropdown = document.getElementById('statusFilterDropdown');
-    const typesDropdown = document.getElementById('typesFilterDropdown');
     const statusBtnLabel = document.getElementById('statusBtnLabel');
-    const typesBtnLabel = document.getElementById('typesBtnLabel');
 
     const closeDropdowns = () => {
         statusDropdown.classList.remove('is-open');
-        typesDropdown.classList.remove('is-open');
         statusBtn.setAttribute('aria-expanded', 'false');
-        typesBtn.setAttribute('aria-expanded', 'false');
     };
 
     const openDropdown = (dropdown, button) => {
@@ -667,16 +732,6 @@ function setupFilterDropdowns() {
         openDropdown(statusDropdown, statusBtn);
     });
 
-    typesBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const isOpen = typesDropdown.classList.contains('is-open');
-        if (isOpen) {
-            closeDropdowns();
-            return;
-        }
-        openDropdown(typesDropdown, typesBtn);
-    });
-
     const statusOptions = document.querySelectorAll('.filter-option[data-filter="status"]');
     statusOptions.forEach(option => {
         option.addEventListener('click', () => {
@@ -684,18 +739,6 @@ function setupFilterDropdowns() {
             statusOptions.forEach(item => item.classList.remove('active'));
             option.classList.add('active');
             statusBtnLabel.textContent = 'Status: ' + capitalizeFirst(activeStatusFilter === 'all' ? 'all' : activeStatusFilter);
-            closeDropdowns();
-            applyFiltersAndRender();
-        });
-    });
-
-    const typeOptions = document.querySelectorAll('.filter-option[data-filter="type"]');
-    typeOptions.forEach(option => {
-        option.addEventListener('click', () => {
-            activeTypeFilter = option.getAttribute('data-value') || 'all';
-            typeOptions.forEach(item => item.classList.remove('active'));
-            option.classList.add('active');
-            typesBtnLabel.textContent = 'Types: ' + capitalizeFirst(activeTypeFilter === 'all' ? 'all' : activeTypeFilter);
             closeDropdowns();
             applyFiltersAndRender();
         });

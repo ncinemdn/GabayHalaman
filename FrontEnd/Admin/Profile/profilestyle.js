@@ -16,17 +16,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     let profile = {
-        fullName: 'Admin',
+        fullName: currentAdmin.full_name || currentAdmin.name || 'Admin',
         role: 'Administrator',
-        email: '',
-        phone: ''
+        email: currentAdmin.email || '',
+        phone: currentAdmin.phone || ''
     };
 
     try {
-        const adminData = await adminAPI.getById(currentAdmin.admin_id);
-        profile.fullName = adminData.full_name || adminData.name || profile.fullName;
-        profile.email = adminData.email || profile.email;
-        profile.phone = adminData.phone || profile.phone;
+        if (typeof adminAPI !== 'undefined' && Number.isFinite(Number(currentAdmin.admin_id))) {
+            const adminData = await adminAPI.getById(currentAdmin.admin_id);
+            profile.fullName = adminData.full_name || adminData.name || profile.fullName;
+            profile.email = adminData.email || profile.email;
+            profile.phone = adminData.phone || profile.phone;
+        }
     } catch (error) {
         console.error('Failed to fetch admin data:', error);
     }
@@ -196,21 +198,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            const logs = await adminLogsAPI.getAll();
+            const [logs, admins] = await Promise.all([
+                adminLogsAPI.getAll(),
+                (typeof adminAPI !== 'undefined' ? adminAPI.getAll() : Promise.resolve([]))
+            ]);
+
             if (!Array.isArray(logs) || logs.length === 0) {
                 transactionLogBody.innerHTML = '<tr><td colspan="5" class="placeholder">No transaction logs available.</td></tr>';
                 return;
             }
 
-            transactionLogBody.innerHTML = logs.map(log => `
+            const adminNameById = new Map(
+                (Array.isArray(admins) ? admins : []).map((admin) => [
+                    String(admin.admin_id),
+                    admin.full_name || admin.name || ('Admin #' + String(admin.admin_id || ''))
+                ])
+            );
+
+            const sortedLogs = [...logs].sort((a, b) => {
+                const aDate = new Date(a.created_at || a.createdAt || 0).getTime();
+                const bDate = new Date(b.created_at || b.createdAt || 0).getTime();
+                return bDate - aDate;
+            });
+
+            transactionLogBody.innerHTML = sortedLogs.map(log => {
+                const logId = log.log_id || log.admin_log_id || 'N/A';
+                const adminId = log.admin_id || log.adminId;
+                const adminLabel = adminId ? (adminNameById.get(String(adminId)) || ('Admin #' + String(adminId))) : 'Unknown Admin';
+                const createdAtRaw = log.created_at || log.createdAt || '';
+                const createdAt = createdAtRaw ? new Date(createdAtRaw).toLocaleString('en-PH') : '';
+                const actionText = log.action_performed || log.action || log.description || 'No details';
+                const moduleText = log.module_used || log.module || '';
+                const statusText = log.status || 'Unknown';
+                const statusClass = String(statusText).toLowerCase() === 'success' ? 'success' : 'warning';
+
+                return `
                 <tr>
-                    <td><strong>${log.admin_log_id ? '#LOG-' + log.admin_log_id : 'N/A'}</strong></td>
-                    <td>${log.created_at || log.createdAt || ''}</td>
-                    <td>${log.action || log.description || 'No details'}</td>
-                    <td>${log.module || ''}</td>
-                    <td><span class="status-badge ${String(log.status || '').toLowerCase() === 'success' ? 'success' : 'warning'}">${log.status || 'Unknown'}</span></td>
+                    <td><strong>${logId !== 'N/A' ? '#LOG-' + logId : 'N/A'}</strong></td>
+                    <td>${createdAt}</td>
+                    <td>${actionText}<br><small>By: ${adminLabel}</small></td>
+                    <td>${moduleText}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         } catch (error) {
             console.error('Failed to load admin logs:', error);
             transactionLogBody.innerHTML = '<tr><td colspan="5" class="placeholder">Unable to load transaction logs.</td></tr>';
@@ -240,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (detailFullName) detailFullName.textContent = data.fullName;
         if (detailRole) detailRole.textContent = data.role;
         if (detailEmail) detailEmail.textContent = data.email;
-        if (detailPhone) detailPhone.textContent = data.phone;
+        if (detailPhone) detailPhone.textContent = data.phone || 'Not set';
     }
 
     function loadAdminSession() {
