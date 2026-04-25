@@ -3,8 +3,8 @@ let activeSearchQuery = '';
 let activeStatusFilter = 'all';
 
 const trackingStatusConfig = {
+    'pending': 'Pending',
     'confirmed': 'Confirmed',
-    'prepared': 'Prepared by Seller',
     'out_for_delivery': 'Out for Delivery',
     'delivered': 'Delivered'
 };
@@ -12,8 +12,16 @@ const trackingStatusConfig = {
 function normalizeTrackingStatus(status) {
     const value = String(status || '').toLowerCase();
 
+    if (!value || value === 'pending') {
+        return 'pending';
+    }
+
     if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
-        return 'prepared';
+        return 'confirmed';
+    }
+
+    if (value === 'confirmed') {
+        return 'confirmed';
     }
 
     if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
@@ -24,7 +32,7 @@ function normalizeTrackingStatus(status) {
         return 'delivered';
     }
 
-    return 'confirmed';
+    return 'pending';
 }
 
 function mapTrackingToDeliveryStatus(trackingStatus) {
@@ -38,6 +46,16 @@ function mapTrackingToDeliveryStatus(trackingStatus) {
     }
 
     return 'pending';
+}
+
+function getTrackingFilterStatus(delivery) {
+    const value = normalizeTrackingStatus(delivery && delivery.trackingStatus);
+
+    if (value === 'out_for_delivery') {
+        return 'out-for-delivery';
+    }
+
+    return value;
 }
 
 // Status configurations
@@ -303,7 +321,7 @@ function getFilteredDeliveries() {
             String(trackingStatusConfig[delivery.trackingStatus] || '').toLowerCase().includes(activeSearchQuery)
         );
 
-        const matchesStatus = activeStatusFilter === 'all' || delivery.status === activeStatusFilter;
+        const matchesStatus = activeStatusFilter === 'all' || getTrackingFilterStatus(delivery) === activeStatusFilter;
         return matchesSearch && matchesStatus;
     });
 }
@@ -371,7 +389,7 @@ function formatId(id) {
 }
 
 function createTrackingStatusDropdown(delivery) {
-    const statuses = ['confirmed', 'prepared', 'out_for_delivery', 'delivered'];
+    const statuses = ['pending', 'confirmed', 'out_for_delivery', 'delivered'];
     const options = statuses.map(status => `
         <option value="${status}" ${delivery.trackingStatus === status ? 'selected' : ''}>
             ${trackingStatusConfig[status]}
