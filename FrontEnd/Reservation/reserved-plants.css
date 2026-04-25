@@ -4,103 +4,134 @@
     box-sizing: border-box;
 }
 
+:root {
+    --gh-olive-900: #1f3419;
+    --gh-olive-700: #375728;
+    --gh-olive-500: #6f9954;
+    --gh-bg-soft: #eef3e8;
+    --gh-surface: #ffffff;
+    --gh-border: #d9e1d2;
+    --gh-text: #1d241d;
+    --gh-muted: #6e7a6d;
+    --gh-success: #2f6f1f;
+}
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #ffffff;
     min-height: 100vh;
+    overflow-x: hidden;
+    color: var(--gh-text);
+    background:
+        radial-gradient(circle at 8% 10%, rgba(146, 183, 112, 0.2), transparent 34%),
+        radial-gradient(circle at 92% 14%, rgba(190, 214, 165, 0.35), transparent 36%),
+        linear-gradient(180deg, #f8fbf5 0%, #eef4eb 100%);
 }
-
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 10px;
 }
 
-
 ::-webkit-scrollbar-track {
-    background: #f6f4f9;
+    background: #eef3e8;
     border-radius: 10px;
 }
-
 
 ::-webkit-scrollbar-thumb {
-    background: #3e5a18;
+    background: #6a8e4d;
     border-radius: 10px;
-    border: 2px solid #f6f4f9;
+    border: 2px solid #eef3e8;
 }
-
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #2d4312;
+    background: #55753d;
 }
-
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: #3e5a18 #f6f4f9;
+    scrollbar-color: #6a8e4d #eef3e8;
 }
 
-
-/* HEADER BACKGROUND */
+/* Header (Landing style) */
 .header {
-  background: #7fa843;
-  padding: 20px 0;
+    background: rgba(104, 150, 84, 0.3);
+    padding: 14px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1200;
+    transition: background-color 0.25s ease, backdrop-filter 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    border-bottom: 1px solid transparent;
 }
 
-/* WHITE NAVBAR */
+.header.is-scrolled {
+    background: rgba(78, 125, 62, 0.68);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 6px 22px rgba(37, 69, 24, 0.32);
+    border-bottom-color: rgba(255, 255, 255, 0.24);
+}
+
 .header-inner {
-  background-color: #ffffff;
-  border-radius: 50px;
-  padding: 12px 28px;
-  max-width: 1300px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    background-color: transparent;
+    border-radius: 0;
+    padding: 8px 28px;
+    max-width: 1340px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+    align-items: center;
+    column-gap: 20px;
+    box-shadow: none;
 }
 
-/* LOGO SECTION */
 .logo-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-self: start;
+    gap: 12px;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 4px 10px 4px 4px;
+    transition: background-color 0.2s ease;
+}
+
+.logo-section:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .logo {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  object-fit: cover;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-/* TEXT LOGO */
 .brand-text {
-  height: 24px;
+    height: 24px;
+    width: auto;
+    display: block;
 }
 
-/* NAV LINKS */
 .nav {
-  display: flex;
+    display: flex;
     align-items: center;
-  gap: 40px;
-    flex: 1;
-    justify-content: center;
+    justify-self: center;
+    gap: 34px;
 }
 
 .nav a {
-  font-family: 'Inria Serif', serif;
-  font-weight: 700;
-  font-size: 18px;
-  color: black;
-  text-decoration: none;
-  transition: 0.2s;
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #132710;
+    text-decoration: none;
+    transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .nav a:hover {
-  opacity: 0.6;
+    opacity: 0.6;
 }
 
 .nav-dropdown {
@@ -111,7 +142,7 @@ body {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
     font-size: 18px;
-    color: black;
+    color: #132710;
     background: none;
     border: none;
     cursor: pointer;
@@ -129,9 +160,10 @@ body {
     left: 50%;
     transform: translateX(-50%) translateY(8px);
     min-width: 170px;
-    background: #ffffff;
+    background: rgba(249, 255, 245, 0.98);
     border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(102, 146, 83, 0.2);
+    box-shadow: 0 10px 24px rgba(20, 49, 12, 0.18);
     padding: 10px 0;
     z-index: 1000;
     opacity: 0;
@@ -166,58 +198,94 @@ body {
     transform: translateY(0);
 }
 
-/* ICONS */
 .header-icons {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+    display: flex;
+    align-items: center;
+    justify-self: end;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 999px;
+    padding: 3px 8px;
 }
 
 .icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .icon-btn svg {
-  width: 20px;
-  height: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.icon-btn svg path {
+    fill: #132710;
+    transition: fill 0.2s ease;
 }
 
 .icon-btn:hover {
-  opacity: 0.6;
+    background: rgba(255, 255, 255, 0.34);
+    transform: translateY(-1px);
 }
 
-/* Main Container */
+.icon-btn:hover svg path {
+    fill: #0c1a08;
+}
+
+/* Main shell */
 .container {
-    padding: 2rem;
-    max-width: 1080px;
+    max-width: 980px;
     margin: 0 auto;
+    margin-top: 106px;
+    padding: 1.3rem 1rem 2.2rem;
 }
 
-
-.page-header {
-    background-color: #3e5a18;
-    border-radius: 50px 50px 0 0;
-    padding: 1rem;
-    text-align: center;
+.page-shell {
+    border: 1px solid #d8e2d2;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 16px 34px rgba(26, 42, 20, 0.1);
+    background: var(--gh-surface);
 }
 
+.page-hero {
+    background: linear-gradient(140deg, var(--gh-olive-900), #2f4b22 52%, #456d33 100%);
+    padding: 1rem 1.2rem;
+    color: #f4f9f1;
+}
+
+.page-kicker {
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
+}
 
 .page-title {
     font-family: 'Inria Serif', serif;
-    font-weight: 700;
-    font-size: 30px;
-    color: white;
+    font-size: 1.65rem;
+    line-height: 1.15;
+    margin-top: 0.2rem;
 }
 
+.page-subtitle {
+    font-size: 0.86rem;
+    margin-top: 0.3rem;
+    opacity: 0.85;
+}
 
 .content-box {
-    background-color: #f6f4f9;
-    border-radius: 50px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    padding: 2rem 2rem 2.5rem;
+    background: linear-gradient(180deg, #f9fcf6 0%, #f2f7ef 100%);
+    padding: 1rem;
 }
 
 .content-box.is-empty {
@@ -226,96 +294,87 @@ body {
     padding: 0;
 }
 
-
+/* Empty state */
 .empty-state {
     text-align: center;
-    padding: 3rem 2rem;
-    max-width: 760px;
+    padding: 2.2rem 1.15rem;
+    max-width: 700px;
     margin: 0 auto;
-    border-radius: 24px;
-    border: 1px solid rgba(62, 90, 24, 0.25);
+    border-radius: 16px;
+    border: 1px solid rgba(62, 90, 24, 0.2);
     background:
-        radial-gradient(circle at 20% 18%, rgba(126, 163, 61, 0.2), transparent 52%),
-        linear-gradient(140deg, #f7faef 0%, #f7f1fa 60%, #eff7ee 100%);
-    box-shadow: 0 14px 28px rgba(54, 80, 23, 0.14);
+        radial-gradient(circle at 20% 18%, rgba(126, 163, 61, 0.16), transparent 52%),
+        linear-gradient(140deg, #f7faef 0%, #f6f9f2 60%, #eff7ee 100%);
+    box-shadow: 0 12px 24px rgba(54, 80, 23, 0.11);
 }
 
 .empty-icon {
-    width: 76px;
-    height: 76px;
-    margin: 0 auto 0.9rem;
-    border-radius: 20px;
-    border: 1px solid rgba(62, 90, 24, 0.3);
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 0.75rem;
+    border-radius: 16px;
+    border: 1px solid rgba(62, 90, 24, 0.28);
     background: #ffffff;
     color: #3e5a18;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 18px rgba(62, 90, 24, 0.17);
+    box-shadow: 0 6px 14px rgba(62, 90, 24, 0.15);
 }
 
 .empty-icon svg {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
 }
-
 
 .empty-state h2 {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 36px;
+    font-size: 1.8rem;
     color: #2c4114;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.45rem;
 }
 
-
 .empty-state p {
-    font-family: 'Inria Serif', serif;
-    font-size: 18px;
+    font-size: 0.93rem;
     color: #587045;
-    margin-bottom: 1.4rem;
+    margin-bottom: 1rem;
 }
 
 .empty-actions {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
 }
 
-
-.btn-reserve {
+.btn-reserve,
+.btn-shop {
     display: inline-block;
-    background-color: #3e5a18;
-    color: white;
-    font-family: 'Inria Serif', serif;
-    font-weight: 700;
-    font-size: 20px;
-    padding: 0.8rem 1.9rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.86rem;
+    padding: 0.58rem 1.15rem;
     border-radius: 999px;
     text-decoration: none;
-    transition: opacity 0.3s, transform 0.2s;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
 }
 
+.btn-reserve {
+    background: #3e5a18;
+    color: #ffffff;
+}
 
 .btn-reserve:hover {
-    opacity: 0.9;
+    opacity: 0.93;
     transform: translateY(-1px);
 }
 
 .btn-shop {
-    display: inline-block;
     background: #ffffff;
     color: #2f4915;
-    border: 1px solid rgba(62, 90, 24, 0.4);
-    font-family: 'Inria Serif', serif;
-    font-weight: 700;
-    font-size: 20px;
-    padding: 0.8rem 1.9rem;
-    border-radius: 999px;
-    text-decoration: none;
-    transition: background 0.2s, transform 0.2s;
+    border: 1px solid rgba(62, 90, 24, 0.35);
 }
 
 .btn-shop:hover {
@@ -323,66 +382,62 @@ body {
     transform: translateY(-1px);
 }
 
-
+/* Reservation groups */
 .date-group {
-    margin-bottom: 2.25rem;
+    margin-bottom: 0.95rem;
+    background: #ffffff;
+    border: 1px solid #d9e2d3;
+    border-radius: 14px;
+    padding: 0.85rem;
+    box-shadow: 0 8px 16px rgba(48, 74, 35, 0.07);
 }
 
-.date-actions {
-    display: flex;
-    justify-content: center;
-    margin-top: 0.85rem;
+.date-group:last-child {
+    margin-bottom: 0;
 }
-
 
 .date-header {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 18px;
-    color: black;
-    margin-bottom: 1rem;
-    text-align: center;
+    font-size: 1rem;
+    color: #2d4217;
+    margin-bottom: 0.7rem;
+    text-align: left;
 }
-
 
 .plants-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    max-width: 720px;
-    margin: 0 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.62rem;
 }
 
 .plants-grid.single-item {
     grid-template-columns: 1fr;
-    max-width: 320px;
+    max-width: 370px;
 }
 
-
 .plant-card {
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fdfefc;
+    border-radius: 11px;
+    border: 1px solid #e0e8db;
+    box-shadow: 0 3px 8px rgba(28, 40, 24, 0.08);
     overflow: hidden;
-    transition: transform 0.3s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     flex-direction: row;
 }
 
-
 .plant-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 7px 14px rgba(28, 40, 24, 0.11);
 }
 
-
 .plant-image-container {
-    width: 92px;
-    height: 92px;
+    width: 86px;
+    height: 86px;
     overflow: hidden;
     flex-shrink: 0;
 }
-
 
 .plant-image {
     width: 100%;
@@ -390,238 +445,170 @@ body {
     object-fit: cover;
 }
 
-
 .plant-info {
-    padding: 0.75rem;
+    padding: 0.58rem 0.62rem;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.2rem;
+    gap: 0.12rem;
     flex: 1;
 }
 
-
 .plant-name {
-    font-family: 'Inria Serif', serif;
-    font-weight: 700;
-    font-size: 12px;
-    color: black;
-    margin-bottom: 0.2rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.84rem;
+    color: #222a21;
+    margin-bottom: 0.12rem;
 }
-
 
 .plant-details {
-    font-family: 'Poppins', sans-serif;
-    font-size: 9px;
-    color: #595959;
-    margin-bottom: 0.1rem;
+    font-size: 0.68rem;
+    color: #5f6c5d;
+    margin-bottom: 0.05rem;
 }
 
-
 .plant-details strong {
-    color: black;
+    color: #303d2e;
     font-weight: 600;
 }
 
-
 .plant-details span {
-    font-weight: 400;
+    font-weight: 500;
 }
-
-
-.plant-rating {
-    font-size: 18px;
-    margin-bottom: 0.75rem;
-    letter-spacing: 2px;
-}
-
 
 .plant-price {
     font-family: 'Karla', sans-serif;
     font-weight: 700;
-    font-size: 16px;
-    color: black;
-    margin-bottom: 0.2rem;
+    font-size: 0.93rem;
+    color: #1f2d1b;
+    margin: 0.06rem 0;
 }
 
+.date-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.62rem;
+}
 
 .reservation-buy-now {
-    padding: 0.4rem 0.9rem;
+    padding: 0.46rem 0.98rem;
     border: none;
     border-radius: 999px;
-    background-color: #3e5a18;
-    color: white;
-    font-family: 'Inria Serif', serif;
-    font-weight: 700;
-    font-size: 12px;
+    background: linear-gradient(145deg, #355625, #4e7538);
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.76rem;
+    letter-spacing: 0.01em;
     cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .reservation-buy-now:hover {
-    opacity: 0.9;
+    opacity: 0.94;
+    transform: translateY(-1px);
 }
-
-
-.view-all {
-    text-align: center;
-    margin-top: 3rem;
-}
-
-
-.view-all-link {
-    background: none;
-    border: none;
-    padding: 0;
-    font-family: 'Inria Serif', serif;
-    font-weight: 700;
-    font-size: 40px;
-    color: black;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-
-.view-all-link:hover {
-    color: #3e5a18;
-}
-
 
 /* Responsive */
 @media (max-width: 1024px) {
-    .plants-grid {
-        grid-template-columns: repeat(2, 1fr);
-        max-width: 800px;
-    }
-
-
-    .logo {
-        width: 56px;
-        height: 56px;
-    }
-
-
     .nav {
         display: none;
     }
-}
 
+    .container {
+        margin-top: 98px;
+    }
+
+    .plants-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .plants-grid.single-item {
+        max-width: 100%;
+    }
+}
 
 @media (max-width: 768px) {
     .container {
-        padding: 2rem 1rem;
+        padding: 0.95rem 0.72rem 1.5rem;
+        margin-top: 92px;
     }
-
-
-    .content-box {
-        padding: 2.5rem 1.5rem;
-    }
-
 
     .header-inner {
-        padding: 1rem 1.5rem;
-        border-radius: 30px;
+        padding: 8px 14px;
+        border-radius: 0;
     }
-
-
-    .page-header {
-        border-radius: 30px 30px 0 0;
-    }
-
-
-    .content-box {
-        border-radius: 30px;
-    }
-
 
     .logo {
         width: 40px;
         height: 40px;
-        border-radius: 20px;
     }
 
+    .page-hero {
+        padding: 0.86rem 0.9rem;
+    }
 
     .page-title {
-        font-size: 24px;
+        font-size: 1.28rem;
     }
 
+    .page-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .content-box {
+        padding: 0.72rem;
+    }
 
     .date-header {
-        font-size: 20px;
+        font-size: 0.92rem;
     }
-
-
-    .plants-grid {
-        grid-template-columns: 1fr;
-        max-width: 100%;
-    }
-
 
     .plant-card {
-        flex-direction: column;
+        flex-direction: row;
     }
-
 
     .plant-image-container {
-        width: 100%;
-        height: 160px;
+        width: 76px;
+        height: 76px;
     }
-
 
     .plant-name {
-        font-size: 16px;
+        font-size: 0.8rem;
     }
-
 
     .plant-details {
-        font-size: 13px;
+        font-size: 0.66rem;
     }
-
-
-    .plant-rating {
-        font-size: 18px;
-    }
-
 
     .plant-price {
-        font-size: 18px;
+        font-size: 0.86rem;
     }
 
     .reservation-buy-now {
-        font-size: 14px;
+        font-size: 0.72rem;
     }
 
-
-    .plants-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+    .empty-state {
+        padding: 1.6rem 0.95rem;
     }
-
 
     .empty-state h2 {
-        font-size: 24px;
+        font-size: 1.3rem;
     }
 
-
     .empty-state p {
-        font-size: 16px;
+        font-size: 0.84rem;
     }
 
     .empty-actions {
         flex-direction: column;
     }
 
-
-    .btn-reserve {
-        font-size: 18px;
-        padding: 0.8rem 2rem;
-        width: min(100%, 260px);
-        text-align: center;
-    }
-
+    .btn-reserve,
     .btn-shop {
-        font-size: 18px;
-        padding: 0.8rem 2rem;
-        width: min(100%, 260px);
+        width: min(100%, 230px);
         text-align: center;
     }
 }

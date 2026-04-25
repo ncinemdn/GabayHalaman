@@ -17,35 +17,76 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #ffffff;
-            min-height: 100vh;
+        :root {
+            --gh-olive-900: #1f3419;
+            --gh-olive-700: #375728;
+            --gh-olive-500: #6f9954;
+            --gh-bg-soft: #eef3e8;
+            --gh-surface: #ffffff;
+            --gh-border: #d9e1d2;
+            --gh-text: #1d241d;
+            --gh-muted: #6e7a6d;
+            --gh-danger: #b42318;
         }
 
-        /* Header (matched to landing page) */
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--gh-text);
+            background:
+                radial-gradient(circle at 8% 10%, rgba(146, 183, 112, 0.2), transparent 34%),
+                radial-gradient(circle at 92% 14%, rgba(190, 214, 165, 0.35), transparent 36%),
+                linear-gradient(180deg, #f8fbf5 0%, #eef4eb 100%);
+        }
+
+        /* Header (Landing exact style) */
         .header {
-            background: #7fa843;
-            padding: 20px 0;
+            background: rgba(104, 150, 84, 0.3);
+            padding: 14px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1200;
+            transition: background-color 0.25s ease, backdrop-filter 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        .header.is-scrolled {
+            background: rgba(78, 125, 62, 0.68);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 6px 22px rgba(37, 69, 24, 0.32);
+            border-bottom-color: rgba(255, 255, 255, 0.24);
         }
 
         .header-inner {
-            background-color: #ffffff;
-            border-radius: 50px;
-            padding: 12px 28px;
-            max-width: 1300px;
+            background-color: transparent;
+            border-radius: 0;
+            padding: 8px 28px;
+            max-width: 1340px;
             margin: 0 auto;
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
             align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            column-gap: 20px;
+            box-shadow: none;
         }
 
         .logo-section {
             display: flex;
             align-items: center;
+            justify-self: start;
             gap: 12px;
             text-decoration: none;
+            border-radius: 999px;
+            padding: 4px 10px 4px 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .logo-section:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .logo {
@@ -57,20 +98,24 @@
 
         .brand-text {
             height: 24px;
+            width: auto;
+            display: block;
         }
 
         .nav {
             display: flex;
-            gap: 40px;
+            align-items: center;
+            justify-self: center;
+            gap: 34px;
         }
 
         .nav a {
             font-family: 'Inria Serif', serif;
             font-weight: 700;
             font-size: 18px;
-            color: black;
+            color: #132710;
             text-decoration: none;
-            transition: 0.2s;
+            transition: color 0.2s ease, opacity 0.2s ease;
         }
 
         .nav a:hover {
@@ -84,17 +129,16 @@
         .nav-dropdown-toggle {
             font-family: 'Inria Serif', serif;
             font-weight: 700;
-            font-size: 20px;
-            color: black;
+            font-size: 18px;
+            color: #132710;
             background: none;
             border: none;
             cursor: pointer;
             padding: 0;
-            white-space: nowrap;
         }
 
         .nav-dropdown-toggle:hover {
-            text-decoration: underline;
+            opacity: 0.6;
         }
 
         .nav-dropdown-menu {
@@ -104,9 +148,10 @@
             left: 50%;
             transform: translateX(-50%) translateY(8px);
             min-width: 170px;
-            background: #ffffff;
+            background: rgba(249, 255, 245, 0.98);
             border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(102, 146, 83, 0.2);
+            box-shadow: 0 10px 24px rgba(20, 49, 12, 0.18);
             padding: 10px 0;
             z-index: 1000;
             opacity: 0;
@@ -144,14 +189,25 @@
         .header-icons {
             display: flex;
             align-items: center;
-            gap: 18px;
+            justify-self: end;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.26);
+            border-radius: 999px;
+            padding: 3px 8px;
         }
 
         .icon-btn {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 6px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease, transform 0.2s ease;
         }
 
         .icon-btn svg {
@@ -159,165 +215,257 @@
             height: 20px;
         }
 
+        .icon-btn svg path {
+            fill: #132710;
+            transition: fill 0.2s ease;
+        }
+
         .icon-btn:hover {
-            opacity: 0.6;
+            background: rgba(255, 255, 255, 0.34);
+            transform: translateY(-1px);
+        }
+
+        .icon-btn:hover svg path {
+            fill: #0c1a08;
         }
 
         /* Main Container */
         .container {
-            padding: 3rem;
-            max-width: 1200px;
+            max-width: 980px;
             margin: 0 auto;
+            margin-top: 106px;
+            padding: 1.25rem 1rem 2rem;
         }
 
-        .form-container {
-            background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 3rem;
-            max-width: 700px;
-            margin: 0 auto;
+        .page-shell {
+            border: 1px solid #d8e2d2;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 16px 34px rgba(26, 42, 20, 0.1);
+            background: var(--gh-surface);
+        }
+
+        .page-hero {
+            background: linear-gradient(140deg, var(--gh-olive-900), #2f4b22 52%, #456d33 100%);
+            padding: 1rem 1.2rem;
+            color: #f4f9f1;
+        }
+
+        .page-kicker {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.8;
         }
 
         .form-title {
             font-family: 'Inria Serif', serif;
             font-weight: 700;
-            font-size: 32px;
-            color: black;
-            text-align: center;
-            margin-bottom: 2.5rem;
+            font-size: 1.55rem;
+            color: #f7fbf5;
+            margin-top: 0.2rem;
+        }
+
+        .page-subtitle {
+            font-size: 0.84rem;
+            margin-top: 0.3rem;
+            opacity: 0.85;
+        }
+
+        .form-container {
+            background: linear-gradient(180deg, #f9fcf6 0%, #f2f7ef 100%);
+            padding: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
         }
 
         .form-group {
-            margin-bottom: 2rem;
+            margin-bottom: 0;
+        }
+
+        .form-group.wide {
+            grid-column: span 2;
         }
 
         .form-label {
             display: block;
-            font-family: 'Poppins', sans-serif;
             font-weight: 600;
-            font-size: 16px;
-            color: black;
-            margin-bottom: 0.75rem;
+            font-size: 0.82rem;
+            color: #2f372d;
+            margin-bottom: 0.35rem;
         }
 
         .form-input {
             width: 100%;
-            padding: 1rem 1.25rem;
-            border: 1px solid #d1d5db;
-            border-radius: 15px;
+            padding: 0.72rem 0.88rem;
+            border: 1px solid #c7d2bf;
+            border-radius: 10px;
+            background: #ffffff;
             font-family: 'Poppins', sans-serif;
-            font-size: 15px;
-            color: #595959;
-            transition: border-color 0.3s;
+            font-size: 0.9rem;
+            color: #263124;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #78a240;
+            border-color: var(--gh-olive-700);
+            box-shadow: 0 0 0 3px rgba(92, 136, 66, 0.16);
         }
 
         .form-input::placeholder {
-            color: #999;
+            color: #849083;
         }
 
-        .file-upload-section {
-            margin-bottom: 2rem;
-        }
-
-        .file-upload-label {
-            display: inline-block;
-            color: #0066cc;
-            font-weight: 600;
-            font-size: 14px;
-            text-decoration: underline;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .file-upload-label:hover {
-            color: #0052a3;
+        .form-input.has-error {
+            border-color: #cf2b3e;
+            box-shadow: 0 0 0 3px rgba(207, 43, 62, 0.14);
         }
 
         #validIDFile {
             display: none;
         }
 
+        .file-upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.46rem 0.8rem;
+            border: 1px dashed #89a779;
+            border-radius: 999px;
+            background: #f5faef;
+            color: #2f531f;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .file-upload-label:hover {
+            background: #ecf5e2;
+            transform: translateY(-1px);
+        }
+
+        .file-upload-label.has-error {
+            border-color: #cf2b3e;
+            background: #fff1f3;
+            color: #a31f30;
+        }
+
         .uploaded-file-name {
             display: none;
-            margin-top: 0.5rem;
-            font-size: 14px;
-            color: #78a240;
+            margin-top: 0.35rem;
+            font-size: 0.76rem;
+            color: #3d6e29;
+            font-weight: 600;
+        }
+
+        .form-note {
+            min-height: 1em;
+            margin-top: 0.28rem;
+            font-size: 0.73rem;
+            line-height: 1.2;
+            color: transparent;
+        }
+
+        .form-note.error {
+            color: #b42318;
             font-weight: 500;
         }
 
         .form-buttons {
             display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 3rem;
+            gap: 0.6rem;
+            justify-content: flex-end;
+            margin-top: 0.95rem;
+            grid-column: span 2;
         }
 
         .btn {
-            padding: 1rem 3rem;
+            padding: 0.58rem 1.25rem;
             border: none;
-            border-radius: 15px;
+            border-radius: 10px;
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 0.82rem;
             cursor: pointer;
-            transition: all 0.3s;
-            min-width: 150px;
+            transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+            min-width: 108px;
         }
 
         .btn-cancel {
-            background-color: #c41e3a;
-            color: white;
+            background-color: #f9ecef;
+            color: var(--gh-danger);
+            border: 1px solid #e8bcc4;
         }
 
         .btn-cancel:hover {
-            background-color: #a01830;
-            transform: translateY(-2px);
+            background-color: #f7e1e6;
+            transform: translateY(-1px);
         }
 
         .btn-save {
-            background-color: #78a240;
+            background: linear-gradient(145deg, #355625, #4e7538);
             color: white;
+            box-shadow: 0 8px 16px rgba(52, 87, 36, 0.22);
         }
 
         .btn-save:hover {
-            background-color: #6a8e37;
-            transform: translateY(-2px);
+            opacity: 0.94;
+            transform: translateY(-1px);
         }
 
         @media (max-width: 768px) {
             .container {
-                padding: 2rem 1rem;
+                margin-top: 92px;
+                padding: 0.95rem 0.72rem 1.5rem;
             }
 
-            .form-container {
-                padding: 2rem 1.5rem;
+            .header-inner {
+                padding: 8px 14px;
             }
 
-            .form-title {
-                font-size: 24px;
-            }
-
-            .form-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                min-width: auto;
+            .logo {
+                width: 40px;
+                height: 40px;
             }
 
             .nav {
                 display: none;
             }
 
-            .logo {
-                width: 56px;
-                height: 56px;
+            .form-title {
+                font-size: 1.28rem;
+            }
+
+            .page-subtitle {
+                font-size: 0.8rem;
+            }
+
+            .form-container {
+                padding: 0.82rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.wide,
+            .form-buttons {
+                grid-column: span 1;
+            }
+
+            .form-buttons {
+                justify-content: stretch;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
             }
         }
     </style>
@@ -372,42 +520,52 @@
 
     <!-- Main Content -->
     <div class="container">
-        <div class="form-container">
-            <h1 class="form-title">Delivery Details of the Customer</h1>
+        <div class="page-shell">
+            <div class="page-hero">
+                <p class="page-kicker">Checkout Step</p>
+                <h1 class="form-title">Delivery Details</h1>
+                <p class="page-subtitle">Fill in your information to continue with a safe and accurate delivery.</p>
+            </div>
 
-            <form id="deliveryForm" onsubmit="handleSave(event)">
+            <div class="form-container">
+            <form id="deliveryForm" onsubmit="handleSave(event)" class="form-grid">
                 <!-- Full Name -->
                 <div class="form-group">
                     <label class="form-label">Full Name</label>
                     <input type="text" class="form-input" id="fullName" placeholder="Enter your name" required>
+                    <p class="form-note" id="fullNameNote"></p>
                 </div>
 
                 <!-- Email -->
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input type="email" class="form-input" id="email" placeholder="Enter your email" required>
+                    <p class="form-note" id="emailNote"></p>
                 </div>
 
                 <!-- Phone Number -->
                 <div class="form-group">
                     <label class="form-label">Phone Number</label>
                     <input type="tel" class="form-input" id="phone" placeholder="Enter your phone number" required>
+                    <p class="form-note" id="phoneNote"></p>
                 </div>
 
                 <!-- Address -->
-                <div class="form-group">
+                <div class="form-group wide">
                     <label class="form-label">Address</label>
                     <input type="text" class="form-input" id="address" placeholder="Insert address for delivery" required>
+                    <p class="form-note" id="addressNote"></p>
                 </div>
 
                 <!-- Valid ID -->
-                <div class="form-group">
+                <div class="form-group wide">
                     <label class="form-label">Valid ID</label>
-                    <label class="file-upload-label" onclick="document.getElementById('validIDFile').click()">
-                        Upload a file here
+                    <label class="file-upload-label" id="fileUploadLabel" onclick="document.getElementById('validIDFile').click()">
+                        <span>Upload a file here</span>
                     </label>
                     <input type="file" id="validIDFile" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileUpload(event)">
                     <div class="uploaded-file-name" id="fileName"></div>
+                    <p class="form-note" id="validIDNote"></p>
                 </div>
 
                 <!-- Buttons -->
@@ -416,42 +574,182 @@
                     <button type="submit" class="btn btn-save">Save</button>
                 </div>
             </form>
+            </div>
         </div>
     </div>
 
     <script>
+        const FIELD_CONFIG = {
+            fullName: { noteId: 'fullNameNote', label: 'Full name' },
+            email: { noteId: 'emailNote', label: 'Email' },
+            phone: { noteId: 'phoneNote', label: 'Phone number' },
+            address: { noteId: 'addressNote', label: 'Address' }
+        };
+
+        function getReturnPage() {
+            const params = new URLSearchParams(window.location.search);
+            const returnTarget = String(params.get('return') || '').trim().toLowerCase();
+
+            if (returnTarget === 'order-now') {
+                return 'order-now.html';
+            }
+
+            return 'cart.html';
+        }
+
+        function setFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const config = FIELD_CONFIG[fieldId];
+            const note = config ? document.getElementById(config.noteId) : null;
+
+            if (field) {
+                field.classList.toggle('has-error', Boolean(message));
+            }
+
+            if (note) {
+                note.textContent = message || '';
+                note.classList.toggle('error', Boolean(message));
+            }
+        }
+
+        function setValidIdError(message) {
+            const note = document.getElementById('validIDNote');
+            const fileLabel = document.getElementById('fileUploadLabel');
+
+            if (note) {
+                note.textContent = message || '';
+                note.classList.toggle('error', Boolean(message));
+            }
+
+            if (fileLabel) {
+                fileLabel.classList.toggle('has-error', Boolean(message));
+            }
+        }
+
+        function clearValidationMessages() {
+            Object.keys(FIELD_CONFIG).forEach(function(fieldId) {
+                setFieldError(fieldId, '');
+            });
+            setValidIdError('');
+        }
+
+        function validateDeliveryForm() {
+            clearValidationMessages();
+
+            const fullName = String(document.getElementById('fullName').value || '').trim();
+            const email = String(document.getElementById('email').value || '').trim();
+            const phone = String(document.getElementById('phone').value || '').trim();
+            const address = String(document.getElementById('address').value || '').trim();
+            const idFileInput = document.getElementById('validIDFile');
+            const hasValidID = Boolean(idFileInput && idFileInput.files && idFileInput.files.length > 0);
+
+            let isValid = true;
+
+            if (!fullName) {
+                setFieldError('fullName', 'Please enter your full name.');
+                isValid = false;
+            }
+
+            if (!email) {
+                setFieldError('email', 'Please enter your email address.');
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                setFieldError('email', 'Please enter a valid email format.');
+                isValid = false;
+            }
+
+            if (!phone) {
+                setFieldError('phone', 'Please enter your phone number.');
+                isValid = false;
+            }
+
+            if (!address) {
+                setFieldError('address', 'Please enter your delivery address.');
+                isValid = false;
+            }
+
+            if (!hasValidID) {
+                setValidIdError('Please upload a valid ID before saving.');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                return null;
+            }
+
+            return {
+                fullName,
+                email,
+                phone,
+                address,
+                hasValidID
+            };
+        }
+
         function handleFileUpload(event) {
             const file = event.target.files[0];
+            setValidIdError('');
+
             if (file) {
                 const fileName = document.getElementById('fileName');
                 fileName.textContent = '✓ ' + file.name;
                 fileName.style.display = 'block';
+            } else {
+                const fileName = document.getElementById('fileName');
+                if (fileName) {
+                    fileName.textContent = '';
+                    fileName.style.display = 'none';
+                }
             }
         }
 
         function handleSave(event) {
             event.preventDefault();
 
-            const deliveryDetails = {
-                fullName: document.getElementById('fullName').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                address: document.getElementById('address').value,
-                hasValidID: document.getElementById('validIDFile').files.length > 0
-            };
+            const deliveryDetails = validateDeliveryForm();
+            if (!deliveryDetails) {
+                return;
+            }
 
             localStorage.setItem('deliveryDetails', JSON.stringify(deliveryDetails));
-            window.location.href = 'cart.html';
+            window.location.href = getReturnPage();
         }
 
         function handleCancel() {
             if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-                window.location.href = 'cart.html';
+                window.location.href = getReturnPage();
             }
+        }
+
+        function initializeStickyHeaderBlur() {
+            const header = document.querySelector('.header');
+            if (!header) {
+                return;
+            }
+
+            function syncHeaderState() {
+                header.classList.toggle('is-scrolled', window.scrollY > 10);
+            }
+
+            syncHeaderState();
+            window.addEventListener('scroll', syncHeaderState, { passive: true });
         }
 
         // Load saved details if they exist
         window.addEventListener('DOMContentLoaded', function() {
+            initializeStickyHeaderBlur();
+
+            Object.keys(FIELD_CONFIG).forEach(function(fieldId) {
+                const field = document.getElementById(fieldId);
+                if (!field) {
+                    return;
+                }
+
+                field.addEventListener('input', function() {
+                    setFieldError(fieldId, '');
+                });
+            });
+
             const saved = localStorage.getItem('deliveryDetails');
             if (saved) {
                 const details = JSON.parse(saved);

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="shoppage.css">
 </head>
 
-<body>
+<body class="product-detail-page">
     <header class="header">
         <div class="header-inner">
             <a href="../LandingPage/landingpage.html" class="logo-section">
@@ -121,49 +121,105 @@
                                 <button type="button" class="buy-now-btn">Buy Now</button>
                             </div>
                         </div>
+
+                        <div class="product-meta-panels" aria-label="Product details cards">
+                            <article class="meta-panel">
+                                <div class="meta-panel-header">
+                                    <h4>Additional Description</h4>
+                                    <span class="meta-panel-caret" aria-hidden="true">⌃</span>
+                                </div>
+                                <p class="meta-panel-body" id="plantDescriptionFit">
+                                    Loose-fit sweatshirt hoodie in medium weight cotton-blend fabric with a generous, but not oversized silhouette. Jersey-lined, drawstring hood, dropped shoulders, long sleeves, and a kangaroo pocket. Wide ribbing at cuffs and hem. Soft, brushed inside.
+                                </p>
+                            </article>
+
+                            <article class="meta-panel">
+                                <div class="meta-panel-header">
+                                    <h4>Shipping</h4>
+                                    <span class="meta-panel-caret" aria-hidden="true">⌃</span>
+                                </div>
+
+                                <div class="shipping-grid">
+                                    <div class="shipping-item">
+                                        <span class="shipping-icon" aria-hidden="true">%</span>
+                                        <div>
+                                            <p class="shipping-label">Discount</p>
+                                            <p class="shipping-value" id="shippingDiscountValue">Discount for bulk orders</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="shipping-item">
+                                        <span class="shipping-icon" aria-hidden="true">◼</span>
+                                        <div>
+                                            <p class="shipping-label">Package</p>
+                                            <p class="shipping-value">Regular Package</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="shipping-item">
+                                        <span class="shipping-icon" aria-hidden="true">◷</span>
+                                        <div>
+                                            <p class="shipping-label">Delivery Time</p>
+                                            <p class="shipping-value" id="shippingDeliveryTimeValue">3-5 Working Days</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="shipping-item">
+                                        <span class="shipping-icon" aria-hidden="true">⇢</span>
+                                        <div>
+                                            <p class="shipping-label">Estimated Arrival</p>
+                                            <p class="shipping-value" id="shippingEstimatedArrivalValue">Loading...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <!-- Tabs Section -->
             <div class="tabs-section">
-                <div class="tabs-header">
-                    <button class="tab-btn active" data-tab="additional">Additional information</button>
-                    <button class="tab-btn" data-tab="reviews">Reviews</button>
-                </div>
-                
-                <div class="tab-content active" id="additionalTab">
-                    <div class="tab-header-bar"></div>
-                    <div class="tab-body" id="additionalInfo">
-                        <p>Loading information...</p>
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="reviewsTab">
-                    <div class="tab-header-bar"></div>
+                <div class="tab-content active" id="reviewsTab">
                     <div class="tab-body">
                         <div class="reviews-tab-wrap">
-                            <div class="reviews-create-card">
-                                <h3 class="reviews-create-title">Write a review</h3>
-                                <form id="productReviewForm" class="reviews-create-form">
-                                    <div class="reviews-create-row">
-                                        <input id="reviewUserName" type="text" class="reviews-input" placeholder="Your name" required>
-                                        <div class="reviews-star-picker" id="reviewUserStars" role="radiogroup" aria-label="Choose rating">
-                                            <button type="button" class="reviews-star-btn" data-value="1" aria-label="1 star">★</button>
-                                            <button type="button" class="reviews-star-btn" data-value="2" aria-label="2 stars">★</button>
-                                            <button type="button" class="reviews-star-btn" data-value="3" aria-label="3 stars">★</button>
-                                            <button type="button" class="reviews-star-btn" data-value="4" aria-label="4 stars">★</button>
-                                            <button type="button" class="reviews-star-btn" data-value="5" aria-label="5 stars">★</button>
-                                        </div>
-                                    </div>
-                                    <input id="reviewUserRating" type="hidden" required>
-                                    <textarea id="reviewUserComment" class="reviews-textarea" placeholder="Share your experience with this plant" rows="3" required></textarea>
-                                    <button type="submit" class="reviews-submit-btn">Post Review</button>
-                                </form>
+                            <div class="reviews-score-card" aria-label="Current product rating">
+                                <h3 class="reviews-score-title">Rating &amp; Reviews</h3>
+                                <p class="reviews-score-value"><span id="reviewsAverageValue">4.5</span><small>/5</small></p>
+                                <p class="reviews-score-caption" id="reviewsCountValue">(50 New Reviews)</p>
+
+                                <div class="reviews-breakdown" id="reviewsBreakdown">
+                                    <div class="reviews-breakdown-row"><span>★ 5</span><div class="reviews-breakdown-bar"><span id="reviewsBar5"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>★ 4</span><div class="reviews-breakdown-bar"><span id="reviewsBar4"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>★ 3</span><div class="reviews-breakdown-bar"><span id="reviewsBar3"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>★ 2</span><div class="reviews-breakdown-bar"><span id="reviewsBar2"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>★ 1</span><div class="reviews-breakdown-bar"><span id="reviewsBar1"></span></div></div>
+                                </div>
                             </div>
 
-                            <p id="reviewsTabNote" class="text-center">No reviews yet. Be the first to review this product!</p>
-                            <div id="productReviewsList" class="reviews-tab-list" aria-live="polite"></div>
+                            <div class="reviews-feed">
+                                <div class="reviews-create-card">
+                                    <h3 class="reviews-create-title">Write a review</h3>
+                                    <form id="productReviewForm" class="reviews-create-form">
+                                        <div class="reviews-create-row">
+                                            <input id="reviewUserName" type="text" class="reviews-input" placeholder="Your name" required>
+                                            <div class="reviews-star-picker" id="reviewUserStars" role="radiogroup" aria-label="Choose rating">
+                                                <button type="button" class="reviews-star-btn" data-value="1" aria-label="1 star">★</button>
+                                                <button type="button" class="reviews-star-btn" data-value="2" aria-label="2 stars">★</button>
+                                                <button type="button" class="reviews-star-btn" data-value="3" aria-label="3 stars">★</button>
+                                                <button type="button" class="reviews-star-btn" data-value="4" aria-label="4 stars">★</button>
+                                                <button type="button" class="reviews-star-btn" data-value="5" aria-label="5 stars">★</button>
+                                            </div>
+                                        </div>
+                                        <input id="reviewUserRating" type="hidden" required>
+                                        <textarea id="reviewUserComment" class="reviews-textarea" placeholder="Share your experience with this plant" rows="3" required></textarea>
+                                        <button type="submit" class="reviews-submit-btn">Post Review</button>
+                                    </form>
+                                </div>
+
+                                <p id="reviewsTabNote" class="text-center">No reviews yet. Be the first to review this product!</p>
+                                <div id="productReviewsList" class="reviews-tab-list" aria-live="polite"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -214,10 +270,10 @@
                 </p>
 
                 <nav class="footer-nav" aria-label="Footer navigation">
-                    <a href="../../LandingPage/landingpage.html">Home</a>
+                    <a href="../LandingPage/landingpage.html">Home</a>
                     <a href="Shoppage.html">Shop</a>
-                    <a href="../../LandingPage/info.html#about-us">About Us</a>
-                    <a href="../../LandingPage/info.html#users-manual">Users Manual</a>
+                    <a href="../LandingPage/info.html#about-us">About Us</a>
+                    <a href="../LandingPage/info.html#users-manual">Users Manual</a>
                     <a href="../Reservation/confirmation.html">Contact</a>
                 </nav>
             </div>

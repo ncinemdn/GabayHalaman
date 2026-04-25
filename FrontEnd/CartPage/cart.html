@@ -10,9 +10,33 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --green: #7ea33d;
+    --gh-olive-900: #1f3419;
+    --gh-olive-700: #375728;
+    --gh-bg-soft: #eef3e8;
+    --gh-surface: #ffffff;
+    --gh-border: #d9e1d2;
+    --gh-text: #1d241d;
+    --gh-muted: #6e7a6d;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     letter-spacing: -0.2px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: var(--gh-text);
+    background:
+        radial-gradient(circle at 8% 10%, rgba(146, 183, 112, 0.2), transparent 34%),
+        radial-gradient(circle at 92% 14%, rgba(190, 214, 165, 0.35), transparent 36%),
+        linear-gradient(180deg, #f8fbf5 0%, #eef4eb 100%);
 }
 
 .serif {
@@ -20,43 +44,53 @@ body {
     letter-spacing: -0.3px;
 }
 
-/* COLORS */
-:root{
-    --green:#7ea33d;
+/* Header (landing exact style) */
+.header {
+    background: rgba(104, 150, 84, 0.3);
+    padding: 14px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1200;
+    transition: background-color 0.25s ease, backdrop-filter 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    border-bottom: 1px solid transparent;
 }
 
-/* SHADOWS */
-.nav-shadow { box-shadow: 0 6px 25px rgba(0,0,0,0.08); }
-.card-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
-.soft-shadow { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-
-/* BUTTON */
-.btn-green { background: var(--green); }
-.btn-green:hover { filter: brightness(0.95); }
-
-/* Header (matched to landing page) */
-.header {
-    background: #7fa843;
-    padding: 20px 0;
+.header.is-scrolled {
+    background: rgba(78, 125, 62, 0.68);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 6px 22px rgba(37, 69, 24, 0.32);
+    border-bottom-color: rgba(255, 255, 255, 0.24);
 }
 
 .header-inner {
-    background-color: #ffffff;
-    border-radius: 50px;
-    padding: 12px 28px;
-    max-width: 1300px;
+    background-color: transparent;
+    border-radius: 0;
+    padding: 8px 28px;
+    max-width: 1340px;
     margin: 0 auto;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
     align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    column-gap: 20px;
+    box-shadow: none;
 }
 
 .logo-section {
     display: flex;
     align-items: center;
+    justify-self: start;
     gap: 12px;
     text-decoration: none;
+    border-radius: 999px;
+    padding: 4px 10px 4px 4px;
+    transition: background-color 0.2s ease;
+}
+
+.logo-section:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .logo {
@@ -68,20 +102,24 @@ body {
 
 .brand-text {
     height: 24px;
+    width: auto;
+    display: block;
 }
 
 .nav {
     display: flex;
-    gap: 40px;
+    align-items: center;
+    justify-self: center;
+    gap: 34px;
 }
 
 .nav a {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
     font-size: 18px;
-    color: black;
+    color: #132710;
     text-decoration: none;
-    transition: 0.2s;
+    transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .nav a:hover {
@@ -95,8 +133,8 @@ body {
 .nav-dropdown-toggle {
     font-family: 'Inria Serif', serif;
     font-weight: 700;
-    font-size: 20px;
-    color: black;
+    font-size: 18px;
+    color: #132710;
     background: none;
     border: none;
     cursor: pointer;
@@ -105,7 +143,7 @@ body {
 }
 
 .nav-dropdown-toggle:hover {
-    text-decoration: underline;
+    opacity: 0.6;
 }
 
 .nav-dropdown-menu {
@@ -115,9 +153,10 @@ body {
     left: 50%;
     transform: translateX(-50%) translateY(8px);
     min-width: 170px;
-    background: #ffffff;
+    background: rgba(249, 255, 245, 0.98);
     border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(102, 146, 83, 0.2);
+    box-shadow: 0 10px 24px rgba(20, 49, 12, 0.18);
     padding: 10px 0;
     z-index: 1000;
     opacity: 0;
@@ -155,14 +194,25 @@ body {
 .header-icons {
     display: flex;
     align-items: center;
-    gap: 18px;
+    justify-self: end;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 999px;
+    padding: 3px 8px;
 }
 
 .icon-btn {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .icon-btn svg {
@@ -170,8 +220,222 @@ body {
     height: 20px;
 }
 
+.icon-btn svg path {
+    fill: #132710;
+    transition: fill 0.2s ease;
+}
+
 .icon-btn:hover {
-    opacity: 0.6;
+    background: rgba(255, 255, 255, 0.34);
+    transform: translateY(-1px);
+}
+
+.icon-btn:hover svg path {
+    fill: #0c1a08;
+}
+
+/* Cart Page */
+.page-wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    margin-top: 106px;
+    padding: 1.25rem 1rem 2rem;
+}
+
+.page-title {
+    font-size: 2.1rem;
+    font-weight: 700;
+    margin-bottom: 1.15rem;
+    color: #22361b;
+}
+
+.cart-layout {
+    display: flex;
+    gap: 1rem;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.cart-items-column {
+    min-width: 0;
+    flex: 0 0 60%;
+}
+
+.summary-column {
+    min-width: 0;
+    flex: 0 0 40%;
+}
+
+.cart-items-column.full-width {
+    flex: 1 1 100%;
+}
+
+.summary-panel {
+    background: #ffffff;
+    border: 1px solid #dbe5d6;
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 14px 24px rgba(31, 52, 25, 0.08);
+    position: sticky;
+    top: 98px;
+}
+
+.summary-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.95rem;
+    color: #1f3019;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #2a3128;
+    margin-bottom: 0.65rem;
+}
+
+.summary-note {
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: #6a7568;
+    margin-top: 0.45rem;
+}
+
+.summary-divider {
+    border-top: 1px solid #d9dfd3;
+    margin: 0.85rem 0;
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.85rem;
+    color: #1f2e1a;
+}
+
+.summary-btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 0.72rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    margin-bottom: 0.45rem;
+}
+
+.summary-btn:hover {
+    transform: translateY(-1px);
+}
+
+.summary-btn.delivery {
+    background: linear-gradient(145deg, #355625, #4e7538);
+    color: #fff;
+}
+
+.summary-btn.place {
+    background-color: #d1d5db;
+    color: #fff;
+}
+
+/* Cart Cards */
+.cart-item-card {
+    background: #ffffff;
+    border: 1px solid #d8e2d1;
+    border-radius: 14px;
+    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    box-shadow: 0 8px 18px rgba(32, 52, 26, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cart-item-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(32, 52, 26, 0.11);
+}
+
+.cart-item-main {
+    display: flex;
+    align-items: center;
+    gap: 0.68rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.item-thumb {
+    width: 74px;
+    height: 74px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #e0e8db;
+    flex-shrink: 0;
+}
+
+.item-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1f2d1b;
+}
+
+.item-price {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #2a3a24;
+    margin-top: 0.2rem;
+}
+
+.item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.58rem;
+    flex-shrink: 0;
+}
+
+.qty-chip {
+    background: #edf1e8;
+    border: 1px solid #d4dbc9;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    padding: 0.16rem 0.48rem;
+    min-width: 90px;
+    justify-content: space-between;
+    gap: 0.4rem;
+}
+
+.qty-btn {
+    background: none;
+    border: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #33482a;
+    cursor: pointer;
+}
+
+.qty-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.del-btn {
+    border: none;
+    background: #fff1f3;
+    color: #b42318;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    cursor: pointer;
 }
 
 /* Checkbox Styling */
@@ -290,37 +554,56 @@ body {
     .nav {
         display: none;
     }
+
+    .cart-layout {
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 768px) {
-    .header {
-        padding: 10px 0 20px;
-    }
-
     .header-inner {
-        padding: 1rem 1.5rem;
-        border-radius: 30px;
+        padding: 8px 14px;
     }
 
     .logo {
-        width: 60px;
-        height: 60px;
+        width: 40px;
+        height: 40px;
     }
 
-    .header-icons {
-        gap: 1rem;
+    .page-wrap {
+        margin-top: 92px;
+        padding: 0.95rem 0.72rem 1.5rem;
     }
 
-    .icon-btn svg {
-        width: 20px;
-        height: 20px;
+    .page-title {
+        font-size: 1.6rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .cart-item-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .cart-item-main {
+        width: 100%;
+    }
+
+    .item-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .summary-panel {
+        top: auto;
+        position: static;
     }
 }
 </style>
 
 </head>
 
-<body class="bg-white min-h-screen">
+<body>
 
 <!-- Header -->
 <header class="header">
@@ -370,49 +653,49 @@ body {
 </header>
 
 <!-- MAIN -->
-<div class="max-w-[1120px] mx-auto px-8 py-8">
+<div class="page-wrap">
 
-<h1 class="serif text-[40px] font-bold mb-12">Your cart</h1>
+<h1 class="serif page-title">Your Cart</h1>
 
-<div class="flex gap-10 flex-col lg:flex-row">
+<div class="cart-layout">
 
 <!-- LEFT -->
-<div id="cart" class="lg:w-[60%] space-y-5"></div>
+<div id="cart" class="cart-items-column space-y-3"></div>
 
 <!-- RIGHT -->
-<div id="summaryColumn" class="lg:w-[40%]">
-<div id="orderSummaryPanel" class="bg-white rounded-[20px] p-8 card-shadow sticky top-20">
+<div id="summaryColumn" class="summary-column">
+<div id="orderSummaryPanel" class="summary-panel">
 
-<h2 class="serif text-[24px] font-bold mb-8">Order Summary</h2>
+<h2 class="summary-title">Order Summary</h2>
 
-<div class="space-y-5 text-[15px] mb-8">
-<div class="flex justify-between">
+<div>
+<div class="summary-row">
 <span id="count">Subtotal (3 items)</span>
 <span id="subtotal" class="font-semibold">₱1,999.00</span>
 </div>
 
-<div class="flex justify-between">
+<div class="summary-row">
 <span>Shipping</span>
 <span class="font-bold">FREE</span>
 </div>
 
-<p class="text-[12px] leading-5 text-gray-600">
+<p class="summary-note">
 Shipping charges are determined based on the delivery distance to the destination address and are subject to change without prior notice.
 </p>
 </div>
 
-<div class="border-t border-gray-300 my-6"></div>
+<div class="summary-divider"></div>
 
-<div class="flex justify-between mb-8 text-[16px]">
-<span class="font-bold">Total</span>
-<span id="total" class="font-bold text-[18px]">₱1,999.00</span>
+<div class="summary-total">
+<span>Total</span>
+<span id="total">₱1,999.00</span>
 </div>
 
-<button id="deliveryBtn" class="w-full py-4 rounded-[18px] text-white text-[16px] font-semibold btn-green mb-3 soft-shadow transition hover:opacity-90">
+<button id="deliveryBtn" class="summary-btn delivery">
 Add Delivery Details
 </button>
 
-<button id="placeOrderBtn" class="w-full py-4 rounded-[18px] text-white text-[16px] font-semibold soft-shadow transition" style="background-color: #d1d5db; cursor: not-allowed;" disabled>
+<button id="placeOrderBtn" class="summary-btn place" style="background-color: #d1d5db; cursor: not-allowed;" disabled>
 Place Order
 </button>
 
@@ -542,8 +825,7 @@ function syncCartLayout(hasItems) {
     }
 
     if (cartColumn) {
-        cartColumn.classList.toggle('lg:w-[60%]', hasItems);
-        cartColumn.classList.toggle('lg:w-full', !hasItems);
+        cartColumn.classList.toggle('full-width', !hasItems);
     }
 }
 
@@ -576,26 +858,26 @@ function render(){
     }
 
     container.innerHTML = data.map(item => `
-        <div class="bg-[#f3f1f7] rounded-[20px] p-6 flex justify-between items-center card-shadow transition hover:shadow-lg">
+        <div class="cart-item-card">
 
-            <div class="flex items-center gap-4 flex-1">
+            <div class="cart-item-main">
                 <input type="checkbox" class="product-checkbox" id="checkbox-${item.id}" ${item.selected ? 'checked' : ''} onchange="toggleSelect(${item.id})" style="width: 24px; height: 24px; cursor: pointer; flex-shrink: 0;">
-                <img src="${item.img}" class="w-[120px] h-[120px] object-cover rounded-[15px] flex-shrink-0" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
+                <img src="${item.img}" class="item-thumb" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
                 <div>
-                    <h3 class="serif text-[18px] font-semibold leading-tight">${item.name}</h3>
-                    <p class="font-bold text-[16px] mt-2">₱ ${item.price}</p>
+                    <h3 class="item-name">${item.name}</h3>
+                    <p class="item-price">₱ ${item.price}</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-4 flex-shrink-0">
+            <div class="item-actions">
 
-                <div class="bg-gray-300 rounded-full flex items-center px-3 py-1 h-[38px] min-w-[110px] justify-between">
-                    <button class="font-bold text-[16px]" onclick="qty(${item.id},-1)">−</button>
-                    <span class="font-semibold text-[14px]">${item.qty}</span>
-                    <button class="font-bold text-[16px]" onclick="qty(${item.id},1)">+</button>
+                <div class="qty-chip">
+                    <button class="qty-btn" onclick="qty(${item.id},-1)">−</button>
+                    <span class="qty-value">${item.qty}</span>
+                    <button class="qty-btn" onclick="qty(${item.id},1)">+</button>
                 </div>
 
-                <button onclick="del(${item.id})" class="text-red-500 text-xl">🗑</button>
+                <button onclick="del(${item.id})" class="del-btn" aria-label="Delete item">🗑</button>
 
             </div>
 
@@ -912,7 +1194,22 @@ function updateButtonStates() {
     }
 }
 
+function initializeStickyHeaderBlur() {
+    const header = document.querySelector('.header');
+    if (!header) {
+        return;
+    }
+
+    function syncHeaderState() {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+    }
+
+    syncHeaderState();
+    window.addEventListener('scroll', syncHeaderState, { passive: true });
+}
+
 window.addEventListener('DOMContentLoaded', function() {
+    initializeStickyHeaderBlur();
     loadCheckoutData();
     updateButtonStates();
 });

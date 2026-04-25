@@ -538,7 +538,7 @@ function updateButtonStates() {
 
     deliveryBtn.textContent = deliveryDetails ? 'Edit Delivery Details' : 'Add Delivery Details';
     deliveryBtn.onclick = function() {
-        window.location.href = 'details.html';
+        window.location.href = 'details.html?return=order-now';
     };
 
     const canOrder = Boolean(deliveryDetails) && Boolean(orderItem);

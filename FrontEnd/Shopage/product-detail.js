@@ -3,7 +3,7 @@ const state = {
     productImages: [],
     quantity: 1,
     selectedSize: 'medium',
-    selectedTab: 'additional',
+    selectedTab: 'reviews',
     currentMoreProductIndex: 0,
     currentPlant: null,
     currentSizeData: null
@@ -95,8 +95,6 @@ const PLANT_API = {
         return fallback ? [fallback] : [];
     }
 };
-
-const REVIEW_STORAGE_KEY = 'productDetailReviewsByPlant';
 
 async function getInventory() {
     return await PLANT_API.getPlantInventory();
@@ -335,15 +333,47 @@ async function loadPlantData() {
     
     // Update plant details
     document.getElementById('plantName').textContent = foundPlant.name;
-    document.getElementById('plantDescription').textContent = foundPlant.description || 'No description available'
-    document.getElementById('additionalInfo').innerHTML = `
-        <p><strong>Category:</strong> ${foundPlant.category}</p>
-        <p><strong>Price:</strong> fetched from tblPlantSize for the selected size</p>
-        <p><strong>Stock:</strong> fetched from tblPlantSize for the selected size</p>
-        <p>${foundPlant.description || 'Premium plant selection.'}</p>
-        <p><strong>Caring Tips:</strong> Water regularly, ensure proper drainage, and provide appropriate sunlight based on the plant type. Most tropical plants thrive in warm, humid conditions.</p>
-        <p><strong>Shipping:</strong> Carefully packaged to ensure safe delivery. Plants arrive in excellent condition.</p>
-    `;
+    document.getElementById('plantDescription').textContent = foundPlant.description || 'No description available';
+    const additionalDescriptionText = `${foundPlant.description || 'Premium plant selection.'} Water regularly, ensure proper drainage, and provide appropriate sunlight based on the plant type. Most tropical plants thrive in warm, humid conditions. Carefully packaged to ensure safe delivery. Plants arrive in excellent condition.`;
+    const descriptionFitElement = document.getElementById('plantDescriptionFit');
+    if (descriptionFitElement) {
+        descriptionFitElement.textContent = additionalDescriptionText;
+    }
+
+    const shippingEstimatedArrivalElement = document.getElementById('shippingEstimatedArrivalValue');
+    if (shippingEstimatedArrivalElement) {
+        const estimatedArrival = new Date();
+        estimatedArrival.setDate(estimatedArrival.getDate() + 5);
+        shippingEstimatedArrivalElement.textContent = estimatedArrival.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+    }
+
+    const additionalInfoElement = document.getElementById('additionalInfo');
+    if (additionalInfoElement) {
+        additionalInfoElement.innerHTML = `
+            <div class="additional-info-list">
+                <p class="additional-info-row">
+                    <span class="additional-info-label">Category</span>
+                    <span class="additional-info-value">${foundPlant.category || 'General'}</span>
+                </p>
+                <p class="additional-info-row additional-info-row-wide">
+                    <span class="additional-info-label">Overview</span>
+                    <span class="additional-info-value">${foundPlant.description || 'Premium plant selection.'}</span>
+                </p>
+                <p class="additional-info-row additional-info-row-wide">
+                    <span class="additional-info-label">Caring Tips</span>
+                    <span class="additional-info-value">Water regularly, ensure proper drainage, and provide appropriate sunlight based on the plant type. Most tropical plants thrive in warm, humid conditions.</span>
+                </p>
+                <p class="additional-info-row additional-info-row-wide">
+                    <span class="additional-info-label">Shipping</span>
+                    <span class="additional-info-value">Carefully packaged to ensure safe delivery. Plants arrive in excellent condition.</span>
+                </p>
+            </div>
+        `;
+    }
     
     state.productImages = PLANT_API
         ? PLANT_API.getPlantGallery(foundPlant.category, foundPlant.name, foundPlant.image)
@@ -466,40 +496,29 @@ function initSizeButtons() {
 function initTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+
+    if (!tabButtons.length || !tabContents.length) {
+        return;
+    }
     
     tabButtons.forEach(btn => {
         btn.onclick = function() {
             const tabName = this.dataset.tab;
+            const targetTab = document.getElementById(tabName + 'Tab');
+
+            if (!targetTab) {
+                return;
+            }
             
             tabButtons.forEach(b => b.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
             
             this.classList.add('active');
-            document.getElementById(tabName + 'Tab').classList.add('active');
+            targetTab.classList.add('active');
             
             state.selectedTab = tabName;
         };
     });
-}
-
-function getReviewStorage() {
-    try {
-        const parsed = JSON.parse(localStorage.getItem(REVIEW_STORAGE_KEY) || '{}');
-        return parsed && typeof parsed === 'object' ? parsed : {};
-    } catch (error) {
-        return {};
-    }
-}
-
-function getCurrentPlantReviewKey() {
-    if (!state.currentPlant) {
-        return null;
-    }
-    const id = String(state.currentPlant.id || '').trim();
-    if (id) {
-        return id;
-    }
-    return String(state.currentPlant.name || '').toLowerCase().trim();
 }
 
 function buildReviewStars(rating) {
@@ -510,13 +529,78 @@ function buildReviewStars(rating) {
 function renderProductReviews(reviews) {
     const reviewsList = document.getElementById('productReviewsList');
     const reviewsNote = document.getElementById('reviewsTabNote');
+    const avgValueEl = document.getElementById('reviewsAverageValue');
+    const countValueEl = document.getElementById('reviewsCountValue');
+    const featuredNameEl = document.getElementById('reviewsFeaturedName');
+    const featuredDateEl = document.getElementById('reviewsFeaturedDate');
+    const featuredStarsEl = document.getElementById('reviewsFeaturedStars');
+    const featuredCommentEl = document.getElementById('reviewsFeaturedComment');
+    const featuredAvatarEl = document.getElementById('reviewsFeaturedAvatar');
+    const barEls = {
+        5: document.getElementById('reviewsBar5'),
+        4: document.getElementById('reviewsBar4'),
+        3: document.getElementById('reviewsBar3'),
+        2: document.getElementById('reviewsBar2'),
+        1: document.getElementById('reviewsBar1')
+    };
 
     if (!reviewsList || !reviewsNote) {
         return;
     }
 
+    const safeReviews = Array.isArray(reviews) ? reviews : [];
+    const total = safeReviews.length;
+    const average = total
+        ? safeReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / total
+        : 0;
+
+    if (avgValueEl) {
+        avgValueEl.textContent = average ? average.toFixed(1).replace('.', ',') : '0,0';
+    }
+
+    if (countValueEl) {
+        countValueEl.textContent = `(${total} New Review${total === 1 ? '' : 's'})`;
+    }
+
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    safeReviews.forEach(function(review) {
+        const rating = Math.max(1, Math.min(5, Number(review.rating) || 1));
+        distribution[rating] += 1;
+    });
+
+    const maxBucket = Math.max(1, distribution[1], distribution[2], distribution[3], distribution[4], distribution[5]);
+    [5, 4, 3, 2, 1].forEach(function(star) {
+        if (barEls[star]) {
+            barEls[star].style.width = `${(distribution[star] / maxBucket) * 100}%`;
+        }
+    });
+
+    const featured = safeReviews[0] || null;
+    if (featuredNameEl) {
+        featuredNameEl.textContent = featured ? featured.name : 'Customer';
+    }
+    if (featuredDateEl) {
+        featuredDateEl.textContent = featured ? (featured.date || '-- --- ----') : '-- --- ----';
+    }
+    if (featuredStarsEl) {
+        featuredStarsEl.textContent = featured ? buildReviewStars(featured.rating) : '☆☆☆☆☆';
+    }
+    if (featuredCommentEl) {
+        featuredCommentEl.textContent = featured ? featured.comment : 'No reviews yet for this plant.';
+    }
+    if (featuredAvatarEl) {
+        const name = String(featured?.name || 'C').trim();
+        const initials = name
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(function(part) { return part.charAt(0); })
+            .join('') || 'C';
+        featuredAvatarEl.textContent = initials;
+    }
+
     reviewsList.innerHTML = '';
-    reviews.forEach(function(review) {
+    safeReviews.forEach(function(review) {
         const reviewItem = document.createElement('article');
         reviewItem.className = 'review-item';
 
@@ -537,7 +621,7 @@ function renderProductReviews(reviews) {
 
         const reviewDate = document.createElement('p');
         reviewDate.className = 'review-item-date';
-        reviewDate.textContent = review.date;
+        reviewDate.textContent = review.date || ('Posted on ' + new Date().toLocaleDateString());
 
         reviewHeader.appendChild(reviewName);
         reviewHeader.appendChild(reviewStars);
@@ -547,10 +631,121 @@ function renderProductReviews(reviews) {
         reviewsList.appendChild(reviewItem);
     });
 
-    reviewsNote.style.display = reviews.length ? 'none' : '';
+    reviewsNote.style.display = safeReviews.length ? 'none' : '';
 }
 
-function initReviews() {
+async function resolveProductReviewClientId(name) {
+    if (typeof clientsAPI === 'undefined') {
+        return null;
+    }
+
+    const normalizedName = String(name || '').trim();
+    if (!normalizedName) {
+        return null;
+    }
+
+    try {
+        const clients = await clientsAPI.getAll();
+        if (Array.isArray(clients)) {
+            const existingClient = clients.find(function(client) {
+                const clientName = String(client.full_name || '').trim().toLowerCase();
+                return clientName === normalizedName.toLowerCase();
+            });
+
+            if (existingClient && Number(existingClient.client_id) > 0) {
+                return Number(existingClient.client_id);
+            }
+        }
+
+        const fallbackEmail = `review-${Date.now()}@gabayhalaman.local`;
+        await clientsAPI.create({
+            full_name: normalizedName,
+            email: fallbackEmail,
+            contact_number: 0,
+            created_at: new Date().toISOString()
+        });
+
+        const refreshedClients = await clientsAPI.getAll();
+        if (Array.isArray(refreshedClients)) {
+            const createdClient = refreshedClients.find(function(client) {
+                const clientName = String(client.full_name || '').trim().toLowerCase();
+                const clientEmail = String(client.email || '').trim().toLowerCase();
+                return clientName === normalizedName.toLowerCase() && clientEmail === fallbackEmail;
+            });
+
+            if (createdClient && Number(createdClient.client_id) > 0) {
+                return Number(createdClient.client_id);
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to resolve review client:', error);
+    }
+
+    return null;
+}
+
+async function loadProductReviewsFromBackend() {
+    const reviewsList = document.getElementById('productReviewsList');
+    const reviewsNote = document.getElementById('reviewsTabNote');
+
+    if (!reviewsList || !reviewsNote) {
+        return;
+    }
+
+    const plantId = Number(state.currentPlant?.id || 0);
+    if (!Number.isFinite(plantId) || plantId <= 0 || typeof reviewsAPI === 'undefined') {
+        renderProductReviews([]);
+        return;
+    }
+
+    try {
+        const [reviews, clients] = await Promise.all([
+            reviewsAPI.getAll(),
+            typeof clientsAPI !== 'undefined' ? clientsAPI.getAll() : Promise.resolve([])
+        ]);
+
+        const clientMap = {};
+        if (Array.isArray(clients)) {
+            clients.forEach(function(client) {
+                const id = Number(client.client_id);
+                if (Number.isFinite(id) && id > 0) {
+                    clientMap[id] = String(client.full_name || '').trim() || 'Customer';
+                }
+            });
+        }
+
+        const plantReviews = Array.isArray(reviews)
+            ? reviews
+                .filter(function(review) {
+                    return Number(review.plant_id) === plantId;
+                })
+                .sort(function(a, b) {
+                    const aTime = new Date(a.created_at || 0).getTime();
+                    const bTime = new Date(b.created_at || 0).getTime();
+                    return bTime - aTime;
+                })
+                .map(function(review) {
+                    return {
+                        name: clientMap[Number(review.client_id)] || 'Customer',
+                        rating: Number(review.rating || 5),
+                        comment: String(review.comment || '').trim() || 'No comment provided.',
+                        date: new Date(review.created_at || Date.now()).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                        })
+                    };
+                })
+            : [];
+
+        renderProductReviews(plantReviews);
+    } catch (error) {
+        console.warn('Unable to fetch product reviews from database:', error);
+        renderProductReviews([]);
+    }
+}
+
+async function initReviews() {
     const form = document.getElementById('productReviewForm');
     const nameInput = document.getElementById('reviewUserName');
     const ratingInput = document.getElementById('reviewUserRating');
@@ -561,10 +756,7 @@ function initReviews() {
         return;
     }
 
-    const key = getCurrentPlantReviewKey();
-    const storage = getReviewStorage();
-    const existingReviews = key && Array.isArray(storage[key]) ? storage[key] : [];
-    renderProductReviews(existingReviews);
+    await loadProductReviewsFromBackend();
 
     const setStarRating = function(ratingValue) {
         const rating = Math.max(0, Math.min(5, Number(ratingValue) || 0));
@@ -583,36 +775,55 @@ function initReviews() {
 
     setStarRating(0);
 
-    form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', async function(event) {
         event.preventDefault();
-
-        const keyForSave = getCurrentPlantReviewKey();
-        if (!keyForSave) {
-            return;
-        }
 
         const name = String(nameInput.value || '').trim();
         const comment = String(commentInput.value || '').trim();
         const rating = Number(ratingInput.value || 0);
+        const plantId = Number(state.currentPlant?.id || 0);
 
-        if (!name || !comment || !rating) {
+        if (!name || !comment || !rating || !Number.isFinite(plantId) || plantId <= 0) {
             return;
         }
 
-        const nextStorage = getReviewStorage();
-        const current = Array.isArray(nextStorage[keyForSave]) ? nextStorage[keyForSave] : [];
-        const newReview = {
-            name,
-            rating,
-            comment,
-            date: 'Posted on ' + new Date().toLocaleDateString()
-        };
+        if (typeof reviewsAPI === 'undefined') {
+            alert('Review service is unavailable right now.');
+            return;
+        }
 
-        nextStorage[keyForSave] = [newReview, ...current].slice(0, 20);
-        localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(nextStorage));
-        renderProductReviews(nextStorage[keyForSave]);
-        form.reset();
-        setStarRating(0);
+        const submitBtn = form.querySelector('.reviews-submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Posting...';
+        }
+
+        try {
+            const clientId = await resolveProductReviewClientId(name);
+            if (!clientId) {
+                throw new Error('Unable to resolve client id');
+            }
+
+            await reviewsAPI.create({
+                plant_id: Number(plantId),
+                client_id: Number(clientId),
+                rating: Number(rating),
+                comment: String(comment),
+                created_at: new Date().toISOString()
+            });
+
+            await loadProductReviewsFromBackend();
+            form.reset();
+            setStarRating(0);
+        } catch (error) {
+            console.warn('Failed to submit product review:', error);
+            alert('Unable to submit your review right now. Please try again later.');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Post Review';
+            }
+        }
     });
 }
 

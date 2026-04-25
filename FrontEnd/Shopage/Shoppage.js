@@ -126,6 +126,20 @@ let currentPlantsMeta = {
     subtitle: 'Showing random plants from our collection.'
 };
 
+function initStickyHeaderBlur() {
+    const header = document.querySelector('.header');
+    if (!header) {
+        return;
+    }
+
+    const updateHeaderState = () => {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+    };
+
+    updateHeaderState();
+    window.addEventListener('scroll', updateHeaderState, { passive: true });
+}
+
 async function buildAllPlantsPool() {
     const inventory = await PLANT_API.getPlantInventory();
     return inventory.map((plant) => {
@@ -154,6 +168,8 @@ async function refreshPlantsData() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
+    initStickyHeaderBlur();
+
     // Load categories first from backend
     await loadCategoriesFromBackend();
     renderCategoryChips();
@@ -541,15 +557,6 @@ function initMoreProductsCarousel() {
                     </div>
                     <div class="product-info">
                         <h3 class="product-name">${product.name}</h3>
-                        <div class="product-actions" aria-hidden="true">
-                            <span class="product-action-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="9" cy="20" r="1"></circle>
-                                    <circle cx="19" cy="20" r="1"></circle>
-                                    <path d="M3 4h2l2 12h12l2-8H7"></path>
-                                </svg>
-                            </span>
-                        </div>
                     </div>
                 </article>
             </a>

@@ -61,12 +61,10 @@
   <div id="order-list-page" class="page active">
     <div class="bg-white">
       <!-- My Purchases heading -->
-      <p class="page-heading">My Purchases</p>
+      <p class="page-heading">Order History</p>
       
       <!-- Current Order (Dynamic) -->
       <div id="currentOrderContainer"></div>
-      
-      </div>
     </div>
   </div>
 
@@ -77,73 +75,67 @@
       </div>
       <!-- Order Details heading -->
       <p class="page-heading">Order Details</p>
-      
-      <!-- Main Card -->
-      <div class="details-header">
-        <p>Order Confirmed Today</p>
-      </div>
-      <div class="details-card">
-        <div id="detailsContent">
-          <div class="product-image">
-            <img id="detailsImage" alt="" src="" />
+
+      <section class="order-details-shell" aria-live="polite">
+        <div class="order-details-topbar">
+          <p class="details-order-ref">Order: <span id="detailsOrderRef">Loading...</span></p>
+          <div class="details-top-actions">
+            <button class="details-top-btn invoice" type="button" disabled>Invoice</button>
+            <button class="details-top-btn track" type="button" onclick="navigateTo('track-order')">Track Order</button>
+            <button class="details-top-btn cancel" type="button" onclick="confirmCancelOrder()">Cancel</button>
           </div>
-          
-          <p class="details-text">Full Name: <span id="detailsFullName">Loading...</span></p>
-          <div class="details-line"></div>
-          
-          <p class="details-text">Plants Ordered:</p>
-          <div class="details-items" id="detailsItems">
-            <!-- Loaded by JS -->
-          </div>
-          
-          <div class="details-line"></div>
-          <p class="details-text">Payment Status: <span id="detailsPaymentStatus" class="payment-status-tag unpaid">Unpaid</span></p>
-          <div class="details-line"></div>
-          <p class="details-text">Total Quantity: <span id="detailsTotalQty">0</span></p>
-          <p class="details-text">Total Price: <span id="detailsTotalPrice">₱0.00</span></p>
         </div>
-      </div>
-      
-      <!-- Shipping Details Card -->
-      <div class="details-header">
-        <p>Shipping Details</p>
-      </div>
-      <div class="details-card">
-        <p class="details-text">
-          <span>Contact Number: </span>
-          <span style="color: #373535;" id="detailsPhone">N/A</span>
-        </p>
-        
-        <div class="details-line"></div>
-        
-        <p class="details-text">Delivery Address:</p>
-        <p class="details-text" style="color: #373535;" id="detailsAddress">N/A</p>
-      </div>
-      
-      <!-- Delivery Window Card -->
-      <div class="details-header">
-        <p>Estimated Delivery Window</p>
-      </div>
-      <div class="details-card">
-        <p class="details-text">
-          <span>Earliest Delivery: </span>
-          <span style="color: #373535;" id="detailsEarliestDelivery">Loading...</span>
-        </p>
-        
-        <div class="details-line"></div>
-        
-        <p class="details-text">
-          <span>Latest Delivery: </span>
-          <span style="color: #373535;" id="detailsLatestDelivery">Loading...</span>
-        </p>
-      </div>
-      
-      <!-- Buttons -->
-      <div class="button-container">
-        <button class="order-btn disabled">Order Details</button>
-        <button class="order-btn primary" onclick="navigateTo('track-order')">Track order</button>
-        <button class="order-btn secondary" onclick="confirmCancelOrder()">Cancel Order</button>
-      </div>
+
+        <div class="details-tabs" role="tablist" aria-label="Order detail sections">
+          <button class="details-tab active" type="button" role="tab" aria-selected="true" data-tab="summary">Summary</button>
+          <button class="details-tab" type="button" role="tab" aria-selected="false" data-tab="shipping">Shipping Details</button>
+          <button class="details-tab" type="button" role="tab" aria-selected="false" data-tab="delivery">Delivery</button>
+        </div>
+
+        <div class="details-panels">
+          <div class="details-panel active" data-panel="summary">
+            <div class="details-summary-grid" id="detailsContent">
+              <div class="details-product-tile">
+                <img id="detailsImage" alt="Product image" src="" />
+              </div>
+
+              <div class="details-main-info">
+                <p class="details-section-title">Customer</p>
+                <p class="details-text">Full Name: <span id="detailsFullName">Loading...</span></p>
+
+                <div class="details-divider"></div>
+
+                <p class="details-section-title">Items</p>
+                <div class="details-items" id="detailsItems">
+                  <!-- Loaded by JS -->
+                </div>
+
+                <div class="details-divider"></div>
+
+                <p class="details-text">Payment Status: <span id="detailsPaymentStatus" class="payment-status-tag unpaid">Unpaid</span></p>
+                <p class="details-text">Total Quantity: <span id="detailsTotalQty">0</span></p>
+                <p class="details-text details-total">Total Price: <span id="detailsTotalPrice">₱0.00</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="details-panel" data-panel="shipping">
+            <section class="details-info-card details-info-card-single">
+              <p class="details-section-title">Shipping Details</p>
+              <p class="details-text"><span>Contact Number: </span><span id="detailsPhone">N/A</span></p>
+              <p class="details-text"><span>Delivery Address: </span><span id="detailsAddress">N/A</span></p>
+            </section>
+          </div>
+
+          <div class="details-panel" data-panel="delivery">
+            <section class="details-info-card details-info-card-single">
+              <p class="details-section-title">Estimated Delivery Window</p>
+              <p class="details-text"><span>Earliest Delivery: </span><span id="detailsEarliestDelivery">Loading...</span></p>
+              <p class="details-text"><span>Latest Delivery: </span><span id="detailsLatestDelivery">Loading...</span></p>
+            </section>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -173,17 +165,10 @@
         </div>
       </div>
 
-      <div class="map-container">
-        <a id="map-link" href="#" target="_blank" rel="noopener noreferrer">
-          <img alt="Delivery map" id="map-image" src="https://raw.githubusercontent.com/figma/build-assets/main/9c0e5c94e0f3cb6ed4d0748def3383fa7e4bcf56.png" />
-        </a>
-      </div>
-
-      <div class="track-info">
-        <p><strong>Order ID:</strong> <span id="order-id">#123456</span></p>
-        <p><strong>Status:</strong> <span id="status-text">Loading...</span></p>
-        <p><strong>ETA:</strong> <span id="eta-text">—</span></p>
-        <p><strong>Current Location:</strong> <span id="location-text">—</span></p>
+      <div class="track-route-wrapper">
+        <section class="track-route-card" id="track-route-estimate" aria-live="polite">
+          <!-- route estimate injected by JS -->
+        </section>
       </div>
     </div>
   </div>
@@ -192,5 +177,20 @@
   <script src="../shared/navbar-dropdown.js"></script>
   <script src="../shared/api.js"></script>
   <script src="orderpage.js"></script>
+  <script>
+    (function () {
+      const header = document.querySelector('.header');
+      if (!header) {
+        return;
+      }
+
+      const updateHeaderState = () => {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+      };
+
+      updateHeaderState();
+      window.addEventListener('scroll', updateHeaderState, { passive: true });
+    })();
+  </script>
 </body>
 </html>
