@@ -28,9 +28,15 @@ namespace API.Controllers
 		}
 
 		[HttpPost]
-		public bool Add(Plant p)
+public ActionResult<int> Add(Plant p)
+	{
+		var newPlantId = plantServices.Add(p);
+		if (newPlantId <= 0)
 		{
-			return plantServices.Add(p);
+			return BadRequest("Failed to create plant.");
+		}
+
+		return CreatedAtAction(nameof(GetById), new { id = newPlantId }, newPlantId);
 		}
 
 		[HttpPut]
