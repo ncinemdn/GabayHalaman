@@ -231,18 +231,87 @@ function getLocalPlantsByCategory() {
 }
 
 function getSourcePlantsByCategory() {
-    return backendPlantsByCategory || {};
+    if (backendPlantsByCategory && Object.keys(backendPlantsByCategory).length) {
+        return backendPlantsByCategory;
+    }
+    return getLocalPlantsByCategory();
+}
+
+function resolveReservationCategory(category) {
+    if (!category) {
+        return '';
+    }
+
+    const mappedCategory = mapToRequiredCategory(category);
+    if (mappedCategory) {
+        return mappedCategory;
+    }
+
+    const normalizedCategory = normalizeText(category);
+    const exactMatch = REQUIRED_CATEGORIES.find((name) => normalizeText(name) === normalizedCategory);
+    if (exactMatch) {
+        return exactMatch;
+    }
+
+    return category;
+}
+
+function findPlantByIdAcrossSource(plantId) {
+    const sourceByCategory = getSourcePlantsByCategory();
+    for (const [category, plants] of Object.entries(sourceByCategory)) {
+        if (!Array.isArray(plants)) {
+            continue;
+        }
+
+        const found = plants.find((plant) => String(plant.id) === String(plantId));
+        if (found) {
+            return { plant: found, category };
+        }
+    }
+    return null;
+}
+
+function findLocalCategoryForRequestedCategory(category) {
+    const normalizedTarget = normalizeText(category);
+    const match = Object.entries(GH_CATEGORY_BY_UI_CATEGORY).find(([, requiredCategory]) => {
+        return normalizeText(requiredCategory) === normalizedTarget;
+    });
+    return match ? match[0] : '';
 }
 
 function getPlantsForCategory(category) {
-    const sourceByCategory = getSourcePlantsByCategory();
-    if (sourceByCategory && Array.isArray(sourceByCategory[category])) {
-        return sourceByCategory[category];
+    const backendSource = backendPlantsByCategory || {};
+    const localSource = getLocalPlantsByCategory();
+    if (!category) {
+        return [];
     }
 
-    const mappedCategory = GH_CATEGORY_BY_UI_CATEGORY[category];
-    if (mappedCategory && sourceByCategory && Array.isArray(sourceByCategory[mappedCategory])) {
-        return sourceByCategory[mappedCategory];
+    const normalizedResolved = resolveReservationCategory(category);
+    const localFallbackCategory = findLocalCategoryForRequestedCategory(category);
+    const normalizedCategory = normalizeText(category);
+    const directMatch = REQUIRED_CATEGORIES.find((name) => normalizeText(name) === normalizedCategory);
+
+    const candidateKeys = [category];
+    if (normalizedResolved && !candidateKeys.includes(normalizedResolved)) {
+        candidateKeys.push(normalizedResolved);
+    }
+    if (localFallbackCategory && !candidateKeys.includes(localFallbackCategory)) {
+        candidateKeys.push(localFallbackCategory);
+    }
+    if (directMatch && !candidateKeys.includes(directMatch)) {
+        candidateKeys.push(directMatch);
+    }
+
+    for (const key of candidateKeys) {
+        if (Array.isArray(backendSource[key]) && backendSource[key].length) {
+            return backendSource[key];
+        }
+    }
+
+    for (const key of candidateKeys) {
+        if (Array.isArray(localSource[key]) && localSource[key].length) {
+            return localSource[key];
+        }
     }
 
     return [];
@@ -253,10 +322,22 @@ function getAllSourcePlants() {
 }
 
 function getAvailableStock(plant) {
-    if (window.GHPlantData) {
-        return window.GHPlantData.getEffectiveStock(plant);
+    const stockValue = Number(plant?.stock);
+    const localStock = Number.isFinite(stockValue) ? Math.max(0, stockValue) : null;
+
+    if (localStock !== null) {
+        return localStock;
     }
-    return Math.max(0, Number(plant.stock) || 0);
+
+    if (window.GHPlantData && typeof window.GHPlantData.getPlantById === 'function') {
+        const ghPlant = window.GHPlantData.getPlantById(plant.id);
+        if (ghPlant) {
+            const stock = window.GHPlantData.getEffectiveStock(ghPlant);
+            return Math.max(0, Number(stock) || 0);
+        }
+    }
+
+    return 0;
 }
 
 function getSizeOptionsForPlant(plant) {
@@ -268,9 +349,6 @@ function getSizeOptionsForPlant(plant) {
 }
 
 function isPlantAvailable(plant) {
-    if (window.GHPlantData) {
-        return window.GHPlantData.isInStock(plant);
-    }
     return getAvailableStock(plant) > 0;
 }
 
@@ -351,21 +429,47 @@ function applyReservationPrefill() {
         return;
     }
 
-    if (!prefill || !prefill.category || !prefill.id) {
+    if (!prefill || !prefill.id) {
         localStorage.removeItem(RESERVATION_PREFILL_KEY);
         return;
     }
 
     const categoryField = document.getElementById('category');
-    const categoryPlants = getPlantsForCategory(prefill.category);
-    const matchedPlant = categoryPlants.find(plant => String(plant.id) === String(prefill.id));
+    const resolvedCategory = resolveReservationCategory(prefill.category || '');
+    let categoryPlants = getPlantsForCategory(resolvedCategory);
+    let matchedPlant = categoryPlants.find(plant => String(plant.id) === String(prefill.id));
+    let finalCategory = resolvedCategory;
+
+    if (!matchedPlant) {
+        const found = findPlantByIdAcrossSource(prefill.id);
+        if (found && isPlantAvailable(found.plant)) {
+            matchedPlant = found.plant;
+            finalCategory = resolveReservationCategory(found.category);
+            categoryPlants = getPlantsForCategory(finalCategory);
+        }
+    }
 
     if (!matchedPlant || !isPlantAvailable(matchedPlant)) {
         localStorage.removeItem(RESERVATION_PREFILL_KEY);
         return;
     }
 
-    categoryField.value = prefill.category;
+    if (categoryField) {
+        const displayCategory = resolveReservationCategory(finalCategory) || finalCategory;
+        const hasOption = Array.from(categoryField.options).some((opt) => opt.value === displayCategory);
+        if (!hasOption) {
+            const fallback = Array.from(categoryField.options).find((opt) => normalizeText(opt.value) === normalizeText(displayCategory));
+            if (fallback) {
+                categoryField.value = fallback.value;
+            } else {
+                categoryField.value = resolvedCategory || '';
+            }
+        } else {
+            categoryField.value = displayCategory;
+        }
+        finalCategory = categoryField.value || displayCategory;
+    }
+
     const maxStock = Math.max(1, getAvailableStock(matchedPlant));
     const qty = Math.min(maxStock, Math.max(1, parseInt(prefill.quantity, 10) || 1));
     const size = normalizePrefillSize(prefill.size);
@@ -373,7 +477,7 @@ function applyReservationPrefill() {
     removeSelectedPlant(prefill.id);
     selectedPlants.push({
         ...matchedPlant,
-        category: prefill.category,
+        category: finalCategory,
         quantity: qty,
         size: size
     });
@@ -584,9 +688,9 @@ function handleReserve() {
 
     // Validate each selected plant has size and valid quantity
     for (const plant of selectedPlants) {
-        const latestPlant = window.GHPlantData ? window.GHPlantData.getPlantById(plant.id) : plant;
-        const latestAvailable = isPlantAvailable(latestPlant || {});
-        const latestStock = getAvailableStock(latestPlant || {});
+        const stockCheckedPlant = plant;
+        const latestAvailable = isPlantAvailable(stockCheckedPlant);
+        const latestStock = getAvailableStock(stockCheckedPlant);
 
         if (!latestAvailable) {
             alert(`${plant.name} is out of stock.`);
