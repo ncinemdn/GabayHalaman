@@ -81,22 +81,212 @@ function getNextDeliveryId(existingDeliveries) {
     return '#DEL-' + String(maxNumber + 1);
 }
 
+function normalizeOrderStatus(status) {
+    const value = String(status || '').toLowerCase();
+    if (value === 'delivered' || value === 'completed' || value === 'reserved') {
+        return 'delivered';
+    }
+    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
+        return 'out_for_delivery';
+    }
+    return 'pending';
+}
+
+function getDeliveryTypeLabel(requestType) {
+    const value = String(requestType || '').toLowerCase();
+    if (value === 'reservation') {
+        return 'Reserve';
+    }
+    if (value === 'purchase') {
+        return 'Buy';
+    }
+    return 'Delivery';
+}
+
+function formatDateForDisplay(value) {
+    if (!value) {
+        return '';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return String(value);
+    }
+
+    return parsed.toLocaleDateString('en-PH', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+    });
+}
+
+function getLocalPurchaseOrders() {
+    const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    if (!Array.isArray(purchases)) {
+        return [];
+    }
+
+    return purchases.map(order => ({
+        ...order,
+        id: String(order.id || order.orderId || ''),
+        orderId: String(order.orderId || ''),
+        customerName: order.customerName || 'Customer',
+        orderStatus: normalizeOrderStatus(order.orderStatus),
+        requestType: 'purchase'
+    }));
+}
+
+function getLocalReservationOrders() {
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    if (!Array.isArray(reservations)) {
+        return [];
+    }
+
+    return reservations
+        .filter(order => order && order.isPlacedOrder === true)
+        .map(order => ({
+            ...order,
+            id: String(order.id || order.orderId || ''),
+            orderId: String(order.orderId || ''),
+            customerName: order.customerName || 'Customer',
+            orderStatus: normalizeOrderStatus(order.orderStatus),
+            requestType: 'reservation'
+        }));
+}
+
+function mergeOrdersWithLocalOrders(backendOrders, localOrders) {
+    if (!Array.isArray(localOrders) || !localOrders.length) {
+        return backendOrders;
+    }
+
+    const localOrderMap = new Map();
+    localOrders.forEach(order => {
+        const key = String(order.orderId || order.id || '');
+        if (key) {
+            localOrderMap.set(key, order);
+        }
+    });
+
+    const merged = backendOrders.map(order => {
+        const key = String(order.orderId || order.id || '');
+        const localOrder = localOrderMap.get(key);
+        if (!localOrder) {
+            return order;
+        }
+
+        localOrderMap.delete(key);
+
+        return {
+            ...order,
+            ...localOrder
+        };
+    });
+
+    const remainingLocalOrders = Array.from(localOrderMap.values());
+    return [...remainingLocalOrders, ...merged];
+}
+
+async function loadRequestOrders() {
+    const localPurchaseOrders = getLocalPurchaseOrders();
+    const localReservationOrders = getLocalReservationOrders();
+
+    if (typeof requestsAPI === 'undefined') {
+        return [...localPurchaseOrders, ...localReservationOrders];
+    }
+
+    try {
+        const allRequests = await requestsAPI.getAll();
+        if (!Array.isArray(allRequests)) {
+            return [...localPurchaseOrders, ...localReservationOrders];
+        }
+
+        const backendPurchaseOrders = allRequests
+            .filter(order => String(order.request_type || '').toLowerCase() === 'purchase')
+            .map(order => ({
+                ...order,
+                id: String(order.request_id || ''),
+                orderId: order.request_id ? String(order.request_id) : '',
+                customerName: order.client_name || 'Customer',
+                orderStatus: normalizeOrderStatus(order.request_status),
+                requestType: 'purchase'
+            }));
+
+        const backendReservationOrders = allRequests
+            .filter(order => String(order.request_type || '').toLowerCase() === 'reservation')
+            .map(order => ({
+                ...order,
+                id: String(order.request_id || ''),
+                orderId: order.request_id ? String(order.request_id) : '',
+                customerName: order.client_name || 'Customer',
+                orderStatus: normalizeOrderStatus(order.request_status),
+                requestType: 'reservation'
+            }));
+
+        const purchaseOrders = mergeOrdersWithLocalOrders(backendPurchaseOrders, localPurchaseOrders);
+        const reservationOrders = mergeOrdersWithLocalOrders(backendReservationOrders, localReservationOrders);
+        return [...purchaseOrders, ...reservationOrders];
+    } catch (error) {
+        console.error('Failed to load request orders for delivery view:', error);
+        return [...localPurchaseOrders, ...localReservationOrders];
+    }
+}
+
+function buildSyntheticDeliveryFromOrder(order, index) {
+    const orderId = String(order.orderId || order.id || '').trim();
+    const normalizedStatus = normalizeOrderStatus(order.orderStatus || order.request_status);
+    const trackingStatus = normalizeTrackingStatus(normalizedStatus);
+    const deliveryAddress =
+        order.delivery_address ||
+        (order.deliveryDetails && order.deliveryDetails.address) ||
+        'Address not provided';
+    const scheduledDate =
+        (order.deliveryDetails && order.deliveryDetails.deliveryDate) ||
+        order.scheduled_date ||
+        order.request_date ||
+        order.createdAt ||
+        '';
+
+    return {
+        id: String(order.id || order.orderId || 'local') + '-synthetic-' + index,
+        deliveryId: '',
+        orderId,
+        customerName: order.customerName || order.client_name || order.full_name || 'Customer',
+        deliveryAddress,
+        scheduledDate: formatDateForDisplay(scheduledDate),
+        status: mapTrackingToDeliveryStatus(trackingStatus),
+        trackingStatus,
+        requestType: String(order.requestType || order.request_type || '').toLowerCase(),
+        typeLabel: getDeliveryTypeLabel(order.requestType || order.request_type)
+    };
+}
+
 async function loadDeliveries() {
     try {
         const allDeliveries = await deliveriesAPI.getAll();
-        deliveries = (Array.isArray(allDeliveries) ? allDeliveries : []).map(d => ({
-            id: d.delivery_id,
+        const backendDeliveries = (Array.isArray(allDeliveries) ? allDeliveries : []).map(d => ({
+            id: String(d.delivery_id || ''),
             deliveryId: '#DEL-' + d.delivery_id,
             orderId: d.request_id ? String(d.request_id) : '',
             customerName: d.client_name || d.full_name || 'Customer',
             deliveryAddress: d.delivery_address || 'Address not provided',
-            scheduledDate: d.scheduled_date,
+            scheduledDate: formatDateForDisplay(d.scheduled_date),
             status: mapTrackingToDeliveryStatus(d.delivery_status || d.status),
-            trackingStatus: normalizeTrackingStatus(d.delivery_status || d.status)
+            trackingStatus: normalizeTrackingStatus(d.delivery_status || d.status),
+            requestType: String(d.request_type || '').toLowerCase(),
+            typeLabel: getDeliveryTypeLabel(d.request_type)
         }));
+
+        const requestOrders = await loadRequestOrders();
+        const backendOrderIds = new Set(backendDeliveries.map(item => String(item.orderId || '').trim()).filter(Boolean));
+        const syntheticDeliveries = requestOrders
+            .map((order, index) => buildSyntheticDeliveryFromOrder(order, index))
+            .filter(item => item.orderId && !backendOrderIds.has(String(item.orderId)));
+
+        deliveries = [...backendDeliveries, ...syntheticDeliveries];
     } catch (error) {
         console.error('Failed to load deliveries:', error);
-        deliveries = [];
+        const requestOrders = await loadRequestOrders();
+        deliveries = requestOrders.map((order, index) => buildSyntheticDeliveryFromOrder(order, index));
     }
 }
 
@@ -105,9 +295,10 @@ function getFilteredDeliveries() {
         const matchesSearch = !activeSearchQuery || (
             delivery.deliveryId.toLowerCase().includes(activeSearchQuery) ||
             delivery.orderId.toLowerCase().includes(activeSearchQuery) ||
+            String(delivery.typeLabel || '').toLowerCase().includes(activeSearchQuery) ||
             delivery.customerName.toLowerCase().includes(activeSearchQuery) ||
             delivery.deliveryAddress.toLowerCase().includes(activeSearchQuery) ||
-            delivery.scheduledDate.includes(activeSearchQuery) ||
+            String(delivery.scheduledDate || '').toLowerCase().includes(activeSearchQuery) ||
             String((statusConfig[delivery.status] && statusConfig[delivery.status].label) || '').toLowerCase().includes(activeSearchQuery) ||
             String(trackingStatusConfig[delivery.trackingStatus] || '').toLowerCase().includes(activeSearchQuery)
         );
@@ -121,8 +312,36 @@ function applyFiltersAndRender() {
     renderDeliveries(getFilteredDeliveries());
 }
 
+async function populateSignedInAdminHeader() {
+    let userName = 'Admin';
+    let userRole = 'Administrator';
+
+    try {
+        const currentAdmin = JSON.parse(localStorage.getItem('admin') || 'null');
+        if (currentAdmin) {
+            userName = currentAdmin.full_name || currentAdmin.name || userName;
+            userRole = currentAdmin.role || userRole;
+
+            if (typeof adminAPI !== 'undefined' && Number.isFinite(Number(currentAdmin.admin_id))) {
+                const adminData = await adminAPI.getById(currentAdmin.admin_id);
+                userName = adminData?.full_name || adminData?.name || userName;
+                userRole = adminData?.role || userRole;
+            }
+        }
+    } catch (error) {
+        console.warn('Unable to load admin user data:', error);
+    }
+
+    const userNameEl = document.querySelector('.profile-name');
+    const userRoleEl = document.querySelector('.profile-role');
+
+    if (userNameEl) userNameEl.textContent = userName;
+    if (userRoleEl) userRoleEl.textContent = userRole;
+}
+
 // Initialize the page
 async function init() {
+    await populateSignedInAdminHeader();
     await loadDeliveries();
     updateStats();
     renderDeliveries();
@@ -142,8 +361,13 @@ function updateStats() {
 
 // Format ID for display
 function formatId(id) {
-    const parts = id.split('-');
-    return `<div>${parts[0]}-</div><div>${parts[1]}</div>`;
+    const value = String(id || '');
+    if (!value.includes('-')) {
+        return `<div>${value}</div>`;
+    }
+
+    const parts = value.split('-');
+    return `<div>${parts[0]}-</div><div>${parts.slice(1).join('-')}</div>`;
 }
 
 function createTrackingStatusDropdown(delivery) {
@@ -172,11 +396,9 @@ function renderDeliveries(filteredDeliveries = deliveries) {
 
     tableBody.innerHTML = filteredDeliveries.map(delivery => `
         <div class="table-row" data-id="${delivery.id}">
-            <div class="table-cell center">
-                ${formatId(delivery.deliveryId)}
-            </div>
             <div class="table-cell">
                 ${formatId(delivery.orderId)}
+                <div style="font-size: 11px; font-weight: 600; color: #6a6a6a; margin-top: 4px;">${delivery.typeLabel || 'Delivery'}</div>
             </div>
             <div class="table-cell bold">
                 ${delivery.customerName}
@@ -284,10 +506,10 @@ function setupDeleteButtons() {
 // Handle delete
 function handleDelete(event) {
     const id = event.currentTarget.getAttribute('data-id');
-    const delivery = deliveries.find(d => d.id === id);
+    const delivery = deliveries.find(d => String(d.id) === String(id));
     
     if (delivery && confirm(`Are you sure you want to delete delivery ${delivery.deliveryId}?`)) {
-        const index = deliveries.findIndex(d => d.id === id);
+        const index = deliveries.findIndex(d => String(d.id) === String(id));
         if (index !== -1) {
             deliveries.splice(index, 1);
             updateStats();

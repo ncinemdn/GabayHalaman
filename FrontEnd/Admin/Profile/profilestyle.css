@@ -1,5 +1,48 @@
+:root {
+    --pf-surface: #ffffff;
+    --pf-soft: #f6f8f3;
+    --pf-border: #e3e8dd;
+    --pf-shadow: 0 10px 24px rgba(20, 33, 20, 0.08);
+    --pf-shadow-soft: 0 6px 14px rgba(20, 33, 20, 0.06);
+    --pf-text: #1f2b21;
+    --pf-muted: #5c675f;
+}
+
+/* Unified Admin Typography */
+html,
+body,
+button,
+input,
+select,
+textarea,
+.app-container,
+.main-content,
+.page-header,
+.page-content,
+.sidebar,
+.sidebar * {
+    font-family: 'Inria Serif', serif !important;
+}
+
+body {
+    background: linear-gradient(180deg, #f8f7f4 0%, #f2f4ef 100%);
+}
+
 .hidden {
     display: none !important;
+}
+
+.main-content {
+    background: transparent;
+}
+
+.page-header {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid rgba(122, 122, 122, 0.35);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 30;
 }
 
 .page-header .user-avatar {
@@ -13,17 +56,36 @@
     display: block;
 }
 
+.header-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.dashboard-topbar-title {
+    color: #172117;
+}
+
+.top-subtitle {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #5a665d;
+}
+
 .profile-page-content {
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    padding: 32px;
+    gap: 24px;
+    padding: 26px 30px 34px;
 }
 
-.profile-page-intro {
-    max-width: 980px;
-    margin: 0 auto;
-    width: 100%;
+.profile-page-content .section-card {
+    background: var(--pf-surface);
+    border-radius: 18px;
+    border: 1px solid var(--pf-border);
+    box-shadow: var(--pf-shadow);
+    padding: 1.4rem;
 }
 
 .profile-shell,
@@ -36,7 +98,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
 }
 
 .profile-hero {
@@ -51,7 +113,8 @@
     border-radius: 28px;
     overflow: hidden;
     flex-shrink: 0;
-    box-shadow: 0 14px 28px rgba(46, 125, 50, 0.18);
+    border: 1px solid #dce7d4;
+    box-shadow: 0 14px 28px rgba(46, 125, 50, 0.16);
 }
 
 .profile-hero-avatar img {
@@ -73,14 +136,14 @@
 
 .profile-hero-copy h2 {
     font-size: 34px;
-    color: black;
+    color: var(--pf-text);
     margin-bottom: 8px;
 }
 
 .profile-role-line {
     font-family: 'Inter', sans-serif;
     font-size: 15px;
-    color: #5f5f5f;
+    color: var(--pf-muted);
     margin-bottom: 14px;
 }
 
@@ -96,7 +159,8 @@
     min-height: 34px;
     padding: 0 14px;
     border-radius: 999px;
-    background: #e8fde8;
+    background: #ecf8ea;
+    border: 1px solid #d8e9d4;
     color: #1b5e20;
     font-family: 'Inter', sans-serif;
     font-size: 13px;
@@ -104,14 +168,42 @@
 }
 
 .profile-chip.muted {
-    background: #f0f1f3;
-    color: #555;
+    background: #f1f4ef;
+    border-color: #dfe6da;
+    color: #5f695f;
 }
 
 .profile-action-row {
     margin-bottom: 0;
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.profile-action-row .btn {
+    height: 46px;
+    padding: 0 22px;
+    border-radius: 12px;
+    box-shadow: var(--pf-shadow-soft);
+    font-size: 16px;
+}
+
+.profile-action-row .btn-primary {
+    background: #2e7d32;
+}
+
+.profile-action-row .btn-primary:hover {
+    background: #245a26;
+}
+
+.profile-action-row .btn-secondary {
+    border-width: 1px;
+    border-color: #c8d8be;
+    background: #f8fbf5;
+    color: #2a5f2d;
+}
+
+.profile-action-row .btn-secondary:hover {
+    background: #ecf3e7;
 }
 
 .profile-details-grid {
@@ -121,10 +213,11 @@
 }
 
 .detail-card {
-    border: 1px solid #e1e1e1;
+    border: 1px solid var(--pf-border);
     border-radius: 16px;
     padding: 18px 20px;
-    background: linear-gradient(180deg, #ffffff 0%, #fafaf8 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcfa 100%);
+    box-shadow: var(--pf-shadow-soft);
 }
 
 .detail-label {
@@ -134,28 +227,28 @@
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #767676;
+    color: #6c756d;
     margin-bottom: 8px;
 }
 
 .detail-value {
     font-size: 20px;
     font-weight: bold;
-    color: black;
+    color: var(--pf-text);
 }
 
 .profile-edit-form {
     margin-top: 22px;
-    border: 1px solid #e7e7e7;
+    border: 1px solid var(--pf-border);
     border-radius: 16px;
-    background: #fbfbfb;
+    background: #fbfcfa;
     padding: 20px;
 }
 
 .edit-form-title {
     font-size: 22px;
     margin-bottom: 16px;
-    color: #1d1d1d;
+    color: var(--pf-text);
 }
 
 .edit-fields-grid {
@@ -182,13 +275,19 @@
 .edit-field input {
     width: 100%;
     min-height: 44px;
-    border: 1px solid #d9d9d9;
+    border: 1px solid #d4ded0;
     border-radius: 10px;
     padding: 0 12px;
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     color: #1d1d1d;
     background: #ffffff;
+}
+
+.edit-field input:focus {
+    outline: none;
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.14);
 }
 
 .edit-field input:disabled {
@@ -215,26 +314,27 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 24px;
+    margin-bottom: 18px;
 }
 
 .log-title {
     font-size: 28px;
-    color: black;
+    color: var(--pf-text);
     margin-bottom: 6px;
 }
 
 .log-subtitle {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
-    color: #6b6b6b;
+    color: var(--pf-muted);
 }
 
 .log-search-box {
     width: min(100%, 320px);
     min-height: 48px;
     border-radius: 14px;
-    background: #f6f2f2;
+    background: var(--pf-soft);
+    border: 1px solid #dfe5d8;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -251,10 +351,15 @@
     color: #3f3f3f;
 }
 
+.log-search-input::placeholder {
+    color: #8a958d;
+}
+
 .transaction-table-wrapper {
     overflow-x: auto;
-    border: 1px solid #ececec;
+    border: 1px solid var(--pf-border);
     border-radius: 18px;
+    box-shadow: var(--pf-shadow-soft);
 }
 
 .transaction-table {
@@ -264,14 +369,14 @@
 }
 
 .transaction-table thead {
-    background: #f8f7f4;
+    background: #f4f7f1;
 }
 
 .transaction-table th,
 .transaction-table td {
     padding: 18px 20px;
     text-align: left;
-    border-bottom: 1px solid #ececec;
+    border-bottom: 1px solid #e9eee5;
 }
 
 .transaction-table th {
@@ -287,6 +392,14 @@
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     color: #232323;
+}
+
+.transaction-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.transaction-table tbody tr:hover {
+    background: #fbfdf9;
 }
 
 .transaction-table tbody tr:last-child td {
@@ -307,14 +420,21 @@
 }
 
 .status-badge.success {
-    background: #e8fde8;
+    background: #ecf8ea;
     color: #1b5e20;
+    border: 1px solid #d6e6d3;
+}
+
+.status-badge.warning {
+    background: #fff3df;
+    color: #9a5a00;
+    border: 1px solid #f2d7a9;
 }
 
 .password-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(19, 25, 17, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -326,8 +446,9 @@
     width: min(100%, 480px);
     background: #ffffff;
     border-radius: 18px;
+    border: 1px solid var(--pf-border);
     padding: 22px;
-    box-shadow: 0 22px 40px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 22px 40px rgba(0, 0, 0, 0.18);
 }
 
 .password-modal-head {
@@ -344,7 +465,7 @@
 
 .modal-close-btn {
     border: 0;
-    background: #f3f3f3;
+    background: #f1f5ed;
     color: #4a4a4a;
     width: 34px;
     height: 34px;
@@ -354,11 +475,15 @@
     font-weight: bold;
 }
 
+.modal-close-btn:hover {
+    background: #e6ede0;
+}
+
 .profile-toast {
     position: fixed;
     right: 24px;
     bottom: 24px;
-    background: #2e7d32;
+    background: #266d2a;
     color: #ffffff;
     border-radius: 12px;
     min-height: 46px;
@@ -368,7 +493,7 @@
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 700;
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 24px rgba(22, 40, 22, 0.26);
     opacity: 0;
     transform: translateY(10px);
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -392,23 +517,29 @@
 
 @media (max-width: 768px) {
     .profile-page-content {
-        padding: 20px;
+        padding: 18px 14px 22px;
     }
 
     .page-header {
         padding: 18px 20px;
         gap: 16px;
-        flex-direction: column;
+        flex-direction: row;
         height: auto;
-        align-items: stretch;
-    }
-
-    .search-bar {
-        width: 100%;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .user-info {
         justify-content: flex-end;
+    }
+
+    .dashboard-topbar-title {
+        font-size: 26px;
+        margin: 0;
+    }
+
+    .top-subtitle {
+        font-size: 14px;
     }
 
     .profile-hero {

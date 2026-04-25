@@ -1,54 +1,44 @@
 // Page content templates
 const pages = {
     dashboard: `
-        <div class="page-header">
-            <div class="search-bar">
-                <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                    <path d="M6.22222 59C4.51111 59 3.0463 58.4498 1.82778 57.3494C0.609259 56.249 0 54.9262 0 53.381V19.6667C0 18.1214 0.609259 16.7986 1.82778 15.6982C3.0463 14.5978 4.51111 14.0476 6.22222 14.0476H12.4444C12.4444 10.1611 13.9611 6.84821 16.9944 4.10893C20.0278 1.36964 23.6963 0 28 0C32.3037 0 35.9722 1.36964 39.0056 4.10893C42.0389 6.84821 43.5556 10.1611 43.5556 14.0476H49.7778C51.4889 14.0476 52.9537 14.5978 54.1722 15.6982C55.3907 16.7986 56 18.1214 56 19.6667V53.381C56 54.9262 55.3907 56.249 54.1722 57.3494C52.9537 58.4498 51.4889 59 49.7778 59H6.22222ZM6.22222 53.381H49.7778V19.6667H6.22222V53.381ZM39.0056 32.4149C42.0389 29.6756 43.5556 26.3627 43.5556 22.4762H37.3333C37.3333 24.8175 36.4259 26.8075 34.6111 28.4464C32.7963 30.0853 30.5926 30.9048 28 30.9048C25.4074 30.9048 23.2037 30.0853 21.3889 28.4464C19.5741 26.8075 18.6667 24.8175 18.6667 22.4762H12.4444C12.4444 26.3627 13.9611 29.6756 16.9944 32.4149C20.0278 35.1542 23.6963 36.5238 28 36.5238C32.3037 36.5238 35.9722 35.1542 39.0056 32.4149ZM18.6667 14.0476H37.3333C37.3333 11.7063 36.4259 9.71627 34.6111 8.07738C32.7963 6.43849 30.5926 5.61905 28 5.61905C25.4074 5.61905 23.2037 6.43849 21.3889 8.07738C19.5741 9.71627 18.6667 11.7063 18.6667 14.0476Z" fill="#8B8989"/>
-                </svg>
-                <input type="text" placeholder="Search plants, orders ...">
+        <div class="page-header dashboard-topbar">
+            <div class="header-title-group">
+                <h1 class="dashboard-topbar-title">Dashboard Overview</h1>
+                <p class="page-subtitle" id="dashboardGreeting">Welcome back! Here's your store summary.</p>
             </div>
             <div class="user-info">
-                <div class="user-avatar"></div>
+                <div class="user-avatar">
+                    <img src="../Profile/cc.jpg" alt="Admin Profile Picture">
+                </div>
                 <div class="user-details">
                     <div class="user-name" id="dashboardUserName"></div>
                     <div class="user-role" id="dashboardUserRole"></div>
                 </div>
             </div>
         </div>
+
         <div class="page-content">
-            <div style="margin-bottom: 40px;">
-                <h1 class="page-title">Dashboard Overview</h1>
-                <p class="page-subtitle" id="dashboardGreeting">Welcome back! Here's your store summary.</p>
-            </div>
-           
             <div class="stats-grid" id="dashboardStats">
                 <!-- Dynamic stats will be inserted here -->
             </div>
 
+            <div class="dashboard-panels">
+                <div class="chart-container">
+                    <h2 class="sales-performance-title">Plant Sales Performance</h2>
+                    <div class="chart-wrapper">
+                        <div class="chart-canvas-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
 
-
-
-            <div class="chart-container">
-                <h2 class="sales-performance-title">Plant Sales Performance</h2>
-                <div class="chart-wrapper">
-                    <div class="chart-canvas-container">
-                        <canvas id="salesChart"></canvas>
+                <div>
+                    <h2 class="section-title">Important</h2>
+                    <div class="section-card" id="importantSectionCard">
+                        <p class="placeholder">Important notifications and alerts will appear here</p>
                     </div>
                 </div>
             </div>
-
-
-
-
-            <h2 class="section-title">Important</h2>
-            <div class="section-card">
-                <p class="placeholder">Important notifications and alerts will appear here</p>
-            </div>
-        </div>
-
-
-
 
             <div id="clientsPopup" class="popup-overlay" style="display: none;">
                 <div class="popup-content">
@@ -61,9 +51,6 @@ const pages = {
                     </div>
                 </div>
             </div>
-
-
-
 
             <div id="clientDetailsPopup" class="popup-overlay" style="display: none;">
                 <div class="popup-content">
@@ -329,7 +316,7 @@ const defaultDashboardData = {
 
 // Get dashboard data from API
 function resolveClientName(request) {
-    return request.full_name || request.name || request.customer_name || request.customerName || '';
+    return request.client_name || request.full_name || request.name || request.customer_name || request.customerName || '';
 }
 
 
@@ -357,32 +344,187 @@ function resolveOrderQuantity(request) {
     return Number.isFinite(value) && value > 0 ? Math.round(value) : 1;
 }
 
+function normalizeDashboardRequestStatus(status) {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'delivered' || value === 'completed' || value === 'reserved') {
+        return 'delivered';
+    }
+
+    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
+        return 'out-for-delivery';
+    }
+
+    if (value === 'cancel' || value === 'cancelled' || value === 'canceled') {
+        return 'cancel';
+    }
+
+    return 'pending';
+}
+
+function normalizeDashboardDeliveryStatus(status) {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'delivered') {
+        return 'delivered';
+    }
+
+    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
+        return 'out-for-delivery';
+    }
+
+    return 'pending';
+}
+
+function getDashboardOrderKey(record) {
+    const orderId = String(record.orderId || record.request_id || record.requestId || '').trim();
+    if (orderId) {
+        return 'order:' + orderId;
+    }
+
+    const deliveryId = String(record.delivery_id || record.deliveryId || '').trim();
+    if (deliveryId) {
+        return 'delivery:' + deliveryId;
+    }
+
+    const fallbackId = String(record.id || record.request_id || record.delivery_id || '').trim();
+    return fallbackId ? 'id:' + fallbackId : '';
+}
+
+function getLocalDashboardPurchaseOrders() {
+    const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    if (!Array.isArray(purchases)) {
+        return [];
+    }
+
+    return purchases.map(order => ({
+        ...order,
+        orderId: String(order.orderId || order.id || '').trim(),
+        customerName: order.customerName || 'Customer',
+        request_status: normalizeDashboardRequestStatus(order.orderStatus),
+        request_type: 'purchase'
+    }));
+}
+
+function getLocalDashboardReservationOrders() {
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    if (!Array.isArray(reservations)) {
+        return [];
+    }
+
+    return reservations
+        .filter(order => order && order.isPlacedOrder === true)
+        .map(order => ({
+            ...order,
+            orderId: String(order.orderId || order.id || '').trim(),
+            customerName: order.customerName || 'Customer',
+            request_status: normalizeDashboardRequestStatus(order.orderStatus),
+            request_type: 'reservation'
+        }));
+}
+
+function mergeDashboardRequestsWithLocal(backendRequests, localRequests) {
+    if (!Array.isArray(localRequests) || !localRequests.length) {
+        return backendRequests;
+    }
+
+    const localMap = new Map();
+    localRequests.forEach(order => {
+        const key = String(order.orderId || order.request_id || order.id || '').trim();
+        if (key) {
+            localMap.set(key, order);
+        }
+    });
+
+    const merged = backendRequests.map(order => {
+        const key = String(order.orderId || order.request_id || order.id || '').trim();
+        const localOrder = localMap.get(key);
+        if (!localOrder) {
+            return order;
+        }
+
+        localMap.delete(key);
+        return {
+            ...order,
+            ...localOrder
+        };
+    });
+
+    return [...Array.from(localMap.values()), ...merged];
+}
+
 
 
 
 async function getDashboardData() {
     try {
-        const plants = await plantsAPI.getAll();
-        const requests = await requestsAPI.getAll();
-        const validRequests = Array.isArray(requests) ? requests : [];
+        const [plants, backendRequests, backendDeliveries] = await Promise.all([
+            typeof plantsAPI !== 'undefined' ? plantsAPI.getAll() : Promise.resolve([]),
+            typeof requestsAPI !== 'undefined' ? requestsAPI.getAll() : Promise.resolve([]),
+            typeof deliveriesAPI !== 'undefined' ? deliveriesAPI.getAll() : Promise.resolve([])
+        ]);
+
+        const normalizedBackendRequests = (Array.isArray(backendRequests) ? backendRequests : []).map(request => ({
+            ...request,
+            orderId: String(request.request_id || request.orderId || '').trim(),
+            customerName: request.client_name || request.customerName || request.customer_name || ''
+        }));
+
+        const localRequests = [
+            ...getLocalDashboardPurchaseOrders(),
+            ...getLocalDashboardReservationOrders()
+        ];
+
+        const validRequests = mergeDashboardRequestsWithLocal(normalizedBackendRequests, localRequests);
+        const validDeliveries = Array.isArray(backendDeliveries) ? backendDeliveries : [];
         const clientNames = new Set();
         const monthlyCounts = Array(12).fill(0);
-
-
-
+        const unifiedOrderMap = new Map();
 
         validRequests.forEach(request => {
-            const name = resolveClientName(request);
-            if (name) {
-                clientNames.add(name.trim());
+            const key = getDashboardOrderKey(request);
+            if (!key) {
+                return;
             }
 
+            unifiedOrderMap.set(key, {
+                clientName: resolveClientName(request),
+                requestStatus: normalizeDashboardRequestStatus(request.request_status || request.status || request.orderStatus),
+                date: request.request_date || request.requestDate || request.created_at || request.createdAt || null
+            });
+        });
+
+        validDeliveries.forEach(delivery => {
+            const key = getDashboardOrderKey({ orderId: delivery.request_id, delivery_id: delivery.delivery_id, id: delivery.delivery_id });
+            if (!key) {
+                return;
+            }
+
+            const existing = unifiedOrderMap.get(key) || {};
+            unifiedOrderMap.set(key, {
+                ...existing,
+                clientName: resolveClientName({
+                    client_name: delivery.client_name,
+                    customerName: existing.clientName
+                }) || existing.clientName || '',
+                deliveryStatus: normalizeDashboardDeliveryStatus(delivery.delivery_status || delivery.status),
+                date: existing.date || delivery.scheduled_date || delivery.created_at || null
+            });
+        });
 
 
 
-            const requestDate = new Date(request.request_date || request.requestDate || request.created_at || request.createdAt || null);
-            if (!Number.isNaN(requestDate.getTime())) {
-                monthlyCounts[requestDate.getMonth()] += 1;
+
+        unifiedOrderMap.forEach(order => {
+            if (!order || !order.clientName) {
+                return;
+            }
+
+            clientNames.add(String(order.clientName).trim());
+
+            const orderDate = new Date(order.date || null);
+            if (!Number.isNaN(orderDate.getTime())) {
+                monthlyCounts[orderDate.getMonth()] += 1;
             }
         });
 
@@ -400,8 +542,11 @@ async function getDashboardData() {
 
         return {
             totalPlants: Array.isArray(plants) ? plants.length : 0,
-            totalOrders: validRequests.length,
-            pendingOrders: validRequests.filter(r => (r.request_status || r.status || '').toLowerCase() === 'pending').length,
+            totalOrders: unifiedOrderMap.size,
+            pendingOrders: Array.from(unifiedOrderMap.values()).filter(order => {
+                const effectiveStatus = order.deliveryStatus || order.requestStatus || 'pending';
+                return effectiveStatus === 'pending';
+            }).length,
             totalClients: clientNames.size,
             clientsData: validRequests,
             monthlyGrowth,
@@ -470,11 +615,13 @@ async function populateDashboard() {
    
     // Update user info from backend if possible
     let userName = 'Admin';
+    let userRole = 'Administrator';
     try {
         const currentAdmin = JSON.parse(localStorage.getItem('admin') || 'null');
         if (currentAdmin?.admin_id) {
             const adminData = await adminAPI.getById(currentAdmin.admin_id);
             userName = adminData?.full_name || adminData?.name || userName;
+            userRole = adminData?.role || userRole;
         }
     } catch (error) {
         console.warn('Unable to load admin user data:', error);
@@ -484,6 +631,7 @@ async function populateDashboard() {
 
 
     document.getElementById('dashboardUserName').textContent = userName;
+    document.getElementById('dashboardUserRole').textContent = userRole;
     document.getElementById('dashboardGreeting').textContent = `Welcome back, ${userName}! Here's your store summary.`;
    
     // Create stat cards
@@ -658,21 +806,21 @@ function updateImportantSection(data) {
 
 
 
-    const importantSectionCard = document.querySelector('.section-card');
+    const importantSectionCard = document.getElementById('importantSectionCard');
     if (!importantSectionCard) return;
 
 
 
 
     importantSectionCard.innerHTML = `
-        <div style="display: grid; gap: 20px;">
-            <div>
-                <h3 style="margin: 0 0 8px; color: #2e7d32;">Most Demanded Plants</h3>
-                <p style="margin: 0; color: #444; font-size: 15px;">${mostDemandedPlants || 'No plant demand data available.'}</p>
+        <div class="important-grid">
+            <div class="important-block">
+                <h3 class="important-heading">Most Demanded Plants</h3>
+                <p class="important-text">${mostDemandedPlants || 'No plant demand data available.'}</p>
             </div>
-            <div>
-                <h3 style="margin: 0 0 8px; color: #2e7d32;">Top Clients</h3>
-                <p style="margin: 0; color: #444; font-size: 15px;">${topClients || 'No client order data available.'}</p>
+            <div class="important-block">
+                <h3 class="important-heading">Top Clients</h3>
+                <p class="important-text">${topClients || 'No client order data available.'}</p>
             </div>
         </div>
     `;
