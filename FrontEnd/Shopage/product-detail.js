@@ -11,6 +11,7 @@ const state = {
 
 let moreProducts = [];
 let refreshMoreCarousel = null;
+const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
 
 const PLANT_API = {
     async getPlantInventory() {
@@ -52,8 +53,6 @@ const PLANT_API = {
                     });
                 });
             }
-            
-            const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
             
             // Combine plant and size data
             return plants.map(p => {
@@ -784,18 +783,20 @@ function initBuyNowButton() {
             return;
         }
 
+        const selectedSizeData = getCurrentSizeData(state.currentPlant, state.selectedSize) || state.currentSizeData;
         const stockState = getPlantStockState(state.currentPlant);
-        if (!stockState.inStock) {
+        if (!stockState.inStock || !selectedSizeData) {
             return;
         }
 
         const orderNowItem = {
             id: state.currentPlant.id,
             name: state.currentPlant.name,
-            price: state.currentPlant.price,
+            price: Number(selectedSizeData.price || state.currentPlant.price || 0),
             image: state.currentPlant.image,
             quantity: state.quantity,
-            size: state.selectedSize,
+            size: selectedSizeData.name || state.selectedSize,
+            plantSizeId: selectedSizeData.id || null,
             category: state.currentPlant.category
         };
 

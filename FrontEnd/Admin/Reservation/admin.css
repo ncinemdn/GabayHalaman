@@ -20,6 +20,156 @@ body {
     min-height: 100vh;
 }
 
+.action-loading-line {
+    position: fixed;
+    top: 14px;
+    right: 26px;
+    width: min(246px, calc(100vw - 28px));
+    height: 2px;
+    background: linear-gradient(90deg, #2e7d32 0%, #78a240 100%);
+    border-radius: 16px 16px 0 0;
+    box-shadow: none;
+    transform: scaleX(0);
+    transform-origin: left;
+    opacity: 0;
+    transition: transform 0.7s ease, opacity 0.2s ease;
+    z-index: 2100;
+}
+
+.action-loading-line.active {
+    transform: scaleX(1);
+    opacity: 1;
+}
+
+.action-toast {
+    position: fixed;
+    top: 14px;
+    right: 26px;
+    width: min(246px, calc(100vw - 28px));
+    min-height: 82px;
+    background: #ffffff;
+    border: 1px solid #cfdac6;
+    border-radius: 16px;
+    box-shadow: 0 10px 22px rgba(18, 31, 18, 0.12);
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 2090;
+}
+
+.action-toast.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.action-toast.error {
+    border-color: #f0c6c3;
+}
+
+.action-toast-message {
+    margin: 0;
+    font-size: 0.83rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #1f2b21;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 25, 16, 0.52);
+    z-index: 2050;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.action-confirmation-content {
+    width: 100%;
+    max-width: 360px;
+    min-height: 170px;
+    background: #ffffff;
+    border: 1px solid #dce4d5;
+    border-radius: 16px;
+    box-shadow: 0 24px 44px rgba(18, 31, 18, 0.2);
+    padding: 1.15rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-confirmation-message {
+    margin: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #1f2b21;
+    line-height: 1.35;
+}
+
+.action-confirmation-buttons {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.btn-confirm-cancel,
+.btn-confirm-okay {
+    width: 132px;
+    min-width: 132px;
+    height: 42px;
+    border-radius: 12px;
+    font-family: 'Inria Serif', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-confirm-cancel {
+    background: #f8faf5;
+    border: 1px solid #c8d7be;
+    color: #2a3a2a;
+}
+
+.btn-confirm-cancel:hover {
+    background: #edf3e8;
+}
+
+.btn-confirm-okay {
+    background: #2e7d32;
+    border: 1px solid #2e7d32;
+    color: #ffffff;
+}
+
+.btn-confirm-okay:hover {
+    background: #245a26;
+}
+
+.btn-confirm-okay.danger {
+    background: #fef2f2;
+    border: 1px solid #f2d1cf;
+    color: #b42318;
+}
+
+.btn-confirm-okay.danger:hover {
+    background: #fee2e2;
+}
+
 /* Sidebar Styles */
 .sidebar {
     position: fixed;
@@ -1006,5 +1156,36 @@ textarea,
     .expanded-row {
         min-width: 1000px;
         overflow-x: auto;
+    }
+
+    .action-loading-line {
+        width: min(220px, calc(100vw - 22px));
+        right: 12px;
+        top: 12px;
+    }
+
+    .action-toast {
+        top: 12px;
+        right: 12px;
+        width: min(220px, calc(100vw - 22px));
+        min-height: 74px;
+        padding: 0.65rem 0.78rem;
+    }
+
+    .action-toast-message {
+        font-size: 0.8rem;
+    }
+
+    .action-confirmation-content {
+        max-width: min(340px, calc(100vw - 1.2rem));
+        min-height: 160px;
+        padding: 1rem 0.85rem;
+    }
+
+    .btn-confirm-cancel,
+    .btn-confirm-okay {
+        width: 118px;
+        min-width: 118px;
+        height: 40px;
     }
 }

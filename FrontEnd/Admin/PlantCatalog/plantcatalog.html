@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="actionLoadingLine" class="action-loading-line" aria-hidden="true"></div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <div id="sidebar" class="sidebar">
@@ -151,7 +153,7 @@
                                 <span>Add New Plant</span>
                             </button>
                             <button class="btn-add-plant" id="btnManageCategories" onclick="openCategoryManagementModal()">
-                                <span style="font-size: 1.25rem;">⚙️</span>
+                                <span class="manage-categories-icon">⚙</span>
                                 <span>Manage Categories</span>
                             </button>
                         </div>
@@ -256,7 +258,7 @@
             </div>
 
             <p class="form-label">Description</p>
-            <div class="form-input-container">
+            <div class="form-textarea-container">
                 <textarea id="plantDescription" placeholder="Enter plant description" class="form-textarea"></textarea>
             </div>
 
@@ -270,7 +272,7 @@
     <!-- Success Modal -->
     <div class="modal" id="successModal">
         <div class="modal-content-small">
-            <p class="success-message">Successfully Add New Plant</p>
+            <p class="success-message" id="successMessageText">Successfully Add New Plant</p>
             <button class="btn-okay" id="btnOkay" type="button">Okay</button>
         </div>
     </div>
@@ -288,25 +290,25 @@
 
     <!-- Category Management Modal -->
     <div class="modal" id="categoryManagementModal">
-        <div class="modal-content">
+        <div class="modal-content category-modal-content">
             <h2 class="modal-title">Manage Categories</h2>
             
             <div class="form-row">
-                <div class="form-col" style="grid-column: 1 / -1;">
+                <div class="form-col category-form-full">
                     <p class="form-label">Add New Category</p>
-                    <div style="display: flex; gap: 1rem;">
-                        <input type="text" id="newCategoryInput" placeholder="Enter new category name" class="form-input" style="flex: 1;">
-                        <button id="btnAddCategory" class="btn-save" style="flex: 0 0 auto; width: 130px;">Add</button>
+                    <div class="category-add-row">
+                        <input type="text" id="newCategoryInput" placeholder="Enter new category name" class="form-input category-add-input">
+                        <button id="btnAddCategory" class="btn-save category-add-btn">Add</button>
                     </div>
                 </div>
             </div>
 
-            <div class="form-col" style="grid-column: 1 / -1; margin-top: 2rem;">
+            <div class="form-col category-form-full category-list-wrap">
                 <p class="form-label">Existing Categories</p>
                 <div id="categoriesList" class="categories-list"></div>
             </div>
 
-            <div class="modal-buttons" style="justify-content: flex-end;">
+            <div class="modal-buttons category-modal-actions">
                 <button class="btn-cancel" id="btnCloseCategoryModal" type="button">Close</button>
             </div>
         </div>

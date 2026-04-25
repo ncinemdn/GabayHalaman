@@ -689,13 +689,18 @@ async function createBackendRequest(requestType, order) {
     }
 
     const deliveryDetails = order.deliveryDetails || {};
-    const clientId = Number(deliveryDetails.clientId || order.clientId || 0);
+    const clientId = await resolveClientId(deliveryDetails, order.clientId);
+
+    if (!Number.isFinite(Number(clientId)) || Number(clientId) <= 0) {
+        console.warn('Skipping backend request creation because no valid client_id was resolved.');
+        return;
+    }
 
     const requestPayload = {
-        client_id: Number.isFinite(clientId) ? clientId : 0,
+        client_id: Number(clientId),
         request_type: requestType,
         request_status: order.orderStatus || 'pending',
-        payment_status: order.paymentStatus || 'paid',
+        payment_status: order.paymentStatus || 'unpaid',
         total_amount: Math.round(order.totalAmount || 0),
         request_date: new Date().toISOString(),
         last_updated: new Date().toISOString()
@@ -706,6 +711,73 @@ async function createBackendRequest(requestType, order) {
     } catch (error) {
         console.warn('Unable to persist order to backend:', error);
     }
+}
+
+async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
+    const explicitClientId = Number(deliveryDetails.clientId || fallbackClientId || 0);
+    if (Number.isFinite(explicitClientId) && explicitClientId > 0) {
+        return explicitClientId;
+    }
+
+    if (typeof clientsAPI === 'undefined') {
+        return null;
+    }
+
+    const fullName = String(deliveryDetails.fullName || '').trim();
+    const email = String(deliveryDetails.email || '').trim().toLowerCase();
+    const phoneDigits = String(deliveryDetails.phone || '').replace(/\D/g, '');
+    const contactNumber = Number(phoneDigits);
+
+    const matchExistingClient = (clients) => {
+        if (!Array.isArray(clients)) {
+            return null;
+        }
+
+        return clients.find((client) => {
+            const clientEmail = String(client.email || '').trim().toLowerCase();
+            const clientName = String(client.full_name || '').trim();
+            const clientContact = String(client.contact_number || '').replace(/\D/g, '');
+
+            if (email && clientEmail && clientEmail === email) {
+                return true;
+            }
+
+            if (fullName && clientName === fullName && phoneDigits && clientContact === phoneDigits) {
+                return true;
+            }
+
+            return false;
+        }) || null;
+    };
+
+    try {
+        const existingClients = await clientsAPI.getAll();
+        const existingClient = matchExistingClient(existingClients);
+        if (existingClient && Number(existingClient.client_id) > 0) {
+            return Number(existingClient.client_id);
+        }
+
+        if (!fullName || !email) {
+            return null;
+        }
+
+        await clientsAPI.create({
+            full_name: fullName,
+            email,
+            contact_number: Number.isFinite(contactNumber) ? contactNumber : 0,
+            created_at: new Date().toISOString()
+        });
+
+        const refreshedClients = await clientsAPI.getAll();
+        const createdClient = matchExistingClient(refreshedClients);
+        if (createdClient && Number(createdClient.client_id) > 0) {
+            return Number(createdClient.client_id);
+        }
+    } catch (error) {
+        console.warn('Unable to resolve client_id for request:', error);
+    }
+
+    return null;
 }
 
 async function createPurchaseOrderFromCartItems(items) {
@@ -723,7 +795,7 @@ async function createPurchaseOrderFromCartItems(items) {
             image: item.img
         })),
         totalAmount: items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 1)), 0),
-        paymentStatus: 'paid',
+        paymentStatus: 'unpaid',
         orderStatus: 'pending',
         createdAt: new Date().toISOString(),
         deliveryDetails: deliveryDetails

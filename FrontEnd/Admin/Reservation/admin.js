@@ -6,6 +6,9 @@ let expandedTable = null;
 let activeSearchQuery = '';
 let activeStatusFilter = 'all';
 let activeTypeFilter = 'all';
+let pendingAction = null;
+let actionLoadingTimer = null;
+let actionToastTimer = null;
 
 function normalizePaymentStatus(status) {
     const value = String(status || '').toLowerCase();
@@ -493,7 +496,7 @@ function renderMiniTable(containerId, orders) {
                         <td><span class="status-badge ${normalizePaymentStatus(order.paymentStatus)}">${formatPaymentStatusLabel(order.paymentStatus)}</span></td>
                         <td><span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span></td>
                         <td class="action-cell">
-                            <button class="delete-btn row-delete-btn" onclick="deleteOrder('${type}', '${orderId}')" title="Delete order" aria-label="Delete order">
+                            <button class="delete-btn row-delete-btn" onclick="requestDeleteOrder('${type}', '${orderId}')" title="Delete order" aria-label="Delete order">
                                 <svg viewBox="0 0 16 19" fill="currentColor" width="16" height="16" aria-hidden="true">
                                     <path d="M3.45775 18.6345C2.75908 18.6345 2.17475 18.3996 1.70475 17.9298C1.23492 17.4598 1 16.8754 1 16.1768V3.2345H0V1.0845H5.2V0H11.35V1.0845H16.55V3.2345H15.55V16.1768C15.55 16.8606 15.3113 17.4412 14.834 17.9185C14.3567 18.3958 13.7761 18.6345 13.0923 18.6345H3.45775ZM13.4 3.2345H3.15V16.1768C3.15 16.2666 3.17883 16.3403 3.2365 16.398C3.29417 16.4557 3.36792 16.4845 3.45775 16.4845H13.0923C13.1693 16.4845 13.2398 16.4524 13.3038 16.3883C13.3679 16.3243 13.4 16.2538 13.4 16.1768V3.2345ZM5.129 14.4595H7.27875V5.2595H5.129V14.4595ZM9.27125 14.4595H11.421V5.2595H9.27125V14.4595Z"/>
                                 </svg>
@@ -541,21 +544,21 @@ function expandTable(type) {
                     <div class="expanded-cell bold">${getQuantity(order)}</div>
                     <div class="expanded-cell bold">${getTotalAmount(order)}</div>
                     <div class="expanded-cell">
-                        <select class="status-select" onchange="setPaymentStatusByType('${type}', '${order.id}', this.value)">
+                        <select class="status-select" onchange="requestPaymentStatusChangeByType('${type}', '${order.id}', this.value, this)">
                             <option value="unpaid" ${normalizePaymentStatus(order.paymentStatus) === 'unpaid' ? 'selected' : ''}>Unpaid</option>
                             <option value="partially_paid" ${normalizePaymentStatus(order.paymentStatus) === 'partially_paid' ? 'selected' : ''}>Partially Paid</option>
                             <option value="paid" ${normalizePaymentStatus(order.paymentStatus) === 'paid' ? 'selected' : ''}>Paid</option>
                         </select>
                     </div>
                     <div class="expanded-cell">
-                        <select class="status-select" onchange="setOrderStatusByType('${type}', '${order.id}', this.value)">
+                        <select class="status-select" onchange="requestOrderStatusChangeByType('${type}', '${order.id}', this.value, this)">
                             <option value="pending" ${normalizeStatus(order.orderStatus) === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="cancel" ${normalizeStatus(order.orderStatus) === 'cancel' ? 'selected' : ''}>Cancel</option>
                             <option value="delivered" ${normalizeStatus(order.orderStatus) === 'delivered' ? 'selected' : ''}>Delivered</option>
                         </select>
                     </div>
                     <div class="expanded-cell action-cell">
-                        <button class="delete-btn row-delete-btn" onclick="deleteOrder('${type}', '${order.id}')" title="Delete order" aria-label="Delete order">
+                        <button class="delete-btn row-delete-btn" onclick="requestDeleteOrder('${type}', '${order.id}')" title="Delete order" aria-label="Delete order">
                             <svg viewBox="0 0 16 19" fill="currentColor" width="16" height="16" aria-hidden="true">
                                 <path d="M3.45775 18.6345C2.75908 18.6345 2.17475 18.3996 1.70475 17.9298C1.23492 17.4598 1 16.8754 1 16.1768V3.2345H0V1.0845H5.2V0H11.35V1.0845H16.55V3.2345H15.55V16.1768C15.55 16.8606 15.3113 17.4412 14.834 17.9185C14.3567 18.3958 13.7761 18.6345 13.0923 18.6345H3.45775ZM13.4 3.2345H3.15V16.1768C3.15 16.2666 3.17883 16.3403 3.2365 16.398C3.29417 16.4557 3.36792 16.4845 3.45775 16.4845H13.0923C13.1693 16.4845 13.2398 16.4524 13.3038 16.3883C13.3679 16.3243 13.4 16.2538 13.4 16.1768V3.2345ZM5.129 14.4595H7.27875V5.2595H5.129V14.4595ZM9.27125 14.4595H11.421V5.2595H9.27125V14.4595Z"/>
                             </svg>
@@ -577,7 +580,7 @@ function expandTable(type) {
 async function setOrderStatus(orderId, status) {
     const order = purchaseOrders.find(item => item.id === orderId);
     if (!order) {
-        return;
+        return false;
     }
 
     order.orderStatus = normalizeStatus(status);
@@ -589,12 +592,14 @@ async function setOrderStatus(orderId, status) {
     } else {
         renderMiniTables();
     }
+
+    return true;
 }
 
 async function setPaymentStatus(orderId, status) {
     const order = purchaseOrders.find(item => item.id === orderId);
     if (!order) {
-        return;
+        return false;
     }
 
     order.paymentStatus = normalizePaymentStatus(status);
@@ -605,17 +610,18 @@ async function setPaymentStatus(orderId, status) {
     } else {
         renderMiniTables();
     }
+
+    return true;
 }
 
 async function setOrderStatusByType(type, orderId, status) {
     if (type === 'purchase') {
-        await setOrderStatus(orderId, status);
-        return;
+        return setOrderStatus(orderId, status);
     }
 
     const order = reservationOrders.find(item => item.id === orderId);
     if (!order) {
-        return;
+        return false;
     }
 
     order.orderStatus = normalizeStatus(status);
@@ -627,17 +633,18 @@ async function setOrderStatusByType(type, orderId, status) {
     } else {
         renderMiniTables();
     }
+
+    return true;
 }
 
 async function setPaymentStatusByType(type, orderId, status) {
     if (type === 'purchase') {
-        await setPaymentStatus(orderId, status);
-        return;
+        return setPaymentStatus(orderId, status);
     }
 
     const order = reservationOrders.find(item => item.id === orderId);
     if (!order) {
-        return;
+        return false;
     }
 
     order.paymentStatus = normalizePaymentStatus(status);
@@ -648,6 +655,8 @@ async function setPaymentStatusByType(type, orderId, status) {
     } else {
         renderMiniTables();
     }
+
+    return true;
 }
 
 // Minimize expanded table
@@ -659,10 +668,6 @@ function minimizeTable() {
 
 // Delete order
 async function deleteOrder(type, orderId) {
-    if (!confirm('Are you sure you want to delete this order?')) {
-        return;
-    }
-
     let deletedOrderRecord = null;
 
     if (type === 'purchase') {
@@ -672,13 +677,12 @@ async function deleteOrder(type, orderId) {
     }
 
     if (!deletedOrderRecord) {
-        return;
+        return false;
     }
 
     const backendDeleted = await deleteBackendOrder(deletedOrderRecord);
     if (!backendDeleted) {
-        alert('Unable to delete order from server. Please try again.');
-        return;
+        return false;
     }
 
     removeOrderFromLocalCache(type, deletedOrderRecord);
@@ -696,12 +700,40 @@ async function deleteOrder(type, orderId) {
     }
 
     updateStats();
+
+    return true;
 }
 
 // Setup event listeners
 function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', handleSearch);
+
+    const btnActionCancel = document.getElementById('btnActionCancel');
+    const btnActionConfirm = document.getElementById('btnActionConfirm');
+    const actionConfirmationModal = document.getElementById('actionConfirmationModal');
+
+    if (btnActionCancel) {
+        btnActionCancel.addEventListener('click', () => closeActionConfirmation(true));
+    }
+
+    if (btnActionConfirm) {
+        btnActionConfirm.addEventListener('click', confirmPendingAction);
+    }
+
+    if (actionConfirmationModal) {
+        actionConfirmationModal.addEventListener('click', (event) => {
+            if (event.target === actionConfirmationModal) {
+                closeActionConfirmation(true);
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeActionConfirmation(true);
+        }
+    });
 
     setupFilterDropdowns();
 }
@@ -770,6 +802,217 @@ function capitalizeFirst(str) {
         return value;
     }
     return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function getOrderListByType(type) {
+    return type === 'purchase' ? purchaseOrders : reservationOrders;
+}
+
+function getOrderByType(type, orderId) {
+    const orders = getOrderListByType(type);
+    return orders.find(order => String(order.id) === String(orderId));
+}
+
+function hideActionToast() {
+    const actionToast = document.getElementById('actionToast');
+    if (!actionToast) {
+        return;
+    }
+    actionToast.classList.remove('active', 'error');
+}
+
+function showActionToast(message, isError = false) {
+    const actionToast = document.getElementById('actionToast');
+    const actionToastMessage = document.getElementById('actionToastMessage');
+    if (!actionToast || !actionToastMessage) {
+        return;
+    }
+
+    if (actionToastTimer) {
+        clearTimeout(actionToastTimer);
+        actionToastTimer = null;
+    }
+
+    actionToastMessage.textContent = message;
+    actionToast.classList.toggle('error', Boolean(isError));
+    actionToast.classList.add('active');
+
+    actionToastTimer = window.setTimeout(() => {
+        hideActionToast();
+        actionToastTimer = null;
+    }, 2200);
+}
+
+function playActionLoadingLine() {
+    const actionLoadingLine = document.getElementById('actionLoadingLine');
+    if (!actionLoadingLine) {
+        return;
+    }
+
+    if (actionLoadingTimer) {
+        clearTimeout(actionLoadingTimer);
+        actionLoadingTimer = null;
+    }
+
+    actionLoadingLine.classList.remove('active');
+    void actionLoadingLine.offsetWidth;
+    actionLoadingLine.classList.add('active');
+
+    actionLoadingTimer = window.setTimeout(() => {
+        actionLoadingLine.classList.remove('active');
+        actionLoadingTimer = null;
+    }, 700);
+}
+
+function showActionSuccess(message) {
+    playActionLoadingLine();
+    window.setTimeout(() => {
+        showActionToast(message, false);
+    }, 700);
+}
+
+function showActionError(message) {
+    showActionToast(message, true);
+}
+
+function closeActionConfirmation(runCancel = false) {
+    const actionConfirmationModal = document.getElementById('actionConfirmationModal');
+    if (actionConfirmationModal) {
+        actionConfirmationModal.classList.remove('active');
+    }
+    document.body.style.overflow = '';
+
+    if (runCancel && pendingAction && typeof pendingAction.onCancel === 'function') {
+        pendingAction.onCancel();
+    }
+
+    pendingAction = null;
+}
+
+function openActionConfirmation(message, onConfirm, onCancel, options = {}) {
+    const actionConfirmationModal = document.getElementById('actionConfirmationModal');
+    const actionConfirmationMessage = document.getElementById('actionConfirmationMessage');
+    const btnActionConfirm = document.getElementById('btnActionConfirm');
+    if (!actionConfirmationModal || !actionConfirmationMessage || !btnActionConfirm) {
+        return;
+    }
+
+    const confirmLabel = options.confirmLabel || 'Confirm';
+    const isDestructive = Boolean(options.destructive);
+
+    actionConfirmationMessage.textContent = message;
+    btnActionConfirm.textContent = confirmLabel;
+    btnActionConfirm.classList.toggle('danger', isDestructive);
+
+    pendingAction = {
+        onConfirm,
+        onCancel
+    };
+
+    actionConfirmationModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+async function confirmPendingAction() {
+    if (!pendingAction || typeof pendingAction.onConfirm !== 'function') {
+        closeActionConfirmation(false);
+        return;
+    }
+
+    const actionToRun = pendingAction.onConfirm;
+    closeActionConfirmation(false);
+
+    try {
+        await actionToRun();
+    } catch (error) {
+        console.error('Action failed:', error);
+        showActionError('Unable to complete action. Please try again.');
+    }
+}
+
+function revertSelectValue(selectElement, fallbackValue) {
+    if (!selectElement) {
+        return;
+    }
+    selectElement.value = fallbackValue;
+}
+
+function requestOrderStatusChangeByType(type, orderId, newStatus, selectElement) {
+    const order = getOrderByType(type, orderId);
+    if (!order) {
+        showActionError('Order was not found.');
+        return;
+    }
+
+    const previousStatus = normalizeStatus(order.orderStatus);
+    const nextStatus = normalizeStatus(newStatus);
+    if (previousStatus === nextStatus) {
+        return;
+    }
+
+    openActionConfirmation(
+        'Are you sure you want to update the order status?',
+        async () => {
+            const updated = await setOrderStatusByType(type, orderId, nextStatus);
+            if (!updated) {
+                revertSelectValue(selectElement, previousStatus);
+                showActionError('Unable to update order status.');
+                return;
+            }
+            showActionSuccess('Order status updated successfully.');
+        },
+        () => {
+            revertSelectValue(selectElement, previousStatus);
+        },
+        { confirmLabel: 'Update' }
+    );
+}
+
+function requestPaymentStatusChangeByType(type, orderId, newStatus, selectElement) {
+    const order = getOrderByType(type, orderId);
+    if (!order) {
+        showActionError('Order was not found.');
+        return;
+    }
+
+    const previousStatus = normalizePaymentStatus(order.paymentStatus);
+    const nextStatus = normalizePaymentStatus(newStatus);
+    if (previousStatus === nextStatus) {
+        return;
+    }
+
+    openActionConfirmation(
+        'Are you sure you want to update the payment status?',
+        async () => {
+            const updated = await setPaymentStatusByType(type, orderId, nextStatus);
+            if (!updated) {
+                revertSelectValue(selectElement, previousStatus);
+                showActionError('Unable to update payment status.');
+                return;
+            }
+            showActionSuccess('Payment status updated successfully.');
+        },
+        () => {
+            revertSelectValue(selectElement, previousStatus);
+        },
+        { confirmLabel: 'Update' }
+    );
+}
+
+function requestDeleteOrder(type, orderId) {
+    openActionConfirmation(
+        'Are you sure you want to delete this order?',
+        async () => {
+            const deleted = await deleteOrder(type, orderId);
+            if (!deleted) {
+                showActionError('Unable to delete order from server. Please try again.');
+                return;
+            }
+            showActionSuccess('Order deleted successfully.');
+        },
+        null,
+        { confirmLabel: 'Delete', destructive: true }
+    );
 }
 
 // Logout function
