@@ -20,7 +20,7 @@ namespace ProjectName.Models
 		[Column("rating")]
 		public int rating { get; set; }
 		[Column("comment")]
-		public int comment { get; set; }
+		public string comment { get; set; }
 		[Column("created_at")]
 		public DateTime created_at { get; set; }
 	}

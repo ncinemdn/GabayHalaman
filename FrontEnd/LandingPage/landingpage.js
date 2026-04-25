@@ -479,7 +479,8 @@ function initializeReviewModals() {
 
         const reviewDate = document.createElement('p');
         reviewDate.className = 'review-item-date';
-        reviewDate.textContent = 'Posted on ' + new Date().toLocaleDateString();
+        const postedDate = reviewData.createdAt ? new Date(reviewData.createdAt) : new Date();
+        reviewDate.textContent = 'Posted on ' + postedDate.toLocaleDateString();
 
         reviewHeader.appendChild(reviewName);
         reviewHeader.appendChild(reviewStarsText);
@@ -488,6 +489,113 @@ function initializeReviewModals() {
         reviewItem.appendChild(reviewDate);
 
         reviewsList.prepend(reviewItem);
+        updateReviewsNoteVisibility();
+    }
+
+    function getDefaultReviewPlantId() {
+        const firstPlant = Array.isArray(allPlantsPool) && allPlantsPool.length ? allPlantsPool[0] : null;
+        const plantId = Number(firstPlant?.id || 0);
+        return Number.isFinite(plantId) && plantId > 0 ? plantId : null;
+    }
+
+    async function resolveReviewClientId(name, email) {
+        if (typeof clientsAPI === 'undefined') {
+            return null;
+        }
+
+        const normalizedName = String(name || '').trim();
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+
+        try {
+            const clients = await clientsAPI.getAll();
+            if (Array.isArray(clients)) {
+                const existingClient = clients.find(function(client) {
+                    const clientName = String(client.full_name || '').trim();
+                    const clientEmail = String(client.email || '').trim().toLowerCase();
+
+                    if (normalizedEmail && clientEmail === normalizedEmail) {
+                        return true;
+                    }
+
+                    return normalizedName && clientName === normalizedName;
+                });
+
+                if (existingClient && Number(existingClient.client_id) > 0) {
+                    return Number(existingClient.client_id);
+                }
+            }
+
+            const fallbackEmail = normalizedEmail || ('review-' + Date.now() + '@gabayhalaman.local');
+            await clientsAPI.create({
+                full_name: normalizedName,
+                email: fallbackEmail,
+                contact_number: 0,
+                created_at: new Date().toISOString()
+            });
+
+            const refreshedClients = await clientsAPI.getAll();
+            if (Array.isArray(refreshedClients)) {
+                const createdClient = refreshedClients.find(function(client) {
+                    const clientName = String(client.full_name || '').trim();
+                    const clientEmail = String(client.email || '').trim().toLowerCase();
+                    return clientName === normalizedName && clientEmail === fallbackEmail;
+                });
+
+                if (createdClient && Number(createdClient.client_id) > 0) {
+                    return Number(createdClient.client_id);
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to resolve client for review:', error);
+        }
+
+        return null;
+    }
+
+    async function loadReviewsFromBackend() {
+        if (typeof reviewsAPI === 'undefined') {
+            updateReviewsNoteVisibility();
+            return;
+        }
+
+        try {
+            const [reviews, clients] = await Promise.all([
+                reviewsAPI.getAll(),
+                typeof clientsAPI !== 'undefined' ? clientsAPI.getAll() : Promise.resolve([])
+            ]);
+
+            const clientMap = {};
+            if (Array.isArray(clients)) {
+                clients.forEach(function(client) {
+                    const id = Number(client.client_id);
+                    if (Number.isFinite(id) && id > 0) {
+                        clientMap[id] = String(client.full_name || '').trim() || 'Customer';
+                    }
+                });
+            }
+
+            reviewsList.innerHTML = '';
+
+            if (Array.isArray(reviews)) {
+                const sorted = [...reviews].sort(function(a, b) {
+                    const aTime = new Date(a.created_at || 0).getTime();
+                    const bTime = new Date(b.created_at || 0).getTime();
+                    return bTime - aTime;
+                });
+
+                sorted.forEach(function(review) {
+                    addReviewToList({
+                        name: clientMap[Number(review.client_id)] || 'Customer',
+                        comment: String(review.comment ?? '').trim() || 'No comment provided.',
+                        rating: Number(review.rating || 5),
+                        createdAt: review.created_at
+                    });
+                });
+            }
+        } catch (error) {
+            console.warn('Unable to fetch reviews from database:', error);
+        }
+
         updateReviewsNoteVisibility();
     }
 
@@ -522,24 +630,64 @@ function initializeReviewModals() {
         });
     });
 
-    reviewForm.addEventListener('submit', function(event) {
+    reviewForm.addEventListener('submit', async function(event) {
         event.preventDefault();
 
         const nameInput = document.querySelector('#reviewName');
         const commentInput = document.querySelector('#reviewComment');
         const ratingValue = Number(reviewRatingInput.value || 0);
         const name = (nameInput.value || '').trim();
+        const email = ((document.querySelector('#reviewEmail')?.value) || '').trim();
         const comment = (commentInput.value || '').trim();
+        const resolvedRating = ratingValue > 0 ? ratingValue : 5;
 
         if (!name || !comment) {
             return;
         }
 
-        addReviewToList({
-            name: name,
-            comment: comment,
-            rating: ratingValue > 0 ? ratingValue : 5
-        });
+        const plantId = getDefaultReviewPlantId();
+        if (!plantId) {
+            alert('Unable to submit review right now. Please try again later.');
+            return;
+        }
+
+        const clientId = await resolveReviewClientId(name, email);
+        if (!clientId) {
+            alert('Unable to submit review right now. Please try again later.');
+            return;
+        }
+
+        if (typeof reviewsAPI === 'undefined') {
+            alert('Review service is unavailable right now.');
+            return;
+        }
+
+        const submitBtn = reviewForm.querySelector('.review-submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+        }
+
+        try {
+            await reviewsAPI.create({
+                plant_id: Number(plantId),
+                client_id: Number(clientId),
+                rating: Number(resolvedRating),
+                comment: String(comment),
+                created_at: new Date().toISOString()
+            });
+
+            await loadReviewsFromBackend();
+        } catch (error) {
+            console.warn('Failed to save review:', error);
+            alert('Unable to submit your review right now. Please try again later.');
+            return;
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send a review';
+            }
+        }
 
         closeModal(reviewModal);
         openModal(reviewSuccessModal);
@@ -547,7 +695,7 @@ function initializeReviewModals() {
         setStarRating(0);
     });
 
-    updateReviewsNoteVisibility();
+    loadReviewsFromBackend();
 }
 
 function initializeFooter() {
