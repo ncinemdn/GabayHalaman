@@ -1860,6 +1860,17 @@ svg {
   background: #ffeaea;
 }
 
+.details-top-btn.cancel:disabled {
+  background: #e6e8eb;
+  border-color: #d1d5db;
+  color: #8b949e;
+  cursor: not-allowed;
+}
+
+.details-top-btn.cancel:disabled:hover {
+  background: #e6e8eb;
+}
+
 .details-top-btn.invoice:disabled {
   opacity: 0.75;
   cursor: not-allowed;

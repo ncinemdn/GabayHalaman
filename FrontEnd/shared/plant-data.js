@@ -1,5 +1,6 @@
 (function initPlantData(window) {
     const STORAGE_KEY = 'gh_plant_inventory_v3';
+    const PLANT_IMAGE_MAP_KEY = 'gh_plant_images_v1';
 
     const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGZydWl0JTIwdHJlZXxlbnwxfHx8fDE3NzI5NTQxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
 
@@ -58,7 +59,131 @@
         return '../' + normalizedPath;
     }
 
+    function parsePlantImages(imageValue) {
+        const fallback = [DEFAULT_PLANT_IMAGE];
+
+        if (Array.isArray(imageValue)) {
+            const cleaned = imageValue
+                .map((item) => String(item || '').trim())
+                .filter(Boolean);
+            return cleaned.length ? cleaned : fallback;
+        }
+
+        const raw = String(imageValue || '').trim();
+        if (!raw) {
+            return fallback;
+        }
+
+        if (raw.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    const cleaned = parsed
+                        .map((item) => String(item || '').trim())
+                        .filter(Boolean);
+                    if (cleaned.length) {
+                        return cleaned;
+                    }
+                }
+            } catch (error) {
+                // Ignore parse error and continue with plain-string parsing.
+            }
+        }
+
+        if (raw.includes('||')) {
+            const splitByPipes = raw
+                .split('||')
+                .map((item) => String(item || '').trim())
+                .filter(Boolean);
+            if (splitByPipes.length) {
+                return splitByPipes;
+            }
+        }
+
+        if (raw.includes(',') && !raw.startsWith('data:')) {
+            const splitByComma = raw
+                .split(',')
+                .map((item) => String(item || '').trim())
+                .filter(Boolean);
+            if (splitByComma.length > 1) {
+                return splitByComma;
+            }
+        }
+
+        return [raw];
+    }
+
+    function getPrimaryPlantImage(imageValue) {
+        const images = parsePlantImages(imageValue);
+        return images[0] || DEFAULT_PLANT_IMAGE;
+    }
+
+    function getStoredPlantImageMap() {
+        const raw = window.localStorage.getItem(PLANT_IMAGE_MAP_KEY);
+        if (!raw) {
+            return {};
+        }
+
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                return parsed;
+            }
+        } catch (error) {
+            // Ignore invalid payload and reset to empty map.
+        }
+
+        return {};
+    }
+
+    function saveStoredPlantImageMap(imageMap) {
+        window.localStorage.setItem(PLANT_IMAGE_MAP_KEY, JSON.stringify(imageMap || {}));
+    }
+
+    function savePlantImagesForPlant(plantId, images) {
+        const safeId = String(plantId || '').trim();
+        if (!safeId) {
+            return;
+        }
+
+        const safeImages = parsePlantImages(images).slice(0, 4);
+        const imageMap = getStoredPlantImageMap();
+        imageMap[safeId] = safeImages;
+        saveStoredPlantImageMap(imageMap);
+    }
+
+    function removePlantImagesForPlant(plantId) {
+        const safeId = String(plantId || '').trim();
+        if (!safeId) {
+            return;
+        }
+
+        const imageMap = getStoredPlantImageMap();
+        if (Object.prototype.hasOwnProperty.call(imageMap, safeId)) {
+            delete imageMap[safeId];
+            saveStoredPlantImageMap(imageMap);
+        }
+    }
+
+    function resolvePlantImagesById(plantId, imageValue) {
+        const safeId = String(plantId || '').trim();
+        if (safeId) {
+            const imageMap = getStoredPlantImageMap();
+            const mapped = imageMap[safeId];
+            if (Array.isArray(mapped) && mapped.length) {
+                return parsePlantImages(mapped).slice(0, 4);
+            }
+        }
+
+        return parsePlantImages(imageValue).slice(0, 4);
+    }
+
     function getPlantImage(category, name, fallbackImage) {
+        const explicitImage = getPrimaryPlantImage(fallbackImage);
+        if (explicitImage && explicitImage !== DEFAULT_PLANT_IMAGE) {
+            return explicitImage;
+        }
+
         const key = `${String(category || '').trim().toLowerCase()}|${String(name || '').trim().toLowerCase()}`;
         const localPath = LOCAL_PLANT_IMAGES[key];
 
@@ -70,6 +195,11 @@
     }
 
     function getPlantGallery(category, name, fallbackImage) {
+        const explicitImages = parsePlantImages(fallbackImage).slice(0, 4);
+        if (explicitImages.length && explicitImages[0] !== DEFAULT_PLANT_IMAGE) {
+            return explicitImages;
+        }
+
         const key = `${String(category || '').trim().toLowerCase()}|${String(name || '').trim().toLowerCase()}`;
         const localPath = LOCAL_PLANT_IMAGES[key];
 
@@ -315,6 +445,11 @@
             isInStock,
             getStockLabel,
             getPlantGallery,
+            parsePlantImages,
+            getPrimaryPlantImage,
+            resolvePlantImagesById,
+            savePlantImagesForPlant,
+            removePlantImagesForPlant,
             savePlantInventory,
             MASTER_PLANTS_BY_CATEGORY
         };

@@ -44,12 +44,15 @@ const PLANT_API = {
             return plants.map(p => {
                 const sizeData = plantSizeMap[p.plant_id] || { price: 0, stock_quantity: 0 };
                 const categoryName = categoryMap[p.category_id] || 'General';
+                const parsedImages = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
+                    ? window.GHPlantData.resolvePlantImagesById(p.plant_id, p.image_path || p.image || DEFAULT_PLANT_IMAGE)
+                    : [p.image_path || p.image || DEFAULT_PLANT_IMAGE];
                 return {
                     id: p.plant_id,
                     name: p.plant_name,
                     price: sizeData.price || 0,
                     category: categoryName,
-                    image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
+                    image: parsedImages[0] || DEFAULT_PLANT_IMAGE,
                     stock: sizeData.stock_quantity || 0
                 };
             });

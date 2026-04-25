@@ -3,9 +3,12 @@ let plants = [];
 let categories = [];
 let categoryMap = {};
 let categoryNameToId = {};
+const MAX_PLANT_IMAGES = 4;
+const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400';
+const SAFE_DB_IMAGE_PATH_LENGTH = 220;
 
 let editingPlantId = null;
-let currentImagePreview = null;
+let currentImagePreviews = [];
 let customCategories = new Set();
 
 // DOM Elements
@@ -72,8 +75,7 @@ function renderSizeOptions(plant) {
 // Modal elements
 const modalTitle = document.getElementById('modalTitle');
 const imageInput = document.getElementById('imageInput');
-const imagePreview = document.getElementById('imagePreview');
-const previewImg = document.getElementById('previewImg');
+const imagePreviewGrid = document.getElementById('imagePreviewGrid');
 const uploadLabel = document.getElementById('uploadLabel');
 const removeImageBtn = document.getElementById('removeImageBtn');
 const plantName = document.getElementById('plantName');
@@ -101,6 +103,129 @@ const categoriesList = document.getElementById('categoriesList');
 let pendingDeleteId = null;
 let actionLoadingTimer = null;
 let successToastTimer = null;
+
+function parsePlantImages(imageValue) {
+    if (window.GHPlantData && typeof window.GHPlantData.parsePlantImages === 'function') {
+        return window.GHPlantData.parsePlantImages(imageValue).slice(0, MAX_PLANT_IMAGES);
+    }
+
+    if (Array.isArray(imageValue)) {
+        return imageValue.map(item => String(item || '').trim()).filter(Boolean).slice(0, MAX_PLANT_IMAGES);
+    }
+
+    const raw = String(imageValue || '').trim();
+    if (!raw) {
+        return [];
+    }
+
+    if (raw.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                return parsed.map(item => String(item || '').trim()).filter(Boolean).slice(0, MAX_PLANT_IMAGES);
+            }
+        } catch (error) {
+            // Ignore and continue fallback parsing.
+        }
+    }
+
+    return [raw];
+}
+
+function serializePlantImages(images) {
+    const safeImages = (Array.isArray(images) ? images : [])
+        .map(item => String(item || '').trim())
+        .filter(Boolean)
+        .slice(0, MAX_PLANT_IMAGES);
+
+    return JSON.stringify(safeImages);
+}
+
+function getPrimaryImage(images) {
+    const safeImages = Array.isArray(images) ? images : [];
+    return safeImages[0] || DEFAULT_PLANT_IMAGE;
+}
+
+function isSafeDbImagePath(value) {
+    const imagePath = String(value || '').trim();
+    if (!imagePath) {
+        return false;
+    }
+
+    if (imagePath.startsWith('data:')) {
+        return false;
+    }
+
+    return imagePath.length <= SAFE_DB_IMAGE_PATH_LENGTH;
+}
+
+function buildSafeDbImagePath(images, fallbackImage) {
+    const safeImages = Array.isArray(images) ? images : [];
+    const firstSafeImage = safeImages.find((img) => isSafeDbImagePath(img));
+    if (firstSafeImage) {
+        return firstSafeImage;
+    }
+
+    if (isSafeDbImagePath(fallbackImage)) {
+        return String(fallbackImage || '').trim();
+    }
+
+    return DEFAULT_PLANT_IMAGE;
+}
+
+function renderImagePreviews() {
+    if (!imagePreviewGrid || !uploadLabel || !removeImageBtn) {
+        return;
+    }
+
+    imagePreviewGrid.innerHTML = '';
+
+    if (!currentImagePreviews.length) {
+        imagePreviewGrid.classList.add('hidden');
+        removeImageBtn.classList.add('hidden');
+    } else {
+        imagePreviewGrid.classList.remove('hidden');
+        removeImageBtn.classList.remove('hidden');
+    }
+
+    currentImagePreviews.forEach((imageSrc, index) => {
+        const tile = document.createElement('div');
+        tile.className = 'image-preview-tile';
+
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        img.alt = `Plant preview ${index + 1}`;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-image-item-btn';
+        removeBtn.setAttribute('data-index', String(index));
+        removeBtn.setAttribute('aria-label', `Remove image ${index + 1}`);
+        removeBtn.textContent = 'x';
+
+        tile.appendChild(img);
+        tile.appendChild(removeBtn);
+        imagePreviewGrid.appendChild(tile);
+    });
+
+    uploadLabel.classList.toggle('hidden', currentImagePreviews.length >= MAX_PLANT_IMAGES);
+}
+
+function removeImageAt(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= currentImagePreviews.length) {
+        return;
+    }
+
+    currentImagePreviews.splice(index, 1);
+    imageInput.value = '';
+    renderImagePreviews();
+}
+
+function removeAllImages() {
+    currentImagePreviews = [];
+    imageInput.value = '';
+    renderImagePreviews();
+}
 
 // Logout function
 function logout() {
@@ -182,14 +307,20 @@ async function loadPlantInventory() {
             return map;
         }, {});
 
-        plants = (Array.isArray(allPlants) ? allPlants : []).map(plant => ({
-            id: String(plant.plant_id),
-            name: plant.plant_name || '',
-            category: getCategoryName(plant.category_id),
-            description: plant.description || '',
-            image: plant.image_path || '',
-            sizes: sizesByPlant[plant.plant_id] || {}
-        })).map(normalizePlantData);
+        plants = (Array.isArray(allPlants) ? allPlants : []).map((plant) => {
+            const imageList = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
+                ? window.GHPlantData.resolvePlantImagesById(plant.plant_id, plant.image_path || plant.image || '')
+                : parsePlantImages(plant.image_path || plant.image || '');
+            return {
+                id: String(plant.plant_id),
+                name: plant.plant_name || '',
+                category: getCategoryName(plant.category_id),
+                description: plant.description || '',
+                image: getPrimaryImage(imageList),
+                images: imageList,
+                sizes: sizesByPlant[plant.plant_id] || {}
+            };
+        }).map(normalizePlantData);
     } catch (error) {
         console.error('Failed to load plant inventory:', error);
         plants = [];
@@ -221,7 +352,24 @@ function attachEventListeners() {
 
     // Image upload
     imageInput.addEventListener('change', handleImageUpload);
-    removeImageBtn.addEventListener('click', removeImage);
+    removeImageBtn.addEventListener('click', removeAllImages);
+
+    if (imagePreviewGrid) {
+        imagePreviewGrid.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const removeBtn = target.closest('.remove-image-item-btn');
+            if (!removeBtn) {
+                return;
+            }
+
+            const index = Number(removeBtn.getAttribute('data-index'));
+            removeImageAt(index);
+        });
+    }
 
     // Search and filter
     searchInput.addEventListener('input', filterPlants);
@@ -443,12 +591,8 @@ function editPlant(id) {
     plantStock.value = sizeData.stock;
     plantDescription.value = plant.description || '';
     
-    if (plant.image) {
-        currentImagePreview = plant.image;
-        previewImg.src = plant.image;
-        imagePreview.classList.remove('hidden');
-        uploadLabel.classList.add('hidden');
-    }
+    currentImagePreviews = parsePlantImages(plant.images || plant.image || '');
+    renderImagePreviews();
 
     addPlantModal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -465,8 +609,9 @@ function deletePlant(id) {
 // Confirm delete
 async function confirmDelete() {
     if (pendingDeleteId) {
+        const deletedPlantId = pendingDeleteId;
         try {
-            const deleted = await plantsAPI.delete(Number(pendingDeleteId));
+            const deleted = await plantsAPI.delete(Number(deletedPlantId));
             if (!deleted) {
                 showErrorMessage('Failed to delete plant from database.');
                 return;
@@ -477,8 +622,11 @@ async function confirmDelete() {
             return;
         }
         
-        pendingDeleteId = null;
         closeConfirmationModal();
+
+        if (window.GHPlantData && typeof window.GHPlantData.removePlantImagesForPlant === 'function') {
+            window.GHPlantData.removePlantImagesForPlant(deletedPlantId);
+        }
         
         // Reload from DB to ensure sync
         await loadPlantInventory();
@@ -615,11 +763,14 @@ async function savePlant() {
     };
 
     const isEditing = Boolean(editingPlantId);
+    const selectedImages = currentImagePreviews.length ? currentImagePreviews.slice(0, MAX_PLANT_IMAGES) : [];
 
     if (isEditing) {
         const index = plants.findIndex(p => p.id === editingPlantId);
         if (index !== -1) {
             const existing = plants[index];
+            const existingImages = parsePlantImages(existing.images || existing.image || DEFAULT_PLANT_IMAGE);
+            const finalImages = selectedImages.length ? selectedImages : existingImages;
             const updatedSizes = { ...existing.sizes };
             updatedSizes[selectedSize] = { ...updatedSizes[selectedSize], ...newSizeData };
             const hasAnyStock = Object.values(updatedSizes).some(size => Number(size.stock) > 0 && Boolean(size.available));
@@ -635,7 +786,7 @@ async function savePlant() {
                 plant_name: name,
                 category_id: categoryId,
                 description,
-                image_path: currentImagePreview || existing.image || ''
+                image_path: buildSafeDbImagePath(finalImages, existing.image || DEFAULT_PLANT_IMAGE)
             };
 
             let plantUpdated = false;
@@ -648,6 +799,10 @@ async function savePlant() {
             if (!plantUpdated) {
                 showErrorMessage('Failed to save changes to database.');
                 return;
+            }
+
+            if (window.GHPlantData && typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
+                window.GHPlantData.savePlantImagesForPlant(editingPlantId, finalImages);
             }
 
             const sizeEntry = existing.sizes?.[selectedSize];
@@ -681,7 +836,8 @@ async function savePlant() {
                 name,
                 category,
                 description,
-                image: currentImagePreview || existing.image || '',
+                image: getPrimaryImage(finalImages),
+                images: finalImages,
                 selectedSize,
                 sizes: updatedSizes,
                 available: hasAnyStock
@@ -695,11 +851,13 @@ async function savePlant() {
             return;
         }
 
+        const finalImages = selectedImages.length ? selectedImages : [DEFAULT_PLANT_IMAGE];
+
         const plantPayload = {
             plant_name: name,
             category_id: categoryId,
             description,
-            image_path: currentImagePreview || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'
+            image_path: buildSafeDbImagePath(finalImages, DEFAULT_PLANT_IMAGE)
         };
 
         let newPlantId = null;
@@ -714,6 +872,10 @@ async function savePlant() {
             if (!newPlantId) {
                 showErrorMessage('Failed to create plant in database.');
                 return;
+            }
+
+            if (window.GHPlantData && typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
+                window.GHPlantData.savePlantImagesForPlant(newPlantId, finalImages);
             }
         } catch (error) {
             console.error('Failed to create plant:', error);
@@ -748,7 +910,8 @@ async function savePlant() {
             name,
             category,
             description,
-            image: currentImagePreview || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400',
+            image: getPrimaryImage(finalImages),
+            images: finalImages,
             selectedSize,
             sizes,
             available: stock > 0
@@ -879,32 +1042,48 @@ function resetForm() {
     plantStock.value = '';
     plantDescription.value = '';
     imageInput.value = '';
-    currentImagePreview = null;
-    imagePreview.classList.add('hidden');
-    uploadLabel.classList.remove('hidden');
+    currentImagePreviews = [];
+    renderImagePreviews();
 }
 
 // Handle image upload
 function handleImageUpload(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            currentImagePreview = reader.result;
-            previewImg.src = reader.result;
-            imagePreview.classList.remove('hidden');
-            uploadLabel.classList.add('hidden');
-        };
-        reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (!files.length) {
+        return;
     }
-}
 
-// Remove image
-function removeImage() {
-    currentImagePreview = null;
-    imageInput.value = '';
-    imagePreview.classList.add('hidden');
-    uploadLabel.classList.remove('hidden');
+    const remainingSlots = MAX_PLANT_IMAGES - currentImagePreviews.length;
+    if (remainingSlots <= 0) {
+        imageInput.value = '';
+        showErrorMessage('You can upload up to 4 images only.');
+        return;
+    }
+
+    const selectedFiles = files.slice(0, remainingSlots);
+    const readers = selectedFiles.map((file) => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result || ''));
+        reader.readAsDataURL(file);
+    }));
+
+    Promise.all(readers)
+        .then((results) => {
+            const validImages = results.filter(Boolean);
+            currentImagePreviews = [...currentImagePreviews, ...validImages].slice(0, MAX_PLANT_IMAGES);
+            renderImagePreviews();
+
+            if (files.length > selectedFiles.length) {
+                showErrorMessage('Only the first 4 images were added.');
+            }
+        })
+        .catch((error) => {
+            console.error('Failed to read selected image files:', error);
+            showErrorMessage('Failed to read selected image files. Please try again.');
+        })
+        .finally(() => {
+            imageInput.value = '';
+        });
 }
 
 // Price formatting

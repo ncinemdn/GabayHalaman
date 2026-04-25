@@ -995,37 +995,62 @@ textarea,
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
+    gap: 0.6rem;
     background: #f8fbf5;
     position: relative;
     margin-bottom: 0.9rem;
 }
 
-.image-preview {
-    position: relative;
+.image-preview-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 12px;
 }
 
-.image-preview img {
-    border-radius: 14px;
-    width: 140px;
-    height: 140px;
+.image-preview-tile {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #d2dccb;
+    background: #ffffff;
+}
+
+.image-preview-tile img {
+    width: 100%;
+    height: 62px;
     object-fit: cover;
 }
 
 .remove-image-btn {
-    position: absolute;
-    right: -8px;
-    top: -8px;
-    width: 24px;
-    height: 24px;
-    background: transparent;
-    border: none;
+    background: #fff3f3;
+    border: 1px solid #e7b6b6;
+    color: #992525;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
-    padding: 0;
 }
 
-.remove-image-btn svg {
-    width: 100%;
-    height: 100%;
+.remove-image-item-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(23, 33, 20, 0.78);
+    color: #ffffff;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .upload-label {

@@ -1,19 +1,20 @@
 let deliveries = [];
 let activeSearchQuery = '';
 let activeStatusFilter = 'all';
+const DELIVERY_STORAGE_KEY = 'gh_delivery_schedule_v1';
 
 const trackingStatusConfig = {
-    'pending': 'Pending',
+    'placed_order': 'Placed Order',
     'confirmed': 'Confirmed',
-    'out_for_delivery': 'Out for Delivery',
+    'shipped': 'Shipped',
     'delivered': 'Delivered'
 };
 
 function normalizeTrackingStatus(status) {
     const value = String(status || '').toLowerCase();
 
-    if (!value || value === 'pending') {
-        return 'pending';
+    if (!value || value === 'placed order' || value === 'placed_order' || value === 'placed-order' || value === 'pending') {
+        return 'placed_order';
     }
 
     if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
@@ -24,20 +25,20 @@ function normalizeTrackingStatus(status) {
         return 'confirmed';
     }
 
-    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
-        return 'out_for_delivery';
+    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping' || value === 'shipped') {
+        return 'shipped';
     }
 
     if (value === 'delivered') {
         return 'delivered';
     }
 
-    return 'pending';
+    return 'placed_order';
 }
 
 function mapTrackingToDeliveryStatus(trackingStatus) {
     const value = normalizeTrackingStatus(trackingStatus);
-    if (value === 'out_for_delivery') {
+    if (value === 'shipped') {
         return 'out-for-delivery';
     }
 
@@ -51,11 +52,7 @@ function mapTrackingToDeliveryStatus(trackingStatus) {
 function getTrackingFilterStatus(delivery) {
     const value = normalizeTrackingStatus(delivery && delivery.trackingStatus);
 
-    if (value === 'out_for_delivery') {
-        return 'out-for-delivery';
-    }
-
-    return value;
+    return value.replace(/_/g, '-');
 }
 
 // Status configurations
@@ -104,10 +101,16 @@ function normalizeOrderStatus(status) {
     if (value === 'delivered' || value === 'completed' || value === 'reserved') {
         return 'delivered';
     }
-    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
-        return 'out_for_delivery';
+    if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping' || value === 'shipped') {
+        return 'shipped';
     }
-    return 'pending';
+    if (value === 'confirmed') {
+        return 'confirmed';
+    }
+    if (value === 'placed order' || value === 'placed_order' || value === 'pending') {
+        return 'placed_order';
+    }
+    return 'placed_order';
 }
 
 function getDeliveryTypeLabel(requestType) {
@@ -389,7 +392,7 @@ function formatId(id) {
 }
 
 function createTrackingStatusDropdown(delivery) {
-    const statuses = ['pending', 'confirmed', 'out_for_delivery', 'delivered'];
+    const statuses = ['placed_order', 'confirmed', 'shipped', 'delivered'];
     const options = statuses.map(status => `
         <option value="${status}" ${delivery.trackingStatus === status ? 'selected' : ''}>
             ${trackingStatusConfig[status]}
@@ -544,7 +547,101 @@ function setupStatusDropdowns() {
     });
 }
 
-function handleTrackingStatusChange(event) {
+function getDeliveryScheduleSnapshot() {
+    const raw = localStorage.getItem(DELIVERY_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+}
+
+function upsertDeliveryScheduleEntry(delivery) {
+    if (!delivery || !delivery.orderId) {
+        return;
+    }
+
+    const schedule = getDeliveryScheduleSnapshot();
+    const orderId = String(delivery.orderId);
+    const nextEntry = {
+        orderId,
+        trackingStatus: delivery.trackingStatus,
+        status: delivery.status,
+        updatedAt: new Date().toISOString()
+    };
+
+    const index = schedule.findIndex(item => String(item.orderId || '') === orderId);
+    if (index >= 0) {
+        schedule[index] = {
+            ...schedule[index],
+            ...nextEntry
+        };
+    } else {
+        schedule.push(nextEntry);
+    }
+
+    localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(schedule));
+}
+
+function syncOrderTrackingStatus(orderId, trackingStatus) {
+    if (!orderId) {
+        return;
+    }
+
+    const normalizedStatus = normalizeTrackingStatus(trackingStatus);
+    const updateTracking = (items) => {
+        if (!Array.isArray(items)) {
+            return items;
+        }
+
+        return items.map(item => {
+            const itemOrderId = String(item.orderId || item.id || '');
+            if (itemOrderId !== String(orderId)) {
+                return item;
+            }
+
+            return {
+                ...item,
+                trackingStatus: normalizedStatus
+            };
+        });
+    };
+
+    const purchaseOrders = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    localStorage.setItem('purchaseOrders', JSON.stringify(updateTracking(purchaseOrders) || []));
+
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    localStorage.setItem('reservations', JSON.stringify(updateTracking(reservations) || []));
+}
+
+async function persistDeliveryStatusUpdate(delivery) {
+    if (!delivery) {
+        return;
+    }
+
+    upsertDeliveryScheduleEntry(delivery);
+    syncOrderTrackingStatus(delivery.orderId, delivery.trackingStatus);
+
+    const requestId = Number(delivery.orderId || delivery.id);
+    if (!Number.isFinite(requestId) || typeof requestsAPI === 'undefined') {
+        return;
+    }
+
+    const backendStatusMap = {
+        placed_order: 'pending',
+        confirmed: 'confirmed',
+        shipped: 'out for delivery',
+        delivered: 'delivered'
+    };
+
+    try {
+        await requestsAPI.updateStatus(requestId, {
+            request_status: backendStatusMap[delivery.trackingStatus] || 'pending',
+            last_updated: new Date().toISOString()
+        });
+    } catch (error) {
+        console.warn('Unable to persist delivery tracking status to backend:', error);
+    }
+}
+
+async function handleTrackingStatusChange(event) {
     const deliveryId = event.currentTarget.getAttribute('data-id');
     const newTrackingStatus = event.currentTarget.value;
 
@@ -552,6 +649,7 @@ function handleTrackingStatusChange(event) {
     if (delivery) {
         delivery.trackingStatus = normalizeTrackingStatus(newTrackingStatus);
         delivery.status = mapTrackingToDeliveryStatus(delivery.trackingStatus);
+        await persistDeliveryStatusUpdate(delivery);
         updateStats();
         renderDeliveries();
     }

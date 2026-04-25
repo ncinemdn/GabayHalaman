@@ -284,6 +284,8 @@ function loadOrderDetails() {
     const purchases = getPurchaseOrders();
   const latestOrder = getSelectedOrLatestOrder(purchases);
 
+    updateCancelButtonState(latestOrder);
+
     if (!latestOrder || !latestOrder.items || latestOrder.items.length === 0) {
         const orderRefElement = document.getElementById('detailsOrderRef');
         if (orderRefElement) {
@@ -422,6 +424,11 @@ function confirmCancelOrder() {
     if (normalized === 'cancel') {
         showCancelNotification('This order is already cancelled.');
         return;
+    }
+
+    if (isCancelDisabledForOrder(order)) {
+      showCancelNotification('Cancel is unavailable for this order at its current delivery status.');
+      return;
     }
 
     showConfirmationModal(
@@ -674,19 +681,27 @@ function getDeliverySchedule() {
 function normalizeTrackingStatus(status) {
   const value = String(status || '').toLowerCase();
 
-  if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
-    return 'prepared';
+  if (!value || value === 'placed order' || value === 'placed_order' || value === 'placed-order' || value === 'pending') {
+    return 'placed_order';
   }
 
-  if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping') {
-    return 'out_for_delivery';
+  if (value === 'prepared' || value === 'prepared by seller' || value === 'seller prepared') {
+    return 'confirmed';
+  }
+
+  if (value === 'confirmed' || value === 'order confirmed' || value === 'order_confirmed') {
+    return 'confirmed';
+  }
+
+  if (value === 'out for delivery' || value === 'out_for_delivery' || value === 'shipping' || value === 'shipped') {
+    return 'shipped';
   }
 
   if (value === 'delivered') {
     return 'delivered';
   }
 
-  return 'confirmed';
+  return 'placed_order';
 }
 
 function normalizeOrderStatus(status) {
@@ -747,7 +762,7 @@ function formatPaymentStatusLabel(status) {
 
 function getResolvedTrackingStatus(order) {
   if (!order) {
-    return 'confirmed';
+    return 'placed_order';
   }
 
   const schedule = getDeliverySchedule();
@@ -757,33 +772,80 @@ function getResolvedTrackingStatus(order) {
     return normalizeTrackingStatus(matchedDelivery.trackingStatus);
   }
 
-  return normalizeTrackingStatus(order.trackingStatus);
+  const orderTrackingStatus = normalizeTrackingStatus(order.trackingStatus);
+  if (orderTrackingStatus !== 'placed_order' || order.trackingStatus) {
+    return orderTrackingStatus;
+  }
+
+  if (normalizeOrderStatus(order.orderStatus) === 'delivered') {
+    return 'delivered';
+  }
+
+  return 'placed_order';
+}
+
+function isCancelDisabledForOrder(order) {
+  if (!order) {
+    return true;
+  }
+
+  if (normalizeOrderStatus(order.orderStatus) === 'cancel') {
+    return true;
+  }
+
+  const trackingStatus = getResolvedTrackingStatus(order);
+  return trackingStatus === 'confirmed' || trackingStatus === 'shipped' || trackingStatus === 'delivered';
+}
+
+function updateCancelButtonState(order) {
+  const cancelButton = document.querySelector('.details-top-btn.cancel');
+  if (!cancelButton) {
+    return;
+  }
+
+  const isDisabled = isCancelDisabledForOrder(order);
+  cancelButton.disabled = isDisabled;
+  cancelButton.setAttribute('aria-disabled', String(isDisabled));
+
+  if (!order) {
+    cancelButton.title = 'No order selected.';
+    return;
+  }
+
+  if (normalizeOrderStatus(order.orderStatus) === 'cancel') {
+    cancelButton.title = 'This order is already cancelled.';
+    return;
+  }
+
+  cancelButton.title = isDisabled
+    ? 'Cancel is unavailable when status is Confirmed, Shipped, or Delivered.'
+    : 'Cancel this order';
 }
 
 function formatTrackingLabel(status) {
-  if (status === 'prepared') {
-    return 'Prepared by Seller';
+  if (status === 'confirmed') {
+    return 'Confirmed';
   }
 
-  if (status === 'out_for_delivery') {
-    return 'Out for Delivery';
+  if (status === 'shipped') {
+    return 'Shipped';
   }
 
   if (status === 'delivered') {
     return 'Delivered';
   }
 
-  return 'Confirmed';
+  return 'Placed Order';
 }
 
 function getTrackingPayload(order) {
-  const states = ['Placed Order', 'Order Confirmed', 'Shipped', 'Delivered'];
+  const states = ['Placed Order', 'Confirmed', 'Shipped', 'Delivered'];
   const normalized = getResolvedTrackingStatus(order);
 
   const currentIndex = {
+    placed_order: 0,
     confirmed: 1,
-    prepared: 2,
-    out_for_delivery: 2,
+    shipped: 2,
     delivered: 3
   }[normalized] ?? 0;
 
@@ -1069,6 +1131,22 @@ document.addEventListener('DOMContentLoaded', () => {
   initDetailsTabs();
   loadCurrentOrder();
   navigateTo('order-list');
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== DELIVERY_STORAGE_KEY) {
+      return;
+    }
+
+    loadCurrentOrder();
+    const activeDetailsPage = document.getElementById('order-details-page');
+    if (activeDetailsPage && activeDetailsPage.classList.contains('active')) {
+      loadOrderDetails();
+    }
+    const activeTrackPage = document.getElementById('track-order-page');
+    if (activeTrackPage && activeTrackPage.classList.contains('active')) {
+      loadTrackOrder(selectedOrderId);
+    }
+  });
 
   const confirmBtn = document.getElementById('cancelConfirmBtn');
   const dismissBtn = document.getElementById('cancelDismissBtn');

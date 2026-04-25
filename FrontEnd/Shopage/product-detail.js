@@ -12,6 +12,8 @@ const state = {
 let moreProducts = [];
 let refreshMoreCarousel = null;
 const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1689057009374-ce11bce5d976?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+const GALLERY_SLOT_COUNT = 4;
+const GALLERY_PLACEHOLDER_IMAGE = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"%3E%3Crect width="160" height="160" fill="%23eef1ec"/%3E%3Cpath d="M45 108h70L92 78l-16 20-11-13-20 23z" fill="%23c6d1be"/%3E%3Ccircle cx="62" cy="56" r="10" fill="%23c6d1be"/%3E%3C/svg%3E';
 
 const PLANT_API = {
     async getPlantInventory() {
@@ -58,6 +60,9 @@ const PLANT_API = {
             return plants.map(p => {
                 const sizeData = plantSizeMap[p.plant_id] || [];
                 const categoryName = categoryMap[p.category_id] || 'General';
+                const parsedImages = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
+                    ? window.GHPlantData.resolvePlantImagesById(p.plant_id, p.image_path || p.image || DEFAULT_PLANT_IMAGE)
+                    : [p.image_path || p.image || DEFAULT_PLANT_IMAGE];
                 return {
                     id: p.plant_id,
                     name: p.plant_name,
@@ -65,7 +70,8 @@ const PLANT_API = {
                     sizes: sizeData,
                     price: sizeData[0]?.price || 0,
                     category: categoryName,
-                    image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
+                    image: parsedImages[0] || DEFAULT_PLANT_IMAGE,
+                    images: parsedImages.slice(0, 4),
                     stock: sizeData[0]?.stock || 0
                 };
             });
@@ -92,7 +98,10 @@ const PLANT_API = {
     },
 
     getPlantGallery(category, name, fallback) {
-        return fallback ? [fallback] : [];
+        const parsed = (window.GHPlantData && typeof window.GHPlantData.parsePlantImages === 'function')
+            ? window.GHPlantData.parsePlantImages(fallback)
+            : [fallback].filter(Boolean);
+        return parsed.slice(0, 4);
     }
 };
 
@@ -290,6 +299,20 @@ function buildProductDetailUrl(plant) {
     return `product-detail.html?${params.toString()}`;
 }
 
+function getGalleryDisplaySlots(images) {
+    const slots = Array.isArray(images) ? images.slice(0, GALLERY_SLOT_COUNT) : [];
+
+    while (slots.length < GALLERY_SLOT_COUNT) {
+        slots.push(GALLERY_PLACEHOLDER_IMAGE);
+    }
+
+    return slots;
+}
+
+function getDisplayGalleryImages() {
+    return getGalleryDisplaySlots(state.productImages);
+}
+
 // Load plant data from URL parameters
 async function loadPlantData() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -375,21 +398,32 @@ async function loadPlantData() {
         `;
     }
     
-    state.productImages = PLANT_API
-        ? PLANT_API.getPlantGallery(foundPlant.category, foundPlant.name, foundPlant.image)
-        : [foundPlant.image];
+    const explicitImages = Array.isArray(foundPlant.images) ? foundPlant.images.filter(Boolean) : [];
+    state.productImages = explicitImages.length
+        ? explicitImages.slice(0, 4)
+        : (PLANT_API
+            ? PLANT_API.getPlantGallery(foundPlant.category, foundPlant.name, foundPlant.image)
+            : [foundPlant.image]);
 
     // Update main image and thumbnails using the real gallery
+    const galleryImages = getDisplayGalleryImages();
+
     const mainImage = document.getElementById('mainImage');
-    mainImage.src = state.productImages[0] || foundPlant.image;
+    mainImage.src = galleryImages[0] || foundPlant.image;
     mainImage.alt = foundPlant.name;
 
     const thumbnailsContainer = document.getElementById('thumbnails');
     thumbnailsContainer.innerHTML = '';
-    state.productImages.forEach((image, i) => {
+
+    const thumbnailSlots = galleryImages;
+    thumbnailSlots.forEach((image, i) => {
+        const isPlaceholder = i >= state.productImages.length;
         const thumbDiv = document.createElement('div');
-        thumbDiv.className = `thumbnail ${i === 0 ? 'active' : ''}`;
-        thumbDiv.onclick = () => selectImage(i);
+        thumbDiv.className = `thumbnail ${i === 0 && !isPlaceholder ? 'active' : ''} ${isPlaceholder ? 'placeholder' : ''}`.trim();
+
+        if (!isPlaceholder) {
+            thumbDiv.onclick = () => selectImage(i);
+        }
         
         const thumbImg = document.createElement('img');
         thumbImg.src = image;
@@ -403,9 +437,15 @@ async function loadPlantData() {
 }
 
 function selectImage(index) {
-    if (!state.productImages.length) {
+    const galleryImages = getDisplayGalleryImages();
+    if (!galleryImages.length) {
         return;
     }
+
+    if (index < 0 || index >= galleryImages.length) {
+        return;
+    }
+
     state.currentImageIndex = index;
     updateMainImage();
 }
@@ -413,9 +453,10 @@ function selectImage(index) {
 function updateMainImage() {
     const mainImage = document.getElementById('mainImage');
     const thumbnails = document.querySelectorAll('.thumbnail');
+    const galleryImages = getDisplayGalleryImages();
 
-    if (state.productImages.length > 0 && mainImage) {
-        mainImage.src = state.productImages[state.currentImageIndex];
+    if (galleryImages.length > 0 && mainImage) {
+        mainImage.src = galleryImages[state.currentImageIndex];
     }
 
     thumbnails.forEach((thumb, index) => {
@@ -433,18 +474,20 @@ function initProductImageCarousel() {
     }
     
     prevBtn.onclick = () => {
-        if (!state.productImages.length) {
+        const galleryImages = getDisplayGalleryImages();
+        if (!galleryImages.length) {
             return;
         }
-        state.currentImageIndex = (state.currentImageIndex - 1 + state.productImages.length) % state.productImages.length;
+        state.currentImageIndex = (state.currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
         updateMainImage();
     };
     
     nextBtn.onclick = () => {
-        if (!state.productImages.length) {
+        const galleryImages = getDisplayGalleryImages();
+        if (!galleryImages.length) {
             return;
         }
-        state.currentImageIndex = (state.currentImageIndex + 1) % state.productImages.length;
+        state.currentImageIndex = (state.currentImageIndex + 1) % galleryImages.length;
         updateMainImage();
     };
 }

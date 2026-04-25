@@ -41,14 +41,20 @@ const PLANT_API = {
                 });
             }
 
-            return Array.isArray(plants) ? plants.map(p => ({
-                id: p.plant_id,
-                name: p.plant_name,
-                category: categoryMap[p.category_id] || 'General',
-                price: Number((plantSizeMap[p.plant_id]?.price) || 0),
-                image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
-                stock: Number((plantSizeMap[p.plant_id]?.stock_quantity) || 0)
-            })) : [];
+            return Array.isArray(plants) ? plants.map(p => {
+                const parsedImages = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
+                    ? window.GHPlantData.resolvePlantImagesById(p.plant_id, p.image_path || p.image || DEFAULT_PLANT_IMAGE)
+                    : [p.image_path || p.image || DEFAULT_PLANT_IMAGE];
+
+                return {
+                    id: p.plant_id,
+                    name: p.plant_name,
+                    category: categoryMap[p.category_id] || 'General',
+                    price: Number((plantSizeMap[p.plant_id]?.price) || 0),
+                    image: parsedImages[0] || DEFAULT_PLANT_IMAGE,
+                    stock: Number((plantSizeMap[p.plant_id]?.stock_quantity) || 0)
+                };
+            }) : [];
         } catch (error) {
             console.error('Failed to fetch landing page inventory:', error);
             return [];
