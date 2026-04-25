@@ -208,11 +208,15 @@ async function loadBackendPlants() {
                 const price = priced.length ? Math.min(...priced.map((s) => s.price)) : 0;
                 const sizeOptions = [...new Set(plantSizes.map((s) => s.sizeName).filter(Boolean))];
 
+                const parsedImages = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
+                    ? window.GHPlantData.resolvePlantImagesById(plant.plant_id, plant.image_path || plant.image || DEFAULT_PLANT_IMAGE)
+                    : [plant.image_path || plant.image || DEFAULT_PLANT_IMAGE];
+
                 grouped[requiredCategory].push({
                     id: plant.plant_id,
                     name: plant.plant_name,
                     price,
-                    image: plant.image_path || plant.image || DEFAULT_PLANT_IMAGE,
+                    image: parsedImages[0] || DEFAULT_PLANT_IMAGE,
                     stock,
                     sizeOptions
                 });

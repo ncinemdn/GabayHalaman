@@ -67,14 +67,20 @@ async function loadBackendCatalog() {
     }
 
     const plantsList = Array.isArray(plants)
-        ? plants.map(p => ({
-            ...p,
-            plant_id: p.plant_id,
-            plant_name: p.plant_name,
-            category: categoryMap[p.category_id] || 'General',
-            image: p.image_path || p.image || DEFAULT_PLANT_IMAGE,
-            sizes: sizeMap[p.plant_id] || []
-        }))
+        ? plants.map(p => {
+            const parsedImages = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
+                ? window.GHPlantData.resolvePlantImagesById(p.plant_id, p.image_path || p.image || DEFAULT_PLANT_IMAGE)
+                : [p.image_path || p.image || DEFAULT_PLANT_IMAGE];
+
+            return {
+                ...p,
+                plant_id: p.plant_id,
+                plant_name: p.plant_name,
+                category: categoryMap[p.category_id] || 'General',
+                image: parsedImages[0] || DEFAULT_PLANT_IMAGE,
+                sizes: sizeMap[p.plant_id] || []
+            };
+        })
         : [];
 
     return plantsList;
