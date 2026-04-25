@@ -431,12 +431,25 @@ function deletePlant(id) {
 }
 
 // Confirm delete
-function confirmDelete() {
+async function confirmDelete() {
     if (pendingDeleteId) {
-        plants = plants.filter(p => p.id !== pendingDeleteId);
-        syncPlantInventory();
+        try {
+            const deleted = await plantsAPI.delete(Number(pendingDeleteId));
+            if (!deleted) {
+                showErrorMessage('Failed to delete plant from database.');
+                return;
+            }
+        } catch (error) {
+            console.error('Failed to delete plant:', error);
+            showErrorMessage('Failed to delete plant. Please try again.');
+            return;
+        }
+        
         pendingDeleteId = null;
         closeConfirmationModal();
+        
+        // Reload from DB to ensure sync
+        await loadPlantInventory();
         renderPlants();
         initializeCategories();
     }
@@ -639,11 +652,63 @@ async function savePlant() {
             });
         }
     } else {
+        // ADD NEW PLANT
+        const categoryId = categoryNameToId[category] ?? null;
+        if (!categoryId) {
+            showErrorMessage('Selected category is invalid.');
+            return;
+        }
+
+        const plantPayload = {
+            plant_name: name,
+            category_id: categoryId,
+            description,
+            image_path: currentImagePreview || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400'
+        };
+
+        let newPlantId = null;
+        try {
+            const created = await plantsAPI.create(plantPayload);
+            if (typeof created === 'number') {
+                newPlantId = created;
+            } else if (created && typeof created === 'object') {
+                newPlantId = created.plant_id || created.id || null;
+            }
+
+            if (!newPlantId) {
+                showErrorMessage('Failed to create plant in database.');
+                return;
+            }
+        } catch (error) {
+            console.error('Failed to create plant:', error);
+            showErrorMessage('Failed to create plant. Please try again.');
+            return;
+        }
+
+        // Create plant size after plant is created
+        if (newPlantId !== null) {
+            const plantSizePayload = {
+                plant_id: Number(newPlantId),
+                size_name: selectedSize,
+                price: Math.round(price),
+                stock_quantity: stock,
+                is_available: stock > 0 ? '1' : '0',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            try {
+                await plantSizesAPI.create(plantSizePayload);
+            } catch (error) {
+                console.error('Failed to create plant size:', error);
+            }
+        }
+
         const sizes = {
             [selectedSize]: newSizeData
         };
         const plantData = normalizePlantData({
-            id: Date.now().toString(),
+            id: String(newPlantId),
             name,
             category,
             description,
@@ -660,6 +725,12 @@ async function savePlant() {
 
     closeAddModal();
     initializeCategories();
+    
+    // Reload from DB to ensure sync with database
+    if (!editingPlantId) {
+        await loadPlantInventory();
+    }
+    
     renderPlants();
     
     if (!editingPlantId) {

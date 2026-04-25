@@ -30,17 +30,27 @@ namespace ProjectName.Services
 			return plantRepository.GetbyId(id);
 		}
 
-		public bool Add(Plant p)
+public int Add(Plant p)
+	{
+		p.CreatedAt = DateTime.Now;
+		p.UpdatedAt = DateTime.Now;
+
+		string query = @"
+			INSERT INTO tblPlant (category_id, plant_name, description, image_path, created_at, updated_at)
+			VALUES (@category_id, @plant_name, @description, @image_path, @CreatedAt, @UpdatedAt);
+			SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+		using (var connection = new SqlConnection("Server=.\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;"))
 		{
-			PlantRepository plantRepository = new PlantRepository();
-			return plantRepository.Add(p);
+			return connection.ExecuteScalar<int>(query, p);
+		}
 		}
 
 		public bool Delete(int id)
 		{
 			Console.WriteLine("Deleting plant ID: " + id);
 
-			using (var connection = new SqlConnection("Server=LAPTOP-21JQHQ4T\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;"))
+			using (var connection = new SqlConnection("Server=.\\SQLEXPRESS;Database=GabayHalamanDB;Trusted_Connection=True;"))
 			{
 				var childRows = connection.Execute(
 					"DELETE FROM tblPlantSize WHERE plant_id = @Id",
