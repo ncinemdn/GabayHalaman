@@ -10,6 +10,19 @@
     <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
+    <div id="logoutLoadingLine" class="logout-loading-line" aria-hidden="true"></div>
+
+    <div id="logoutConfirmModal" class="logout-confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="logoutConfirmTitle">
+        <div class="logout-confirm-card">
+            <h3 id="logoutConfirmTitle">Log Out</h3>
+            <p>Are you sure you want to log out?</p>
+            <div class="logout-confirm-actions">
+                <button id="logoutConfirmCancel" type="button" class="btn btn-secondary">Cancel</button>
+                <button id="logoutConfirmProceed" type="button" class="btn btn-primary">Log Out</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
     <!-- Sidebar -->
     <div id="sidebar" class="sidebar">

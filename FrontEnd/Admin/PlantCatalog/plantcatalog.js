@@ -85,6 +85,8 @@ const plantSize = document.getElementById('plantSize');
 const btnCancel = document.getElementById('btnCancel');
 const btnSave = document.getElementById('btnSave');
 const btnOkay = document.getElementById('btnOkay');
+const successMessageText = document.getElementById('successMessageText');
+const actionLoadingLine = document.getElementById('actionLoadingLine');
 const confirmationMessage = document.getElementById('confirmationMessage');
 const btnConfirmCancel = document.getElementById('btnConfirmCancel');
 const btnConfirmDelete = document.getElementById('btnConfirmDelete');
@@ -97,6 +99,8 @@ const categoriesList = document.getElementById('categoriesList');
 
 // Confirmation tracking
 let pendingDeleteId = null;
+let actionLoadingTimer = null;
+let successToastTimer = null;
 
 // Logout function
 function logout() {
@@ -480,6 +484,8 @@ async function confirmDelete() {
         await loadPlantInventory();
         renderPlants();
         initializeCategories();
+
+        showSuccessWithLoadingLine('Plant deleted successfully.');
     }
 }
 
@@ -608,7 +614,9 @@ async function savePlant() {
         available: stock > 0
     };
 
-    if (editingPlantId) {
+    const isEditing = Boolean(editingPlantId);
+
+    if (isEditing) {
         const index = plants.findIndex(p => p.id === editingPlantId);
         if (index !== -1) {
             const existing = plants[index];
@@ -755,14 +763,16 @@ async function savePlant() {
     initializeCategories();
     
     // Reload from DB to ensure sync with database
-    if (!editingPlantId) {
+    if (!isEditing) {
         await loadPlantInventory();
     }
     
     renderPlants();
-    
-    if (!editingPlantId) {
-        successModal.classList.add('active');
+
+    if (isEditing) {
+        showSuccessWithLoadingLine('Plant updated successfully.');
+    } else {
+        showSuccessWithLoadingLine('Plant added successfully.');
     }
 }
 
@@ -816,8 +826,48 @@ function showErrorMessage(message) {
 
 // Close success modal
 function closeSuccessModal() {
+    if (actionLoadingTimer) {
+        clearTimeout(actionLoadingTimer);
+        actionLoadingTimer = null;
+    }
+
+    if (successToastTimer) {
+        clearTimeout(successToastTimer);
+        successToastTimer = null;
+    }
+
+    if (actionLoadingLine) {
+        actionLoadingLine.classList.remove('active');
+    }
+
     successModal.classList.remove('active');
-    document.body.style.overflow = '';
+}
+
+function showSuccessWithLoadingLine(message) {
+    if (successMessageText) {
+        successMessageText.textContent = message;
+    }
+
+    closeSuccessModal();
+
+    successModal.classList.add('active');
+
+    if (actionLoadingLine) {
+        // Restart the progress animation for each new success action.
+        void actionLoadingLine.offsetWidth;
+        actionLoadingLine.classList.add('active');
+    }
+
+    actionLoadingTimer = window.setTimeout(() => {
+        if (actionLoadingLine) {
+            actionLoadingLine.classList.remove('active');
+        }
+        actionLoadingTimer = null;
+    }, 700);
+
+    successToastTimer = window.setTimeout(() => {
+        closeSuccessModal();
+    }, 2200);
 }
 
 // Reset form

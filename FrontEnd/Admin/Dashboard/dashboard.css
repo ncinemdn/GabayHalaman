@@ -28,6 +28,67 @@ body {
     display: none !important;
 }
 
+.logout-loading-line {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #2e7d32 0%, #78a240 100%);
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.45);
+    z-index: 2100;
+    transition: width 0.7s ease;
+}
+
+.logout-loading-line.active {
+    width: 100%;
+}
+
+.logout-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 24, 16, 0.45);
+    z-index: 2050;
+    padding: 20px;
+}
+
+.logout-confirm-card {
+    width: min(92vw, 420px);
+    background: #ffffff;
+    border: 1px solid var(--dashboard-border);
+    border-radius: 16px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.24);
+    padding: 22px 22px 20px;
+}
+
+.logout-confirm-card h3 {
+    margin: 0 0 10px;
+    font-size: 24px;
+    color: #1f2b21;
+}
+
+.logout-confirm-card p {
+    margin: 0;
+    font-size: 16px;
+    color: #4d5b4f;
+}
+
+.logout-confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.logout-confirm-actions .btn {
+    margin: 0;
+    padding: 12px 20px;
+    font-size: 16px;
+}
+
 
 
 

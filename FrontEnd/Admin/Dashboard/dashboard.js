@@ -293,6 +293,7 @@ const pages = {
 let currentPage = 'dashboard';
 let salesChart = null;
 let currentDashboardData = null;
+let isLogoutInProgress = false;
 
 
 
@@ -911,10 +912,44 @@ function initializeSalesChart(salesData) {
 
 // Logout function
 function logout() {
-    // Clear admin session from localStorage
-    localStorage.removeItem('admin');
-    // Redirect to signin page
-    window.location.href = '../../Admin/Auth/signin.html';
+    if (isLogoutInProgress) {
+        return;
+    }
+
+    const confirmModal = document.getElementById('logoutConfirmModal');
+    if (confirmModal) {
+        confirmModal.classList.remove('hidden');
+    }
+}
+
+function closeLogoutConfirmation() {
+    if (isLogoutInProgress) {
+        return;
+    }
+
+    const confirmModal = document.getElementById('logoutConfirmModal');
+    if (confirmModal) {
+        confirmModal.classList.add('hidden');
+    }
+}
+
+function startLogoutFlow() {
+    if (isLogoutInProgress) {
+        return;
+    }
+
+    isLogoutInProgress = true;
+    closeLogoutConfirmation();
+
+    const loadingLine = document.getElementById('logoutLoadingLine');
+    if (loadingLine) {
+        loadingLine.classList.add('active');
+    }
+
+    window.setTimeout(() => {
+        localStorage.removeItem('admin');
+        window.location.href = '../../Admin/Auth/signin.html';
+    }, 700);
 }
 
 
@@ -961,6 +996,32 @@ function loadPage(pageName) {
 
 // Handle navigation clicks
 document.addEventListener('DOMContentLoaded', function() {
+    const logoutConfirmModal = document.getElementById('logoutConfirmModal');
+    const logoutConfirmCancel = document.getElementById('logoutConfirmCancel');
+    const logoutConfirmProceed = document.getElementById('logoutConfirmProceed');
+
+    if (logoutConfirmCancel) {
+        logoutConfirmCancel.addEventListener('click', closeLogoutConfirmation);
+    }
+
+    if (logoutConfirmProceed) {
+        logoutConfirmProceed.addEventListener('click', startLogoutFlow);
+    }
+
+    if (logoutConfirmModal) {
+        logoutConfirmModal.addEventListener('click', (event) => {
+            if (event.target === logoutConfirmModal) {
+                closeLogoutConfirmation();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeLogoutConfirmation();
+        }
+    });
+
     // Add click handlers to all navigation items
     document.querySelectorAll('[data-page]').forEach(item => {
         item.addEventListener('click', function() {

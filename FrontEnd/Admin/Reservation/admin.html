@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
+    <div id="actionLoadingLine" class="action-loading-line" aria-hidden="true"></div>
+    <div id="actionToast" class="action-toast" role="status" aria-live="polite" aria-atomic="true">
+        <p id="actionToastMessage" class="action-toast-message">Action completed successfully.</p>
+    </div>
+
     <div class="admin-panel">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -242,6 +247,16 @@
                         <!-- Expanded table will be rendered here -->
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="actionConfirmationModal" aria-hidden="true">
+        <div class="action-confirmation-content">
+            <p class="action-confirmation-message" id="actionConfirmationMessage">Are you sure you want to continue?</p>
+            <div class="action-confirmation-buttons">
+                <button class="btn-confirm-cancel" id="btnActionCancel" type="button">Cancel</button>
+                <button class="btn-confirm-okay" id="btnActionConfirm" type="button">Confirm</button>
             </div>
         </div>
     </div>
