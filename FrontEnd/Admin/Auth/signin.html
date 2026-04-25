@@ -30,15 +30,18 @@
                 <p>Use your admin account to continue.</p>
             </div>
 
-            <form id="signInForm" class="auth-form" novalidate>
+            <form id="signInForm" class="auth-form" novalidate autocomplete="off">
                 <label class="field-group">
                     <span>Email</span>
-                    <input type="email" id="signinEmail" name="email" placeholder="admin@example.com" required>
+                    <input type="email" id="signinEmail" name="email" placeholder="admin@example.com" required autocomplete="off">
                 </label>
 
                 <label class="field-group">
                     <span>Password</span>
-                    <input type="password" id="signinPassword" name="password" placeholder="Enter your password" required minlength="8">
+                    <div class="password-input-wrap">
+                        <input type="password" id="signinPassword" name="password" placeholder="Enter your password" required minlength="8" autocomplete="off">
+                        <button type="button" class="password-toggle" data-toggle-target="signinPassword" aria-label="Show password"></button>
+                    </div>
                 </label>
 
                 <p class="inline-link-row"><a href="forgot-password.html">Forgot password?</a></p>

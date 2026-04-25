@@ -31,25 +31,60 @@ body.auth-body {
 .auth-shell {
     width: min(1080px, calc(100% - 2rem));
     margin: 0 auto;
-    min-height: 100vh;
+    min-height: calc(100vh - 2rem);
     display: grid;
-    grid-template-columns: 1.05fr 1fr;
-    gap: 1.25rem;
-    align-items: center;
-    padding: 2rem 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.35rem;
+    align-items: stretch;
+    align-content: center;
+    padding: 1rem 0 1.1rem;
 }
 
 .brand-panel,
 .auth-panel {
-    border: 1px solid var(--line);
     border-radius: 24px;
     background: rgba(255, 253, 244, 0.92);
     backdrop-filter: blur(2px);
     box-shadow: 0 16px 34px rgba(45, 66, 35, 0.15);
+    height: 100%;
 }
 
 .brand-panel {
-    padding: 2.2rem;
+    padding: 1.85rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+body[data-page="signup"] .brand-panel {
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+body[data-page="signup"] .brand-panel::before,
+body[data-page="signup"] .brand-panel::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+body[data-page="signup"] .brand-panel::before {
+    width: 210px;
+    height: 210px;
+    right: -76px;
+    top: -86px;
+    background: radial-gradient(circle, rgba(87, 133, 75, 0.2), rgba(87, 133, 75, 0.02) 68%, transparent 76%);
+}
+
+body[data-page="signup"] .brand-panel::after {
+    width: 150px;
+    height: 150px;
+    left: -54px;
+    bottom: -58px;
+    background: radial-gradient(circle, rgba(47, 91, 47, 0.12), rgba(47, 91, 47, 0.01) 68%, transparent 76%);
 }
 
 .brand-logo {
@@ -88,6 +123,49 @@ body.auth-body {
     margin-bottom: 1.1rem;
 }
 
+.onboarding-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.2rem 0 0.85rem;
+}
+
+.onboarding-chips span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.9rem;
+    padding: 0.22rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #2b4d2a;
+    background: linear-gradient(120deg, rgba(223, 237, 212, 0.95), rgba(205, 228, 189, 0.95));
+    border: 1px solid rgba(102, 141, 89, 0.35);
+}
+
+.onboarding-note {
+    margin-top: 0.2rem;
+    border-radius: 14px;
+    padding: 0.78rem 0.9rem;
+    background: linear-gradient(135deg, rgba(232, 244, 224, 0.96), rgba(244, 249, 239, 0.98));
+    border: 1px solid rgba(120, 157, 90, 0.35);
+    max-width: 430px;
+}
+
+.onboarding-note strong {
+    color: #284927;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.onboarding-note p {
+    margin: 0;
+    color: #3f5535;
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
 .feature-list {
     margin: 0;
     padding-left: 1.15rem;
@@ -115,7 +193,11 @@ body.auth-body {
 }
 
 .auth-panel {
-    padding: 1.8rem;
+    padding: 1.6rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .panel-header p {
@@ -175,6 +257,47 @@ body.auth-body {
 
 .inline-input-action input {
     min-width: 0;
+}
+
+.password-input-wrap {
+    position: relative;
+}
+
+.password-input-wrap input {
+    min-width: 0;
+    padding-right: 4.1rem;
+}
+
+.password-toggle {
+    min-width: 3.2rem;
+    height: 1.5rem;
+    border: none;
+    background: transparent;
+    position: absolute;
+    right: 0.72rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    transition: opacity 0.18s ease, color 0.18s ease;
+    padding: 0;
+    line-height: 1;
+    text-align: right;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #49603d;
+}
+
+.password-toggle:hover {
+    opacity: 0.82;
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid rgba(47, 91, 47, 0.35);
+    outline-offset: 2px;
+}
+
+.password-toggle.is-visible {
+    color: #214421;
 }
 
 .field-help {
@@ -244,6 +367,22 @@ body.auth-body {
     font-size: 0.84rem;
 }
 
+.message:empty {
+    min-height: 0;
+    display: none;
+}
+
+body[data-page="signup"] #signUpError:empty,
+body[data-page="signup"] #signUpSuccess:empty {
+    min-height: 0.45rem;
+    display: block;
+}
+
+body[data-page="signup"] #signUpSuccess:empty {
+    min-height: 0;
+    display: none;
+}
+
 .message.error {
     color: var(--error);
 }
@@ -262,6 +401,110 @@ body.auth-body {
     color: #224d2a;
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
+}
+
+.verify-modal-overlay {
+    position: static;
+    inset: auto;
+    background: transparent;
+    backdrop-filter: none;
+    display: none;
+    padding: 0;
+    z-index: auto;
+}
+
+.verify-modal-overlay.is-open {
+    display: block;
+}
+
+body[data-page="signup"] .auth-panel.verification-active {
+    justify-content: center;
+}
+
+body[data-page="signup"] .verify-modal-overlay.is-open {
+    display: flex;
+    align-items: center;
+}
+
+.auth-panel.verification-active .panel-header,
+.auth-panel.verification-active #signUpForm,
+.auth-panel.verification-active .switch-link {
+    display: none;
+}
+
+.verify-modal {
+    width: 100%;
+    border-radius: 18px;
+    background: var(--panel);
+    box-shadow: none;
+    padding: 1.2rem;
+    position: relative;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.verify-modal h3 {
+    margin: 0;
+    font-size: 1.28rem;
+}
+
+.verify-modal-text {
+    margin: 0;
+    color: #46583b;
+    font-size: 0.92rem;
+}
+
+.verify-modal-timer {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #3f5035;
+}
+
+.verify-modal-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.55rem;
+}
+
+.verify-modal-actions .auth-btn {
+    margin-top: 0;
+}
+
+.verify-modal-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.55rem;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid #8ead7e;
+    border-radius: 999px;
+    background: #eef5e8;
+    color: #214421;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.verify-modal-close:hover {
+    filter: brightness(0.98);
+}
+
+body[data-page="signin"] .auth-shell {
+    min-height: calc(100vh - 2rem);
+    padding: 1rem 0 1.1rem;
+}
+
+body[data-page="signin"] .brand-panel {
+    padding-bottom: 1.85rem;
+}
+
+body[data-page="forgot-password"] .auth-shell {
+    min-height: calc(100vh - 2rem);
+    padding: 1rem 0 1.1rem;
+}
+
+.field-help span {
+    display: block;
 }
 
 .reveal-delay-1,
@@ -287,7 +530,18 @@ body.auth-body {
         grid-template-columns: 1fr;
         gap: 0.95rem;
         width: min(680px, calc(100% - 1rem));
+        min-height: 0;
+        align-content: start;
+        align-items: stretch;
         padding: 1rem 0 1.25rem;
+    }
+
+    body[data-page="signup"] .brand-panel {
+        justify-content: flex-start;
+    }
+
+    .onboarding-note {
+        max-width: none;
     }
 
     .brand-panel,
@@ -301,6 +555,10 @@ body.auth-body {
 
     .auth-panel {
         padding: 1.3rem;
+    }
+
+    .verify-modal-actions {
+        grid-template-columns: 1fr;
     }
 }
 
