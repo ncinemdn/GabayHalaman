@@ -2,6 +2,7 @@
 using ProjectName.Models;
 using ProjectName.Services;
 using BCrypt.Net;
+using System.Collections.Concurrent;
 
 namespace API.Controllers
 {
@@ -11,11 +12,89 @@ namespace API.Controllers
 	{
 		AdminService adminServices = new AdminService();
 
+		private static readonly ConcurrentDictionary<string, PendingSignup> PendingSignups = new();
+
+		private class PendingSignup
+		{
+			public string FullName { get; set; }
+			public string Email { get; set; }
+			public string Phone { get; set; }
+			public string PasswordHash { get; set; }
+			public string VerificationCode { get; set; }
+			public DateTime CodeExpiry { get; set; }
+		}
+
+		// =========================
+		// ✅ REQUEST MODELS
+		// =========================
+
+		public class EmailRequest
+		{
+			public string Email { get; set; }
+		}
+
+		public class VerifyCodeRequest
+		{
+			public string Email { get; set; }
+			public string Code { get; set; }
+		}
+
+		public class LoginRequest
+		{
+			public string Email { get; set; }
+			public string Password { get; set; }
+		}
+
+		public class ResetPasswordRequest
+		{
+			public string Email { get; set; }
+			public string NewPassword { get; set; }
+		}
+
+		// =========================
+		// 🎨 EMAIL TEMPLATE (REUSABLE)
+		// =========================
+
+		private string GenerateEmailTemplate(string title, string message, string code)
+		{
+			return $@"
+            <div style='font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;'>
+                <div style='max-width:500px; margin:auto; background:white; border-radius:10px; padding:25px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.1);'>
+
+                    <h2 style='color:#2e7d32;'>🌿 Gabay Halaman</h2>
+
+                    <h3 style='color:#333;'>{title}</h3>
+
+                    <p style='color:#555; font-size:15px;'>
+                        {message}
+                    </p>
+
+                    <div style='font-size:32px; font-weight:bold; color:#2e7d32; margin:20px 0; letter-spacing:3px;'>
+                        {code}
+                    </div>
+
+                    <p style='font-size:13px; color:#888;'>
+                        This code will expire in 5 minutes.
+                    </p>
+
+                    <hr style='margin:20px 0;' />
+
+                    <p style='font-size:11px; color:#aaa;'>
+                        If you did not request this, you can safely ignore this email.
+                    </p>
+
+                </div>
+            </div>";
+		}
+
+		// =========================
+		// BASIC CRUD
+		// =========================
+
 		[HttpGet]
 		public ActionResult GetAll()
 		{
-			var book = adminServices.GetAll();
-			return Ok(book);
+			return Ok(adminServices.GetAll());
 		}
 
 		[HttpGet("{id}")]
@@ -24,72 +103,107 @@ namespace API.Controllers
 			return adminServices.GetById(id);
 		}
 
+		// =========================
+		// SIGNUP
+		// =========================
+
 		[HttpPost("signup")]
 		public async Task<IActionResult> Signup([FromBody] Admin admin)
 		{
-			// 🔐 HASH PASSWORD
-			admin.password_hash = BCrypt.Net.BCrypt.HashPassword(admin.password_hash);
+			var normalizedEmail = admin.email?.Trim().ToLower();
 
-			admin.created_at = DateTime.Now;
-			admin.updated_at = DateTime.Now;
+			if (string.IsNullOrWhiteSpace(admin.full_name) ||
+				string.IsNullOrWhiteSpace(normalizedEmail) ||
+				string.IsNullOrWhiteSpace(admin.phone) ||
+				string.IsNullOrWhiteSpace(admin.password_hash))
+			{
+				return BadRequest("All signup fields are required.");
+			}
 
-			// 🔢 GENERATE CODE
+			var existingAdmin = adminServices.GetByEmail(normalizedEmail);
+			if (existingAdmin != null)
+			{
+				if (existingAdmin.is_verified)
+					return BadRequest("Email is already registered.");
+
+				return BadRequest("This email already has a pending account. Verify it first.");
+			}
+
+			if (PendingSignups.TryGetValue(normalizedEmail, out var pending) && pending.CodeExpiry > DateTime.Now)
+			{
+				return BadRequest("Verification code already sent. Wait for the current code to expire.");
+			}
+
 			var code = new Random().Next(100000, 999999).ToString();
+			PendingSignups[normalizedEmail] = new PendingSignup
+			{
+				FullName = admin.full_name.Trim(),
+				Email = normalizedEmail,
+				Phone = admin.phone.Trim(),
+				PasswordHash = BCrypt.Net.BCrypt.HashPassword(admin.password_hash),
+				VerificationCode = code,
+				CodeExpiry = DateTime.Now.AddMinutes(5)
+			};
 
-			admin.verification_code = code;
-			admin.code_expiry = DateTime.Now.AddMinutes(5);
-			admin.is_verified = false;
-
-			adminServices.Add(admin);
-
-			// 📧 SEND EMAIL
 			EmailService emailService = new EmailService();
 			await emailService.SendEmail(
-	admin.email,
-	"Verify your Gabay Halaman Account 🌿",
-	$@"
-    <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8;'>
-        <div style='max-width: 500px; margin: auto; background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>
-            
-            <h2 style='color: #2e7d32;'>🌿 Gabay Halaman</h2>
-            
-            <p style='font-size: 16px; color: #333;'>
-                Hello! Please verify your account using the code below:
-            </p>
+				normalizedEmail,
+				"Verify your Gabay Halaman Account 🌿",
+				GenerateEmailTemplate(
+					"Account Verification",
+					"Welcome! Use the code below to verify your account:",
+					code
+				)
+			);
 
-            <div style='font-size: 30px; font-weight: bold; color: #2e7d32; margin: 20px 0;'>
-                {code}
-            </div>
-
-            <p style='font-size: 14px; color: #777;'>
-                This code will expire in 5 minutes.
-            </p>
-
-            <hr style='margin: 20px 0;' />
-
-            <p style='font-size: 12px; color: #aaa;'>
-                If you did not request this, please ignore this email.
-            </p>
-        </div>
-    </div>
-    "
-);
-
-			return Ok("Verification code sent to email.");
+			return Ok("Verification code sent.");
 		}
 
-		[HttpPost("verify")]
-		public IActionResult Verify([FromBody] dynamic data)
-		{
-			string email = data.email;
-			string code = data.code;
+		// =========================
+		// VERIFY ACCOUNT
+		// =========================
 
-			var admin = adminServices.GetByEmail(email);
+		[HttpPost("verify")]
+		public IActionResult Verify([FromBody] VerifyCodeRequest data)
+		{
+			var normalizedEmail = data.Email?.Trim().ToLower();
+
+			if (string.IsNullOrWhiteSpace(normalizedEmail) || string.IsNullOrWhiteSpace(data.Code))
+				return BadRequest("Email and code are required.");
+
+			if (PendingSignups.TryGetValue(normalizedEmail, out var pendingSignup))
+			{
+				if (pendingSignup.VerificationCode != data.Code)
+					return BadRequest("Invalid code");
+
+				if (pendingSignup.CodeExpiry < DateTime.Now)
+					return BadRequest("Code expired");
+
+				var verifiedAdmin = new Admin
+				{
+					full_name = pendingSignup.FullName,
+					email = pendingSignup.Email,
+					phone = pendingSignup.Phone,
+					password_hash = pendingSignup.PasswordHash,
+					created_at = DateTime.Now,
+					updated_at = DateTime.Now,
+					is_verified = true,
+					verification_code = null,
+					code_expiry = null
+				};
+
+				adminServices.Add(verifiedAdmin);
+				PendingSignups.TryRemove(normalizedEmail, out _);
+
+				return Ok("Account verified");
+			}
+
+			var admin = adminServices.GetByEmail(normalizedEmail);
 
 			if (admin == null)
 				return BadRequest("User not found");
 
-			if (admin.verification_code != code)
+			if (admin.verification_code != data.Code)
 				return BadRequest("Invalid code");
 
 			if (admin.code_expiry < DateTime.Now)
@@ -103,32 +217,35 @@ namespace API.Controllers
 			return Ok("Account verified");
 		}
 
-		[HttpPost("login")]
-		public IActionResult Login([FromBody] dynamic data)
-		{
-			string email = data.email;
-			string password = data.password;
+		// =========================
+		// LOGIN
+		// =========================
 
-			var admin = adminServices.GetByEmail(email);
+		[HttpPost("login")]
+		public IActionResult Login([FromBody] LoginRequest data)
+		{
+			var admin = adminServices.GetByEmail(data.Email);
 
 			if (admin == null)
 				return BadRequest("User not found");
 
 			if (!admin.is_verified)
-				return BadRequest("Please verify your email first");
+				return BadRequest("Verify your email first");
 
-			if (!BCrypt.Net.BCrypt.Verify(password, admin.password_hash))
+			if (!BCrypt.Net.BCrypt.Verify(data.Password, admin.password_hash))
 				return BadRequest("Incorrect password");
 
 			return Ok(admin);
 		}
 
-		[HttpPost("forgot-password/send-code")]
-		public async Task<IActionResult> SendCode([FromBody] dynamic data)
-		{
-			string email = data.email;
+		// =========================
+		// FORGOT PASSWORD
+		// =========================
 
-			var admin = adminServices.GetByEmail(email);
+		[HttpPost("forgot-password/send-code")]
+		public async Task<IActionResult> SendCode([FromBody] EmailRequest data)
+		{
+			var admin = adminServices.GetByEmail(data.Email);
 
 			if (admin == null)
 				return BadRequest("Email not found");
@@ -141,54 +258,95 @@ namespace API.Controllers
 			adminServices.Updatet(admin);
 
 			EmailService emailService = new EmailService();
-			await emailService.SendEmail(email, "Reset Code",
-				$"Your reset code is: <b>{code}</b>");
+			await emailService.SendEmail(
+				data.Email,
+				"Reset Password Code",
+				GenerateEmailTemplate(
+					"Password Reset",
+					"Use the code below to reset your password:",
+					code
+				)
+			);
 
-			return Ok();
+			return Ok("Code sent");
 		}
 
 		[HttpPost("forgot-password/verify-code")]
-		public IActionResult VerifyCode([FromBody] dynamic data)
+		public IActionResult VerifyCode([FromBody] VerifyCodeRequest data)
 		{
-			string email = data.email;
-			string code = data.code;
+			var admin = adminServices.GetByEmail(data.Email);
 
-			var admin = adminServices.GetByEmail(email);
+			if (admin == null)
+				return BadRequest("User not found");
 
-			if (admin.verification_code != code)
+			if (admin.verification_code != data.Code)
 				return BadRequest("Invalid code");
 
 			if (admin.code_expiry < DateTime.Now)
-				return BadRequest("Expired code");
+				return BadRequest("Code expired");
 
-			return Ok();
+			return Ok("Code verified");
 		}
 
 		[HttpPost("forgot-password/reset-password")]
-		public IActionResult ResetPassword([FromBody] dynamic data)
+		public IActionResult ResetPassword([FromBody] ResetPasswordRequest data)
 		{
-			string email = data.email;
-			string newPassword = data.newPassword;
+			var admin = adminServices.GetByEmail(data.Email);
 
-			var admin = adminServices.GetByEmail(email);
+			if (admin == null)
+				return BadRequest("User not found");
 
-			admin.password_hash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+			admin.password_hash = BCrypt.Net.BCrypt.HashPassword(data.NewPassword);
 			admin.verification_code = null;
 
 			adminServices.Updatet(admin);
 
-			return Ok();
+			return Ok("Password updated");
 		}
 
-		[HttpPost("resend-verification")]
-		public async Task<IActionResult> ResendVerification([FromBody] dynamic data)
-		{
-			string email = data.email;
+		// =========================
+		// RESEND VERIFICATION
+		// =========================
 
-			var admin = adminServices.GetByEmail(email);
+		[HttpPost("resend-verification")]
+		public async Task<IActionResult> ResendVerification([FromBody] EmailRequest data)
+		{
+			var normalizedEmail = data.Email?.Trim().ToLower();
+
+			if (string.IsNullOrWhiteSpace(normalizedEmail))
+				return BadRequest("Email is required");
+
+			if (PendingSignups.TryGetValue(normalizedEmail, out var pendingSignup))
+			{
+				if (pendingSignup.CodeExpiry > DateTime.Now)
+					return BadRequest("Current code is still active. Please wait for expiration.");
+
+				var pendingCode = new Random().Next(100000, 999999).ToString();
+				pendingSignup.VerificationCode = pendingCode;
+				pendingSignup.CodeExpiry = DateTime.Now.AddMinutes(5);
+				PendingSignups[normalizedEmail] = pendingSignup;
+
+				EmailService pendingEmailService = new EmailService();
+				await pendingEmailService.SendEmail(
+					normalizedEmail,
+					"Verification Code",
+					GenerateEmailTemplate(
+						"Resend Verification",
+						"Here is your new verification code:",
+						pendingCode
+					)
+				);
+
+				return Ok("Verification code resent");
+			}
+
+			var admin = adminServices.GetByEmail(normalizedEmail);
 
 			if (admin == null)
 				return BadRequest("User not found");
+
+			if (admin.code_expiry.HasValue && admin.code_expiry.Value > DateTime.Now)
+				return BadRequest("Current code is still active. Please wait for expiration.");
 
 			var code = new Random().Next(100000, 999999).ToString();
 
@@ -198,35 +356,22 @@ namespace API.Controllers
 			adminServices.Updatet(admin);
 
 			EmailService emailService = new EmailService();
-			await emailService.SendEmail(email, "Verify your account",
-$@"
-<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8;'>
-    <div style='max-width: 500px; margin: auto; background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>
-        
-        <h2 style='color: #2e7d32;'>🌿 Gabay Halaman</h2>
-        
-        <p style='font-size: 16px; color: #333;'>
-            Here is your new verification code:
-        </p>
+			await emailService.SendEmail(
+				normalizedEmail,
+				"Verification Code",
+				GenerateEmailTemplate(
+					"Resend Verification",
+					"Here is your new verification code:",
+					code
+				)
+			);
 
-        <div style='font-size: 30px; font-weight: bold; color: #2e7d32; margin: 20px 0;'>
-            {code}
-        </div>
-
-        <p style='font-size: 14px; color: #777;'>
-            This code will expire in 5 minutes.
-        </p>
-
-        <hr style='margin: 20px 0;' />
-
-        <p style='font-size: 12px; color: #aaa;'>
-            If you did not request this, please ignore this email.
-        </p>
-    </div>
-</div>
-");
 			return Ok("Verification code resent");
 		}
+
+		// =========================
+		// UPDATE / DELETE
+		// =========================
 
 		[HttpPut]
 		public bool Update(Admin ad)
@@ -245,6 +390,5 @@ $@"
 		{
 			return adminServices.ChangePassword(id, request.CurrentPassword, request.NewPassword);
 		}
-
 	}
 }

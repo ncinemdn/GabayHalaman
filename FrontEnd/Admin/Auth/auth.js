@@ -40,14 +40,11 @@ async function signup(name, email, contactNumber, password) {
         document.getElementById("signUpSuccess").textContent =
             "Verification code sent to your email!";
 
-            localStorage.setItem("tempPassword", password);
+        localStorage.setItem("tempPassword", password);
+        localStorage.setItem("verifyEmail", email);
 
-        // 👉 REDIRECT TO VERIFY PAGE
-        setTimeout(() => {
-            localStorage.setItem("verifyEmail", email);
-
-            window.location.href = `verify.html?email=${email}`;
-        }, 1500);
+        openVerificationModal();
+        startCountdown();
 
     } catch (error) {
         document.getElementById("signUpError").textContent =
@@ -58,52 +55,174 @@ async function signup(name, email, contactNumber, password) {
 async function verifyAccount() {
     const params = new URLSearchParams(window.location.search);
     const email = params.get("email") || localStorage.getItem("verifyEmail");
-    const code = document.getElementById("code").value;
+    const codeInput = document.getElementById("signupVerifyCode") || document.getElementById("code");
+    const verifyError = document.getElementById("verifyError");
+    const code = codeInput ? codeInput.value.trim() : "";
 
     if (!code) {
-    alert("Please enter the verification code.");
-    return;
-}
+        if (verifyError) {
+            verifyError.textContent = "Please enter the verification code.";
+        } else {
+            alert("Please enter the verification code.");
+        }
+        return;
+    }
     try {
         if (!email) {
-            alert("Missing email. Please sign up again.");
+            if (verifyError) {
+                verifyError.textContent = "Missing email. Please sign up again.";
+            } else {
+                alert("Missing email. Please sign up again.");
+            }
             return;
+        }
+
+        if (verifyError) {
+            verifyError.textContent = "";
         }
 
         await adminAPI.verify({
             email: email,
             code: code
         });
-        // 👉 redirect to login
+
         localStorage.removeItem("verifyEmail");
-            const password = localStorage.getItem("tempPassword");
-
-            if (password) {
-                const response = await adminAPI.login({
-                    email: email,
-                    password: password
-                });
-
-                localStorage.setItem("admin", JSON.stringify(response));
-                localStorage.removeItem("tempPassword");
-
-                window.location.href = "../Dashboard/dashboard.html";
-            } else {
-                window.location.href = "signin.html";
-            }
+        localStorage.removeItem("tempPassword");
+        closeVerificationModal();
+        window.location.href = "signin.html";
 
     } catch (error) {
-        alert("Invalid or expired code");
+        if (verifyError) {
+            verifyError.textContent = "Invalid or expired code";
+        } else {
+            alert("Invalid or expired code");
+        }
     }
+}
+
+function openVerificationModal() {
+    const verifyModal = document.getElementById("verifyModal");
+    const verifyInput = document.getElementById("signupVerifyCode");
+    const verifyError = document.getElementById("verifyError");
+    const authPanel = document.querySelector(".auth-panel");
+
+    if (!verifyModal) {
+        return;
+    }
+
+    verifyModal.classList.add("is-open");
+    verifyModal.setAttribute("aria-hidden", "false");
+    if (authPanel) {
+        authPanel.classList.add("verification-active");
+    }
+
+    if (verifyError) {
+        verifyError.textContent = "";
+    }
+
+    if (verifyInput) {
+        verifyInput.value = "";
+        verifyInput.focus();
+    }
+}
+
+function closeVerificationModal() {
+    const verifyModal = document.getElementById("verifyModal");
+    const authPanel = document.querySelector(".auth-panel");
+
+    if (!verifyModal) {
+        return;
+    }
+
+    verifyModal.classList.remove("is-open");
+    verifyModal.setAttribute("aria-hidden", "true");
+    if (authPanel) {
+        authPanel.classList.remove("verification-active");
+    }
+    clearInterval(countdownInterval);
+}
+
+function initializePasswordToggles() {
+    const toggleButtons = document.querySelectorAll(".password-toggle[data-toggle-target]");
+
+    toggleButtons.forEach(function (button) {
+        const targetId = button.getAttribute("data-toggle-target");
+        const targetInput = document.getElementById(targetId);
+
+        if (!targetInput) {
+            return;
+        }
+
+        button.textContent = "Show";
+        button.setAttribute("aria-label", "Show password");
+
+        button.addEventListener("click", function () {
+            const isHidden = targetInput.type === "password";
+            targetInput.type = isHidden ? "text" : "password";
+            button.classList.toggle("is-visible", isHidden);
+            button.textContent = isHidden ? "Hide" : "Show";
+            button.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+        });
+    });
+}
+
+function clearFormOnLoad(formElement) {
+    if (!formElement) {
+        return;
+    }
+
+    const clear = function () {
+        formElement.reset();
+        const inputs = formElement.querySelectorAll("input");
+        inputs.forEach(function (input) {
+            if (input.type !== "hidden") {
+                input.value = "";
+            }
+        });
+    };
+
+    clear();
+    requestAnimationFrame(clear);
+    setTimeout(clear, 80);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Auth page loaded, attaching event handlers...');
+    initializePasswordToggles();
     
     const resendBtn = document.getElementById("resendBtn");
+    const verifyBtn = document.getElementById("verifyBtn");
+    const closeVerifyModalBtn = document.getElementById("closeVerifyModal");
+    const verifyModal = document.getElementById("verifyModal");
+    const verifyCodeInput = document.getElementById("signupVerifyCode");
 
     if (resendBtn) {
         resendBtn.addEventListener("click", resendCode);
+    }
+
+    if (verifyBtn) {
+        verifyBtn.addEventListener("click", verifyAccount);
+    }
+
+    if (verifyCodeInput) {
+        verifyCodeInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                verifyAccount();
+            }
+        });
+    }
+
+    if (closeVerifyModalBtn) {
+        closeVerifyModalBtn.addEventListener("click", closeVerificationModal);
+    }
+
+    if (verifyModal) {
+        verifyModal.addEventListener("click", function (event) {
+            if (event.target === verifyModal) {
+                closeVerificationModal();
+            }
+        });
     }
 
     // start timer automatically when on verify page
@@ -113,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const signInForm = document.getElementById("signInForm");
     console.log('Sign-in form found:', !!signInForm);
+    clearFormOnLoad(signInForm);
     
     if (signInForm) {
         signInForm.addEventListener("submit", async function (e) {
@@ -134,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const signUpForm = document.getElementById("signUpForm");
     console.log('Sign-up form found:', !!signUpForm);
+    clearFormOnLoad(signUpForm);
     
     if (signUpForm) {
         signUpForm.addEventListener("submit", async function (e) {
@@ -157,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const forgotForm = document.getElementById("forgotPasswordForm");
     console.log('Forgot password form found:', !!forgotForm);
+    clearFormOnLoad(forgotForm);
     
     if (forgotForm) {
         let isCodeVerified = false;
@@ -295,26 +417,57 @@ async function resetPasswordByEmail(email, newPassword) {
 
 async function resendCode() {
     const email = localStorage.getItem("verifyEmail");
+    const verifyError = document.getElementById("verifyError");
+
+    if (!isVerificationCodeExpired) {
+        if (verifyError) {
+            verifyError.textContent = "You can resend only after the current code expires.";
+        }
+        return;
+    }
 
     if (!email) {
-        alert("Email not found. Please sign up again.");
+        if (verifyError) {
+            verifyError.textContent = "Email not found. Please sign up again.";
+        } else {
+            alert("Email not found. Please sign up again.");
+        }
         return;
     }
 
     try {
-        await apiRequest('/admin/forgot-password/send-code', 'POST', {
+        await apiRequest('/admin/resend-verification', 'POST', {
             email: email
         });
 
-        alert("Verification code resent!");
+        if (verifyError) {
+            verifyError.textContent = "Verification code resent.";
+        } else {
+            alert("Verification code resent!");
+        }
         startCountdown();
 
     } catch (error) {
-        alert("Failed to resend code.");
+        if (verifyError) {
+            verifyError.textContent = "Failed to resend code.";
+        } else {
+            alert("Failed to resend code.");
+        }
     }
 }
 
 let countdownInterval;
+let isVerificationCodeExpired = false;
+
+function setResendButtonState(disabled) {
+    const resendBtn = document.getElementById("resendBtn");
+
+    if (!resendBtn) {
+        return;
+    }
+
+    resendBtn.disabled = disabled;
+}
 
 function startCountdown(duration = 300) {
     let time = duration;
@@ -322,6 +475,8 @@ function startCountdown(duration = 300) {
 const timerText = document.getElementById("timerText");
 if (!timerText) return;
     clearInterval(countdownInterval);
+    isVerificationCodeExpired = false;
+    setResendButtonState(true);
 
     countdownInterval = setInterval(() => {
         const minutes = Math.floor(time / 60);
@@ -333,6 +488,8 @@ if (!timerText) return;
         if (time <= 0) {
             clearInterval(countdownInterval);
             timerText.textContent = "Code expired. Please resend.";
+            isVerificationCodeExpired = true;
+            setResendButtonState(false);
         }
 
         time--;

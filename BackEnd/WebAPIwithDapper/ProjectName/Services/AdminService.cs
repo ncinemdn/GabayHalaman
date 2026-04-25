@@ -29,9 +29,16 @@ namespace ProjectName.Services
 
 		public Admin GetByEmail(string email)
 		{
+			if (string.IsNullOrWhiteSpace(email))
+			{
+				return null;
+			}
+
+			var normalizedEmail = email.Trim().ToLower();
+
 			AdminRepository adminRepository = new AdminRepository();
 			return adminRepository.GetAll()
-				.FirstOrDefault(a => a.email == email);
+				.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.email) && a.email.Trim().ToLower() == normalizedEmail);
 		}
 		public bool Add(Admin ad)
 		{
