@@ -140,6 +140,10 @@
         window.localStorage.setItem(PLANT_IMAGE_MAP_KEY, JSON.stringify(imageMap || {}));
     }
 
+    function isInlineDataImage(value) {
+        return String(value || '').trim().startsWith('data:image/');
+    }
+
     function savePlantImagesForPlant(plantId, images) {
         const safeId = String(plantId || '').trim();
         if (!safeId) {
@@ -149,7 +153,39 @@
         const safeImages = parsePlantImages(images).slice(0, 4);
         const imageMap = getStoredPlantImageMap();
         imageMap[safeId] = safeImages;
-        saveStoredPlantImageMap(imageMap);
+
+        try {
+            saveStoredPlantImageMap(imageMap);
+        } catch (error) {
+            // Fallback: keep only lightweight entries and prioritize the current plant.
+            try {
+                const reducedMap = {};
+
+                Object.entries(imageMap).forEach(([id, list]) => {
+                    if (!Array.isArray(list) || !list.length) {
+                        return;
+                    }
+
+                    if (id === safeId) {
+                        return;
+                    }
+
+                    const firstNonInline = list
+                        .map((item) => String(item || '').trim())
+                        .find((item) => item && !isInlineDataImage(item));
+
+                    if (firstNonInline) {
+                        reducedMap[id] = [firstNonInline];
+                    }
+                });
+
+                reducedMap[safeId] = safeImages.length ? [safeImages[0]] : [];
+                saveStoredPlantImageMap(reducedMap);
+            } catch (fallbackError) {
+                console.warn('Unable to persist plant images in local storage:', fallbackError);
+                throw fallbackError;
+            }
+        }
     }
 
     function removePlantImagesForPlant(plantId) {
@@ -338,12 +374,16 @@
     }
 
     function clonePlant(plant) {
+        const safeImage = isInlineDataImage(plant.image)
+            ? DEFAULT_PLANT_IMAGE
+            : (plant.image || DEFAULT_PLANT_IMAGE);
+
         return {
             id: String(plant.id),
             name: String(plant.name),
             category: String(plant.category),
             price: Number(plant.price) || 0,
-            image: plant.image || DEFAULT_PLANT_IMAGE,
+            image: safeImage,
             stock: Math.max(0, Number(plant.stock) || 0),
             available: plant.available !== false
         };

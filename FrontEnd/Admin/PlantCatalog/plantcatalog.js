@@ -6,6 +6,8 @@ let categoryNameToId = {};
 const MAX_PLANT_IMAGES = 4;
 const DEFAULT_PLANT_IMAGE = 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400';
 const SAFE_DB_IMAGE_PATH_LENGTH = 220;
+const IMAGE_UPLOAD_MAX_DIMENSION = 960;
+const IMAGE_UPLOAD_QUALITY = 0.78;
 
 let editingPlantId = null;
 let currentImagePreviews = [];
@@ -259,6 +261,52 @@ function removeAllImages() {
     renderImagePreviews();
 }
 
+function optimizeImageFile(file) {
+    return new Promise((resolve) => {
+        if (!(file instanceof File) || !String(file.type || '').startsWith('image/')) {
+            resolve('');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                const originalWidth = Number(img.naturalWidth || img.width || 0);
+                const originalHeight = Number(img.naturalHeight || img.height || 0);
+
+                if (!originalWidth || !originalHeight) {
+                    resolve(String(reader.result || ''));
+                    return;
+                }
+
+                const scale = Math.min(1, IMAGE_UPLOAD_MAX_DIMENSION / Math.max(originalWidth, originalHeight));
+                const targetWidth = Math.max(1, Math.round(originalWidth * scale));
+                const targetHeight = Math.max(1, Math.round(originalHeight * scale));
+
+                const canvas = document.createElement('canvas');
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                const context = canvas.getContext('2d');
+                if (!context) {
+                    resolve(String(reader.result || ''));
+                    return;
+                }
+
+                context.drawImage(img, 0, 0, targetWidth, targetHeight);
+                resolve(canvas.toDataURL('image/jpeg', IMAGE_UPLOAD_QUALITY));
+            };
+
+            img.onerror = () => resolve(String(reader.result || ''));
+            img.src = String(reader.result || '');
+        };
+
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+    });
+}
+
 // Logout function
 function logout() {
     // Clear admin session from localStorage
@@ -373,8 +421,15 @@ async function loadPlantInventory() {
 }
 
 function syncPlantInventory() {
-    if (window.GHPlantData) {
+    if (!window.GHPlantData || typeof window.GHPlantData.savePlantInventory !== 'function') {
+        return;
+    }
+
+    try {
         window.GHPlantData.savePlantInventory(plants);
+    } catch (error) {
+        // Keep UI responsive even when localStorage is full from large base64 images.
+        console.warn('Unable to sync plant inventory locally:', error);
     }
 }
 
@@ -1120,13 +1175,9 @@ function handleImageUpload(e) {
     }
 
     const selectedFiles = files.slice(0, remainingSlots);
-    const readers = selectedFiles.map((file) => new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(String(reader.result || ''));
-        reader.readAsDataURL(file);
-    }));
+    const optimizedUploads = selectedFiles.map((file) => optimizeImageFile(file));
 
-    Promise.all(readers)
+    Promise.all(optimizedUploads)
         .then((results) => {
             const validImages = results.filter(Boolean);
             currentImagePreviews = [...currentImagePreviews, ...validImages].slice(0, MAX_PLANT_IMAGES);
