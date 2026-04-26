@@ -1,0 +1,6 @@
+{
+  "routes": [
+    { "src": "/", "dest": "/GabayHalaman/index.html" },
+    { "src": "/(.*)", "dest": "/GabayHalaman/$1" }
+  ]
+}
