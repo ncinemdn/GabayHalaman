@@ -59,6 +59,37 @@
         return '../' + normalizedPath;
     }
 
+    function getApiBaseUrl() {
+        return (window.GH_API_BASE_URL && String(window.GH_API_BASE_URL).trim())
+            || (window.localStorage && String(window.localStorage.getItem('gh_api_base_url') || '').trim())
+            || 'http://localhost:5007/api';
+    }
+
+    function getApiOrigin() {
+        return getApiBaseUrl().replace(/\/api\/?$/i, '');
+    }
+
+    function normalizePlantImageUrl(value) {
+        const raw = String(value || '').trim();
+        if (!raw) {
+            return '';
+        }
+
+        if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) {
+            return raw;
+        }
+
+        if (raw.startsWith('/uploads/') || raw.startsWith('uploads/')) {
+            return `${getApiOrigin()}/${raw.replace(/^\/+/, '')}`;
+        }
+
+        if (raw.startsWith('PlantPics/') || raw.startsWith('Images/')) {
+            return resolveFrontEndAsset(raw);
+        }
+
+        return raw;
+    }
+
     function parsePlantImages(imageValue) {
         const fallback = [DEFAULT_PLANT_IMAGE];
 
@@ -66,7 +97,7 @@
             const cleaned = imageValue
                 .map((item) => String(item || '').trim())
                 .filter(Boolean);
-            return cleaned.length ? cleaned : fallback;
+            return cleaned.length ? cleaned.map(normalizePlantImageUrl) : fallback;
         }
 
         const raw = String(imageValue || '').trim();
@@ -82,7 +113,7 @@
                         .map((item) => String(item || '').trim())
                         .filter(Boolean);
                     if (cleaned.length) {
-                        return cleaned;
+                        return cleaned.map(normalizePlantImageUrl);
                     }
                 }
             } catch (error) {
@@ -96,7 +127,7 @@
                 .map((item) => String(item || '').trim())
                 .filter(Boolean);
             if (splitByPipes.length) {
-                return splitByPipes;
+                return splitByPipes.map(normalizePlantImageUrl);
             }
         }
 
@@ -106,11 +137,11 @@
                 .map((item) => String(item || '').trim())
                 .filter(Boolean);
             if (splitByComma.length > 1) {
-                return splitByComma;
+                return splitByComma.map(normalizePlantImageUrl);
             }
         }
 
-        return [raw];
+        return [normalizePlantImageUrl(raw)];
     }
 
     function getPrimaryPlantImage(imageValue) {
@@ -202,16 +233,23 @@
     }
 
     function resolvePlantImagesById(plantId, imageValue) {
+        const fallbackImages = parsePlantImages(imageValue).slice(0, 4);
         const safeId = String(plantId || '').trim();
         if (safeId) {
             const imageMap = getStoredPlantImageMap();
             const mapped = imageMap[safeId];
             if (Array.isArray(mapped) && mapped.length) {
-                return parsePlantImages(mapped).slice(0, 4);
+                const mappedImages = parsePlantImages(mapped).slice(0, 4);
+                const mappedContainsInline = mappedImages.some((item) => isInlineDataImage(item));
+                const fallbackHasServerImage = fallbackImages.some((item) => item && !isInlineDataImage(item) && item !== DEFAULT_PLANT_IMAGE);
+
+                if (!mappedContainsInline || !fallbackHasServerImage) {
+                    return mappedImages;
+                }
             }
         }
 
-        return parsePlantImages(imageValue).slice(0, 4);
+        return fallbackImages;
     }
 
     function getPlantImage(category, name, fallbackImage) {

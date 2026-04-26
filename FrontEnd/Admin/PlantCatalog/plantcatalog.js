@@ -205,6 +205,25 @@ function buildSafeDbImagePath(images, fallbackImage) {
     return DEFAULT_PLANT_IMAGE;
 }
 
+function buildDbImagePayload(images, fallbackImage = '') {
+    const safeImages = (Array.isArray(images) ? images : [])
+        .map((item) => String(item || '').trim())
+        .filter(Boolean)
+        .filter((item) => item !== DEFAULT_PLANT_IMAGE)
+        .slice(0, MAX_PLANT_IMAGES);
+
+    if (!safeImages.length) {
+        const safeFallback = String(fallbackImage || '').trim();
+        return safeFallback && safeFallback !== DEFAULT_PLANT_IMAGE ? safeFallback : '';
+    }
+
+    if (safeImages.length === 1) {
+        return safeImages[0];
+    }
+
+    return serializePlantImages(safeImages);
+}
+
 function renderImagePreviews() {
     if (!imagePreviewGrid || !uploadLabel || !removeImageBtn) {
         return;
@@ -877,10 +896,7 @@ async function savePlant() {
 
             const nextImagePath = (imageSelectionDirty && !finalImages.length)
                 ? ''
-                : buildSafeDbImagePath(
-                    finalImages,
-                    imageSelectionDirty ? DEFAULT_PLANT_IMAGE : (existing.image || DEFAULT_PLANT_IMAGE)
-                );
+                : buildDbImagePayload(finalImages, imageSelectionDirty ? '' : (existing.image || ''));
 
             const plantPayload = {
                 plant_id: Number(editingPlantId),
@@ -891,21 +907,26 @@ async function savePlant() {
             };
 
             let plantUpdated = false;
+            let updateErrorMessage = '';
             try {
                 plantUpdated = await plantsAPI.update(plantPayload);
             } catch (error) {
                 console.error('Failed to update plant:', error);
+                updateErrorMessage = String(error?.message || '').trim();
             }
 
             if (!plantUpdated) {
-                showErrorMessage('Failed to save changes to database.');
+                showErrorMessage(updateErrorMessage || 'Failed to save changes to database.');
                 return;
             }
 
             try {
                 if (window.GHPlantData) {
-                    if (imageSelectionDirty && !finalImages.length && typeof window.GHPlantData.removePlantImagesForPlant === 'function') {
-                        window.GHPlantData.removePlantImagesForPlant(editingPlantId);
+                    const containsInlineImages = finalImages.some((item) => String(item || '').trim().startsWith('data:image/'));
+                    if ((imageSelectionDirty && !finalImages.length) || containsInlineImages) {
+                        if (typeof window.GHPlantData.removePlantImagesForPlant === 'function') {
+                            window.GHPlantData.removePlantImagesForPlant(editingPlantId);
+                        }
                     } else if (typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
                         window.GHPlantData.savePlantImagesForPlant(editingPlantId, finalImages);
                     }
@@ -966,10 +987,11 @@ async function savePlant() {
             plant_name: name,
             category_id: categoryId,
             description,
-            image_path: buildSafeDbImagePath(finalImages, DEFAULT_PLANT_IMAGE)
+            image_path: buildDbImagePayload(finalImages)
         };
 
         let newPlantId = null;
+        let createErrorMessage = '';
         try {
             const created = await plantsAPI.create(plantPayload);
             if (typeof created === 'number') {
@@ -984,15 +1006,19 @@ async function savePlant() {
             }
 
             try {
-                if (window.GHPlantData && typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
+                const containsInlineImages = finalImages.some((item) => String(item || '').trim().startsWith('data:image/'));
+                if (window.GHPlantData && !containsInlineImages && typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
                     window.GHPlantData.savePlantImagesForPlant(newPlantId, finalImages);
+                } else if (window.GHPlantData && containsInlineImages && typeof window.GHPlantData.removePlantImagesForPlant === 'function') {
+                    window.GHPlantData.removePlantImagesForPlant(newPlantId);
                 }
             } catch (error) {
                 console.warn('Unable to persist plant image map locally:', error);
             }
         } catch (error) {
             console.error('Failed to create plant:', error);
-            showErrorMessage('Failed to create plant. Please try again.');
+            createErrorMessage = String(error?.message || '').trim();
+            showErrorMessage(createErrorMessage || 'Failed to create plant. Please try again.');
             return;
         }
 
@@ -1033,16 +1059,11 @@ async function savePlant() {
     }
 
     customCategories.add(category);
-    syncPlantInventory();
 
     closeAddModal();
+    await loadPlantInventory();
+    syncPlantInventory();
     initializeCategories();
-    
-    // Reload from DB to ensure sync with database
-    if (!isEditing) {
-        await loadPlantInventory();
-    }
-    
     renderPlants();
 
     if (isEditing) {
