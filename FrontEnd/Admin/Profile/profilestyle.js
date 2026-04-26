@@ -1,22 +1,52 @@
-// Logout function
+const PROFILE_CONTEXT_KEY = '__ghProfileAdminContext';
+
 function logout() {
-    // Clear admin session from localStorage
     localStorage.removeItem('admin');
-    // Redirect to signin page
+    localStorage.removeItem('role');
     window.location.href = '../../Admin/Auth/signin.html';
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+function getRoleLabel(roleValue) {
+    const rawRole = String(roleValue || '').trim();
+    if (!rawRole) {
+        return 'Administrator';
+    }
 
-    const manageBtn = document.getElementById("manageAdminsBtn");
+    if (rawRole.toLowerCase() === 'superadmin') {
+        return 'SuperAdmin';
+    }
 
-if (manageBtn) {
-    manageBtn.addEventListener("click", () => {
-        document.getElementById("adminSection").style.display = "block";
-        loadAdmins();
-    });
+    return rawRole;
 }
 
+function isSuperAdminRole(roleValue) {
+    return getRoleLabel(roleValue) === 'SuperAdmin';
+}
+
+function setProfileContext(currentRole, currentAdminId) {
+    window[PROFILE_CONTEXT_KEY] = {
+        currentRole: getRoleLabel(currentRole),
+        currentAdminId: Number.isFinite(Number(currentAdminId)) ? Number(currentAdminId) : null
+    };
+}
+
+function getProfileContext() {
+    return window[PROFILE_CONTEXT_KEY] || {
+        currentRole: getRoleLabel(localStorage.getItem('role')),
+        currentAdminId: null
+    };
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
     const ADMIN_KEY = 'admin';
     const DEFAULT_PROFILE_PHOTO = 'cc.jpg';
     const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -24,17 +54,14 @@ if (manageBtn) {
 
     let currentAdmin = loadAdminSession();
 
-    const role = localStorage.getItem("role");
-
-        if (role === "SuperAdmin") {
-            const btn = document.getElementById("manageAdminsBtn");
-            if (btn) btn.style.display = "block";
-        }
-
     if (!currentAdmin) {
         window.location.href = '../../Admin/Auth/signin.html';
         return;
     }
+
+    let currentRole = getRoleLabel(currentAdmin.role || localStorage.getItem('role'));
+    localStorage.setItem('role', currentRole);
+    setProfileContext(currentRole, currentAdmin.admin_id);
 
     let adminRecord = { ...currentAdmin };
     let pendingPhotoDataUrl = '';
@@ -42,7 +69,7 @@ if (manageBtn) {
 
     let profile = {
         fullName: currentAdmin.full_name || currentAdmin.name || 'Admin',
-        role: currentAdmin.role || 'Administrator',
+        role: currentRole,
         email: currentAdmin.email || '',
         phone: currentAdmin.phone || '',
         photo: currentAdmin.photo || ''
@@ -56,7 +83,12 @@ if (manageBtn) {
                 ...adminData
             };
             lastServerPhoto = String(adminData.photo || '').trim();
+            currentRole = getRoleLabel(adminData.role || currentRole);
+            localStorage.setItem('role', currentRole);
+            setProfileContext(currentRole, currentAdmin.admin_id);
+
             profile.fullName = adminData.full_name || adminData.name || profile.fullName;
+            profile.role = currentRole;
             profile.email = adminData.email || profile.email;
             profile.phone = adminData.phone || profile.phone;
             profile.photo = adminData.photo || profile.photo;
@@ -67,6 +99,8 @@ if (manageBtn) {
 
     const heroName = document.getElementById('heroName');
     const headerName = document.querySelector('.user-name');
+    const headerRole = document.getElementById('headerRole');
+    const heroRoleLine = document.getElementById('heroRoleLine');
     const detailFullName = document.getElementById('detailFullName');
     const detailRole = document.getElementById('detailRole');
     const detailEmail = document.getElementById('detailEmail');
@@ -100,6 +134,142 @@ if (manageBtn) {
     const logSearchInput = document.getElementById('logSearchInput');
     const transactionLogBody = document.getElementById('transactionLogBody');
 
+    const manageAdminsBtn = document.getElementById('manageAdminsBtn');
+    const adminSection = document.getElementById('adminSection');
+    const addAdminToggleBtn = document.getElementById('addAdminToggleBtn');
+    const addAdminForm = document.getElementById('addAdminForm');
+    const cancelAddAdminBtn = document.getElementById('cancelAddAdminBtn');
+    const addAdminError = document.getElementById('addAdminError');
+    const newAdminFullName = document.getElementById('newAdminFullName');
+    const newAdminEmail = document.getElementById('newAdminEmail');
+    const newAdminPhone = document.getElementById('newAdminPhone');
+    const newAdminPassword = document.getElementById('newAdminPassword');
+    const newAdminRole = document.getElementById('newAdminRole');
+    const toggleNewAdminPasswordBtn = document.getElementById('toggleNewAdminPasswordBtn');
+
+    const isSuperAdmin = isSuperAdminRole(profile.role);
+    if (isSuperAdmin && manageAdminsBtn) {
+        manageAdminsBtn.classList.remove('hidden');
+    }
+
+    if (isSuperAdmin && addAdminToggleBtn) {
+        addAdminToggleBtn.classList.remove('hidden');
+    }
+
+    if (manageAdminsBtn && adminSection) {
+        manageAdminsBtn.addEventListener('click', async () => {
+            adminSection.classList.remove('hidden');
+            await loadAdmins();
+        });
+    }
+
+    if (addAdminToggleBtn && addAdminForm) {
+        addAdminToggleBtn.addEventListener('click', () => {
+            addAdminError.textContent = '';
+            addAdminForm.classList.toggle('hidden');
+
+            if (!addAdminForm.classList.contains('hidden')) {
+                newAdminFullName.focus();
+            }
+        });
+    }
+
+    if (cancelAddAdminBtn && addAdminForm) {
+        cancelAddAdminBtn.addEventListener('click', () => {
+            addAdminError.textContent = '';
+            addAdminForm.reset();
+            if (newAdminPassword) {
+                newAdminPassword.type = 'password';
+            }
+            if (toggleNewAdminPasswordBtn) {
+                toggleNewAdminPasswordBtn.textContent = 'Show';
+                toggleNewAdminPasswordBtn.setAttribute('aria-label', 'Show password');
+                toggleNewAdminPasswordBtn.setAttribute('aria-pressed', 'false');
+            }
+            addAdminForm.classList.add('hidden');
+        });
+    }
+
+    if (toggleNewAdminPasswordBtn && newAdminPassword) {
+        toggleNewAdminPasswordBtn.addEventListener('click', () => {
+            const isHidden = newAdminPassword.type === 'password';
+            newAdminPassword.type = isHidden ? 'text' : 'password';
+            toggleNewAdminPasswordBtn.textContent = isHidden ? 'Hide' : 'Show';
+            toggleNewAdminPasswordBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            toggleNewAdminPasswordBtn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+        });
+    }
+
+    if (addAdminForm) {
+        addAdminForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            addAdminError.textContent = '';
+
+            if (!isSuperAdminRole(profile.role)) {
+                addAdminError.textContent = 'Only SuperAdmin can create admin accounts.';
+                return;
+            }
+
+            const fullName = String(newAdminFullName.value || '').trim();
+            const email = String(newAdminEmail.value || '').trim();
+            const phone = String(newAdminPhone.value || '').trim();
+            const password = String(newAdminPassword.value || '').trim();
+            const role = getRoleLabel(newAdminRole.value);
+
+            if (!fullName || !email || !phone || !password) {
+                addAdminError.textContent = 'Please complete all required fields.';
+                return;
+            }
+
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                addAdminError.textContent = 'Please enter a valid email address.';
+                return;
+            }
+
+            if (password.length < 6) {
+                addAdminError.textContent = 'Password must be at least 6 characters.';
+                return;
+            }
+
+            try {
+                await createAdminAccount({
+                    full_name: fullName,
+                    email,
+                    phone,
+                    password,
+                    role
+                });
+
+                if (typeof createAdminActivityLog === 'function') {
+                    await createAdminActivityLog({
+                        action_performed: `Created admin "${fullName}"`,
+                        module_used: 'Profile'
+                    });
+                }
+
+                addAdminForm.reset();
+                if (newAdminPassword) {
+                    newAdminPassword.type = 'password';
+                }
+                if (toggleNewAdminPasswordBtn) {
+                    toggleNewAdminPasswordBtn.textContent = 'Show';
+                    toggleNewAdminPasswordBtn.setAttribute('aria-label', 'Show password');
+                    toggleNewAdminPasswordBtn.setAttribute('aria-pressed', 'false');
+                }
+                addAdminForm.classList.add('hidden');
+                showToast('Admin account created successfully.');
+                await loadAdmins();
+            } catch (error) {
+                const message = String(error?.message || 'Unable to create admin account.');
+                if (message.includes('405')) {
+                    addAdminError.textContent = 'Create Admin endpoint is not active in the running backend. Restart your API and try again.';
+                } else {
+                    addAdminError.textContent = message;
+                }
+            }
+        });
+    }
+
     renderProfile(profile);
     await loadAdminLogs();
 
@@ -114,7 +284,7 @@ if (manageBtn) {
             editFullName.value = profile.fullName;
             editEmail.value = profile.email;
             editPhone.value = profile.phone;
-            editRole.value = profile.role;
+            editRole.value = getRoleLabel(profile.role);
             if (editPhotoInput) {
                 editPhotoInput.value = '';
             }
@@ -397,11 +567,15 @@ if (manageBtn) {
             photo: adminRecord.photo || data.photo || ''
         };
 
+        currentRole = getRoleLabel(currentAdmin.role || data.role || currentRole);
+        localStorage.setItem('role', currentRole);
+        setProfileContext(currentRole, currentAdmin.admin_id);
+
         localStorage.setItem(ADMIN_KEY, JSON.stringify(currentAdmin));
 
         return {
             fullName: currentAdmin.full_name || currentAdmin.name || data.fullName,
-            role: currentAdmin.role || data.role || 'Administrator',
+            role: currentRole,
             email: currentAdmin.email || data.email,
             phone: currentAdmin.phone || data.phone,
             photo: currentAdmin.photo || data.photo || ''
@@ -409,10 +583,13 @@ if (manageBtn) {
     }
 
     function renderProfile(data) {
+        const resolvedRole = getRoleLabel(data.role);
         if (heroName) heroName.textContent = data.fullName;
         if (headerName) headerName.textContent = data.fullName;
+        if (headerRole) headerRole.textContent = resolvedRole;
+        if (heroRoleLine) heroRoleLine.textContent = `${resolvedRole} for catalog, reservations, and delivery operations`;
         if (detailFullName) detailFullName.textContent = data.fullName;
-        if (detailRole) detailRole.textContent = data.role;
+        if (detailRole) detailRole.textContent = resolvedRole;
         if (detailEmail) detailEmail.textContent = data.email;
         if (detailPhone) detailPhone.textContent = data.phone || 'Not set';
         setProfilePhotoImage(headerAvatarImage, data.photo);
@@ -532,49 +709,110 @@ if (manageBtn) {
             profileToast.classList.add('hidden');
         }, 2200);
     }
+
+    async function createAdminAccount(payload) {
+        try {
+            return await apiRequest('/admin', 'POST', payload);
+        } catch (error) {
+            const message = String(error?.message || '').toLowerCase();
+            const isMethodNotAllowed = message.includes('405');
+
+            if (!isMethodNotAllowed) {
+                throw error;
+            }
+
+            try {
+                return await apiRequest('/admin/signup', 'POST', payload);
+            } catch (fallbackError) {
+                const fallbackMessage = String(fallbackError?.message || '').toLowerCase();
+                const signupDisabled = fallbackMessage.includes('disabled');
+
+                if (signupDisabled) {
+                    throw error;
+                }
+
+                throw fallbackError;
+            }
+        }
+    }
 });
 
 async function loadAdmins() {
     try {
         const admins = await apiRequest('/admin', 'GET');
-
-        const container = document.getElementById("adminList");
-
-        container.innerHTML = admins.map(a => `
-            <div style="margin-bottom:10px;">
-                ${a.full_name} (${a.email})
-                <button onclick="deleteAdmin(${a.admin_id})" class="delete-btn">
-                    Delete
-                </button>
-            </div>
-        `).join('');
-
-        // Hide delete if NOT superadmin
-        const role = localStorage.getItem("role");
-        if (role !== "SuperAdmin") {
-            document.querySelectorAll(".delete-btn").forEach(btn => {
-                btn.style.display = "none";
-            });
+        const container = document.getElementById('adminList');
+        if (!container) {
+            return;
         }
 
-    } catch (err) {
-        console.error(err);
+        const context = getProfileContext();
+        const canManage = isSuperAdminRole(context.currentRole);
+
+        if (!Array.isArray(admins) || admins.length === 0) {
+            container.innerHTML = '<div class="admin-list-empty">No admin accounts found.</div>';
+            return;
+        }
+
+        container.innerHTML = admins.map((admin) => {
+            const isOwnRecord = Number(admin.admin_id) === Number(context.currentAdminId);
+            const shouldHideDelete = !canManage || isOwnRecord;
+
+            return `
+            <article class="admin-item">
+                <div class="admin-item-copy">
+                    <p class="admin-name">${escapeHtml(admin.full_name || 'Unnamed Admin')}</p>
+                    <p class="admin-meta">${escapeHtml(admin.email || '')} • ${escapeHtml(getRoleLabel(admin.role))}</p>
+                </div>
+                <button class="admin-action-btn js-delete-admin-btn" data-admin-id="${Number(admin.admin_id)}" ${shouldHideDelete ? 'style="display:none;"' : ''}>Delete Admin</button>
+            </article>
+        `;
+        }).join('');
+
+        container.querySelectorAll('.js-delete-admin-btn').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const id = Number(button.getAttribute('data-admin-id'));
+                if (!Number.isFinite(id)) {
+                    return;
+                }
+
+                await deleteAdmin(id);
+            });
+        });
+    } catch (error) {
+        console.error(error);
     }
 }
 
 async function deleteAdmin(id) {
-    if (!confirm("Are you sure you want to delete this admin?")) return;
+    const context = getProfileContext();
+
+    if (!isSuperAdminRole(context.currentRole)) {
+        alert('Only SuperAdmin can delete admin accounts.');
+        return;
+    }
+
+    if (Number(id) === Number(context.currentAdminId)) {
+        alert('You cannot delete your own active admin account.');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to delete this admin?')) return;
 
     try {
         await apiRequest(`/admin?id=${id}`, 'DELETE');
-        alert("Admin deleted successfully!");
-        loadAdmins();
-    } catch (err) {
-        alert("Error deleting admin");
+        if (typeof createAdminActivityLog === 'function') {
+            await createAdminActivityLog({
+                action_performed: `Deleted admin #${id}`,
+                module_used: 'Profile'
+            });
+        }
+        alert('Admin deleted successfully!');
+        await loadAdmins();
+    } catch (error) {
+        alert('Error deleting admin');
     }
 }
 
-// Logout button handler
 document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {

@@ -52,6 +52,16 @@ namespace API.Controllers
 			public string NewPassword { get; set; }
 		}
 
+		public class CreateAdminRequest
+		{
+			public string full_name { get; set; }
+			public string email { get; set; }
+			public string phone { get; set; }
+			public string password { get; set; }
+			public string role { get; set; }
+			public string? photo { get; set; }
+		}
+
 		// =========================
 		// 🎨 EMAIL TEMPLATE (REUSABLE)
 		// =========================
@@ -102,6 +112,65 @@ namespace API.Controllers
 		public Admin GetById(int id)
 		{
 			return adminServices.GetById(id);
+		}
+
+		[HttpPost]
+		public IActionResult Create([FromBody] CreateAdminRequest data)
+		{
+			var requesterRole = Request.Headers["role"].FirstOrDefault();
+
+			if (string.IsNullOrWhiteSpace(requesterRole) || !string.Equals(requesterRole, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
+			{
+				return Unauthorized("Only Super Admin can perform this action.");
+			}
+
+			if (data == null)
+			{
+				return BadRequest("Request body is required.");
+			}
+
+			if (string.IsNullOrWhiteSpace(data.full_name) || string.IsNullOrWhiteSpace(data.email) || string.IsNullOrWhiteSpace(data.phone) || string.IsNullOrWhiteSpace(data.password))
+			{
+				return BadRequest("Full name, email, phone, and password are required.");
+			}
+
+			if (data.password.Trim().Length < 6)
+			{
+				return BadRequest("Password must be at least 6 characters.");
+			}
+
+			var normalizedEmail = data.email.Trim().ToLowerInvariant();
+			if (adminServices.GetByEmail(normalizedEmail) != null)
+			{
+				return BadRequest("Email is already registered.");
+			}
+
+			var role = string.Equals(data.role, "SuperAdmin", StringComparison.OrdinalIgnoreCase)
+				? "SuperAdmin"
+				: "Administrator";
+
+			var newAdmin = new Admin
+			{
+				full_name = data.full_name.Trim(),
+				email = normalizedEmail,
+				phone = data.phone.Trim(),
+				photo = string.IsNullOrWhiteSpace(data.photo) ? string.Empty : data.photo.Trim(),
+				password_hash = BCrypt.Net.BCrypt.HashPassword(data.password),
+				role = role,
+				created_at = DateTime.Now,
+				updated_at = DateTime.Now,
+				is_verified = true,
+				verification_code = null,
+				code_expiry = null
+			};
+
+			var result = adminServices.Add(newAdmin);
+			if (!result)
+			{
+				return BadRequest("Unable to create admin account.");
+			}
+
+			return Ok(new { message = "Admin account created." });
 		}
 
 		// =========================
