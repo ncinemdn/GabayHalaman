@@ -2731,3 +2731,59 @@ body {
         font-size: 0.68rem;
     }
 }
+
+/* Final navbar visibility and uniformity pass */
+.header {
+    background: rgba(109, 158, 82, 0.86);
+    border-bottom-color: rgba(255, 255, 255, 0.32);
+}
+
+.header.is-scrolled {
+    background: rgba(72, 112, 53, 0.74);
+    border-bottom-color: rgba(255, 255, 255, 0.24);
+}
+
+.nav {
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: clamp(1.18rem, 1.32vw, 1.34rem);
+    color: #ffffff;
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+
+.nav a,
+.nav-dropdown-toggle {
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    text-decoration: none;
+}
+
+.nav-dropdown-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    margin: 0;
+}
+
+.nav a:hover,
+.nav-dropdown-toggle:hover {
+    opacity: 0.82;
+}
+
+.header-icons {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.44);
+}
+
+.icon-btn svg path {
+    fill: #ffffff;
+}
