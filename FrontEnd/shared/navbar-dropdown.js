@@ -41,11 +41,11 @@
                 left: 50%;
                 transform: translateX(-50%) translateY(8px);
                 min-width: 170px;
-                background: #ffffff;
-                border-radius: 0;
-                box-shadow: none;
-                border: none;
-                padding: 0;
+                background: rgba(249, 255, 245, 0.98);
+                border-radius: 12px;
+                box-shadow: 0 10px 24px rgba(20, 49, 12, 0.18);
+                border: 1px solid rgba(102, 146, 83, 0.2);
+                padding: 10px 0;
                 z-index: 1000;
                 opacity: 0;
                 visibility: hidden;
@@ -55,7 +55,7 @@
 
             .nav-dropdown-menu a {
                 display: block;
-                padding: 14px 16px;
+                padding: 10px 16px;
                 font-size: 16px;
                 line-height: 1.25;
                 font-family: 'Poppins', sans-serif;
@@ -195,6 +195,16 @@
 
     ensureBadgeStyles();
     ensureDropdownStyles();
+
+    const header = document.querySelector('.header');
+    if (header) {
+        const syncHeaderState = () => {
+            header.classList.toggle('is-scrolled', window.scrollY > 10);
+        };
+
+        syncHeaderState();
+        window.addEventListener('scroll', syncHeaderState, { passive: true });
+    }
 
     const dropdowns = Array.from(document.querySelectorAll('.nav-dropdown'));
 

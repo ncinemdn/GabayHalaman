@@ -241,7 +241,7 @@ body {
   background: white;
   position: relative;
   min-height: 100vh;
-  padding-top: 108px;
+  padding-top: 20px;
 }
 
 /* Page Heading */
@@ -1243,7 +1243,7 @@ svg {
   }
 
   .bg-white {
-    padding-top: 92px;
+    padding-top: 14px;
   }
 
   .page-heading {

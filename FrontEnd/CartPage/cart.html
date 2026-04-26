@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -238,7 +238,7 @@ body {
 .page-wrap {
     max-width: 1120px;
     margin: 0 auto;
-    margin-top: 106px;
+    margin-top: 20px;
     padding: 1.25rem 1rem 2rem;
 }
 
@@ -464,7 +464,7 @@ body {
 }
 
 .product-checkbox:checked::after {
-    content: '✓';
+    content: 'âœ“';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -571,7 +571,7 @@ body {
     }
 
     .page-wrap {
-        margin-top: 92px;
+        margin-top: 14px;
         padding: 0.95rem 0.72rem 1.5rem;
     }
 
@@ -601,6 +601,8 @@ body {
 }
 </style>
 
+
+    <link rel='stylesheet' href='../shared/navbar-unified.css'>
 </head>
 
 <body>
@@ -671,7 +673,7 @@ body {
 <div>
 <div class="summary-row">
 <span id="count">Subtotal (3 items)</span>
-<span id="subtotal" class="font-semibold">₱1,999.00</span>
+<span id="subtotal" class="font-semibold">â‚±1,999.00</span>
 </div>
 
 <div class="summary-row">
@@ -688,7 +690,7 @@ Shipping charges are determined based on the delivery distance to the destinatio
 
 <div class="summary-total">
 <span>Total</span>
-<span id="total">₱1,999.00</span>
+<span id="total">â‚±1,999.00</span>
 </div>
 
 <button id="deliveryBtn" class="summary-btn delivery">
@@ -865,19 +867,19 @@ function render(){
                 <img src="${item.img}" class="item-thumb" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
                 <div>
                     <h3 class="item-name">${item.name}</h3>
-                    <p class="item-price">₱ ${item.price}</p>
+                    <p class="item-price">â‚± ${item.price}</p>
                 </div>
             </div>
 
             <div class="item-actions">
 
                 <div class="qty-chip">
-                    <button class="qty-btn" onclick="qty(${item.id},-1)">−</button>
+                    <button class="qty-btn" onclick="qty(${item.id},-1)">âˆ’</button>
                     <span class="qty-value">${item.qty}</span>
                     <button class="qty-btn" onclick="qty(${item.id},1)">+</button>
                 </div>
 
-                <button onclick="del(${item.id})" class="del-btn" aria-label="Delete item">🗑</button>
+                <button onclick="del(${item.id})" class="del-btn" aria-label="Delete item">ðŸ—‘</button>
 
             </div>
 
@@ -932,7 +934,7 @@ function update(){
 
     document.getElementById("count").innerText = `Subtotal (${totalQty} items)`;
 
-    let price = "₱ " + totalPrice.toLocaleString("en-PH",{minimumFractionDigits:2});
+    let price = "â‚± " + totalPrice.toLocaleString("en-PH",{minimumFractionDigits:2});
 
     document.getElementById("subtotal").innerText = price;
     document.getElementById("total").innerText = price;

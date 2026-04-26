@@ -1,0 +1,247 @@
+/* Shared customer-facing navbar (matches landing page design/functionality) */
+
+.header {
+    background: rgba(109, 158, 82, 0.86);
+    padding: 14px 0;
+    position: sticky !important;
+    top: 0 !important;
+    left: 0;
+    width: 100%;
+    z-index: 1200;
+    transition: background-color 0.25s ease, backdrop-filter 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+.header.is-scrolled {
+    background: rgba(72, 112, 53, 0.74);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 20px rgba(23, 44, 14, 0.28);
+    border-bottom-color: rgba(255, 255, 255, 0.24);
+}
+
+.header-inner {
+    background-color: transparent;
+    border-radius: 0;
+    padding: 8px 28px;
+    max-width: 1340px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+    align-items: center;
+    column-gap: 20px;
+    box-shadow: none;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    justify-self: start;
+    gap: 12px;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 4px 10px 4px 4px;
+    transition: background-color 0.2s ease;
+}
+
+.logo-section:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.logo {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.brand-text {
+    height: 24px;
+    width: auto;
+    display: block;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    gap: 34px;
+    font-family: 'Inria Serif', serif;
+    font-weight: 700;
+    font-size: clamp(1.18rem, 1.32vw, 1.34rem);
+    color: #ffffff;
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+
+.nav a,
+.nav-dropdown-toggle {
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    text-decoration: none;
+}
+
+.nav a:hover,
+.nav-dropdown-toggle:hover {
+    opacity: 0.82;
+}
+
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.nav-dropdown-toggle:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.nav-dropdown-menu {
+    display: block;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    min-width: 170px;
+    background: rgba(249, 255, 245, 0.98);
+    border-radius: 12px;
+    border: 1px solid rgba(102, 146, 83, 0.2);
+    box-shadow: 0 10px 24px rgba(20, 49, 12, 0.18);
+    padding: 10px 0;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+}
+
+.nav-dropdown-menu a {
+    display: block;
+    padding: 10px 16px;
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    color: #111111;
+    line-height: 1.25;
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.nav-dropdown-menu a:hover {
+    background: #f7f7f7;
+}
+
+.nav-dropdown.is-open .nav-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.cart-dropdown-menu {
+    left: auto;
+    right: 0;
+    transform: translateY(8px);
+    min-width: 170px;
+}
+
+.nav-dropdown.cart-dropdown.is-open .cart-dropdown-menu {
+    transform: translateY(0);
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+    justify-self: end;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.44);
+    border-radius: 999px;
+    padding: 3px 8px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-btn svg path {
+    fill: #ffffff;
+    transition: fill 0.2s ease;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.34);
+    transform: translateY(-1px);
+}
+
+.icon-btn:hover svg path {
+    fill: #f0fff0;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 10px 0 14px;
+    }
+
+    .header-inner {
+        grid-template-columns: 1fr auto;
+        padding: 0.7rem 1rem;
+        border-radius: 0;
+        column-gap: 8px;
+    }
+
+    .logo {
+        width: 44px;
+        height: 44px;
+    }
+
+    .brand-text {
+        height: 21px;
+    }
+
+    .nav {
+        display: none;
+    }
+
+    .header-icons {
+        gap: 6px;
+        padding: 3px 6px;
+    }
+
+    .icon-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+}

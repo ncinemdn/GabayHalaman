@@ -245,7 +245,7 @@ body {
 .container {
     max-width: 980px;
     margin: 0 auto;
-    margin-top: 106px;
+    margin-top: 20px;
     padding: 1.3rem 1rem 2.2rem;
 }
 
@@ -517,7 +517,7 @@ body {
     }
 
     .container {
-        margin-top: 98px;
+        margin-top: 16px;
     }
 
     .plants-grid {
@@ -532,7 +532,7 @@ body {
 @media (max-width: 768px) {
     .container {
         padding: 0.95rem 0.72rem 1.5rem;
-        margin-top: 92px;
+        margin-top: 14px;
     }
 
     .header-inner {
