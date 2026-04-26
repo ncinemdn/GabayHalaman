@@ -2445,7 +2445,7 @@ body {
 /* Visual polish pass */
 .shop-title-section {
     position: relative;
-    margin-top: 72px;
+    margin-top: 120px;
     padding: 30px 16px;
     background:
         radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.22) 0, rgba(255, 255, 255, 0) 36%),
@@ -2544,7 +2544,7 @@ body {
 
 @media (max-width: 900px) {
     .shop-title-section {
-        margin-top: 66px;
+        margin-top: 74px;
         padding: 24px 14px;
     }
 

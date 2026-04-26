@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shoppage.css">
+
+    <link rel='stylesheet' href='../shared/navbar-unified.css'>
 </head>
 
 <body class="product-detail-page">
@@ -87,10 +89,10 @@
                         
                         <div class="rating-price">
                             <div class="rating">
-                                <div class="stars">⭐⭐⭐⭐⭐</div>
+                                <div class="stars">â­â­â­â­â­</div>
                                 <span class="rating-percent">4.5 /5</span>
                             </div>
-                            <p class="price" id="plantPrice">₱250.00</p>
+                            <p class="price" id="plantPrice">â‚±250.00</p>
                             <p class="product-stock-status" id="plantStockStatus">Loading stock...</p>
                         </div>
                         
@@ -109,7 +111,7 @@
                         
                         <div class="cart-controls">
                             <div class="quantity-control">
-                                <button class="quantity-btn" id="decrementBtn">−</button>
+                                <button class="quantity-btn" id="decrementBtn">âˆ’</button>
                                 <div class="divider"></div>
                                 <span class="quantity-value" id="quantityValue">1</span>
                                 <div class="divider"></div>
@@ -126,7 +128,7 @@
                             <article class="meta-panel">
                                 <div class="meta-panel-header">
                                     <h4>Additional Description</h4>
-                                    <span class="meta-panel-caret" aria-hidden="true">⌃</span>
+                                    <span class="meta-panel-caret" aria-hidden="true">âŒƒ</span>
                                 </div>
                                 <p class="meta-panel-body" id="plantDescriptionFit">
                                     Loose-fit sweatshirt hoodie in medium weight cotton-blend fabric with a generous, but not oversized silhouette. Jersey-lined, drawstring hood, dropped shoulders, long sleeves, and a kangaroo pocket. Wide ribbing at cuffs and hem. Soft, brushed inside.
@@ -136,7 +138,7 @@
                             <article class="meta-panel">
                                 <div class="meta-panel-header">
                                     <h4>Shipping</h4>
-                                    <span class="meta-panel-caret" aria-hidden="true">⌃</span>
+                                    <span class="meta-panel-caret" aria-hidden="true">âŒƒ</span>
                                 </div>
 
                                 <div class="shipping-grid">
@@ -149,7 +151,7 @@
                                     </div>
 
                                     <div class="shipping-item">
-                                        <span class="shipping-icon" aria-hidden="true">◼</span>
+                                        <span class="shipping-icon" aria-hidden="true">â—¼</span>
                                         <div>
                                             <p class="shipping-label">Package</p>
                                             <p class="shipping-value">Regular Package</p>
@@ -157,7 +159,7 @@
                                     </div>
 
                                     <div class="shipping-item">
-                                        <span class="shipping-icon" aria-hidden="true">◷</span>
+                                        <span class="shipping-icon" aria-hidden="true">â—·</span>
                                         <div>
                                             <p class="shipping-label">Delivery Time</p>
                                             <p class="shipping-value" id="shippingDeliveryTimeValue">3-5 Working Days</p>
@@ -165,7 +167,7 @@
                                     </div>
 
                                     <div class="shipping-item">
-                                        <span class="shipping-icon" aria-hidden="true">⇢</span>
+                                        <span class="shipping-icon" aria-hidden="true">â‡¢</span>
                                         <div>
                                             <p class="shipping-label">Estimated Arrival</p>
                                             <p class="shipping-value" id="shippingEstimatedArrivalValue">Loading...</p>
@@ -189,11 +191,11 @@
                                 <p class="reviews-score-caption" id="reviewsCountValue">(50 New Reviews)</p>
 
                                 <div class="reviews-breakdown" id="reviewsBreakdown">
-                                    <div class="reviews-breakdown-row"><span>★ 5</span><div class="reviews-breakdown-bar"><span id="reviewsBar5"></span></div></div>
-                                    <div class="reviews-breakdown-row"><span>★ 4</span><div class="reviews-breakdown-bar"><span id="reviewsBar4"></span></div></div>
-                                    <div class="reviews-breakdown-row"><span>★ 3</span><div class="reviews-breakdown-bar"><span id="reviewsBar3"></span></div></div>
-                                    <div class="reviews-breakdown-row"><span>★ 2</span><div class="reviews-breakdown-bar"><span id="reviewsBar2"></span></div></div>
-                                    <div class="reviews-breakdown-row"><span>★ 1</span><div class="reviews-breakdown-bar"><span id="reviewsBar1"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>â˜… 5</span><div class="reviews-breakdown-bar"><span id="reviewsBar5"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>â˜… 4</span><div class="reviews-breakdown-bar"><span id="reviewsBar4"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>â˜… 3</span><div class="reviews-breakdown-bar"><span id="reviewsBar3"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>â˜… 2</span><div class="reviews-breakdown-bar"><span id="reviewsBar2"></span></div></div>
+                                    <div class="reviews-breakdown-row"><span>â˜… 1</span><div class="reviews-breakdown-bar"><span id="reviewsBar1"></span></div></div>
                                 </div>
                             </div>
 
@@ -204,11 +206,11 @@
                                         <div class="reviews-create-row">
                                             <input id="reviewUserName" type="text" class="reviews-input" placeholder="Your name" required>
                                             <div class="reviews-star-picker" id="reviewUserStars" role="radiogroup" aria-label="Choose rating">
-                                                <button type="button" class="reviews-star-btn" data-value="1" aria-label="1 star">★</button>
-                                                <button type="button" class="reviews-star-btn" data-value="2" aria-label="2 stars">★</button>
-                                                <button type="button" class="reviews-star-btn" data-value="3" aria-label="3 stars">★</button>
-                                                <button type="button" class="reviews-star-btn" data-value="4" aria-label="4 stars">★</button>
-                                                <button type="button" class="reviews-star-btn" data-value="5" aria-label="5 stars">★</button>
+                                                <button type="button" class="reviews-star-btn" data-value="1" aria-label="1 star">â˜…</button>
+                                                <button type="button" class="reviews-star-btn" data-value="2" aria-label="2 stars">â˜…</button>
+                                                <button type="button" class="reviews-star-btn" data-value="3" aria-label="3 stars">â˜…</button>
+                                                <button type="button" class="reviews-star-btn" data-value="4" aria-label="4 stars">â˜…</button>
+                                                <button type="button" class="reviews-star-btn" data-value="5" aria-label="5 stars">â˜…</button>
                                             </div>
                                         </div>
                                         <input id="reviewUserRating" type="hidden" required>
@@ -279,7 +281,7 @@
             </div>
 
             <div class="footer-bar">
-                <p>© 2026 GabayHalaman. All rights reserved.</p>
+                <p>Â© 2026 GabayHalaman. All rights reserved.</p>
             </div>
         </footer>
     </div>
@@ -291,3 +293,4 @@
     <script src="product-detail.js"></script>
 </body>
 </html>
+

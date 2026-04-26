@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="orderpage.css">
+
+    <link rel='stylesheet' href='../shared/navbar-unified.css'>
 </head>
 <body>
   <!-- Header -->
@@ -71,7 +73,7 @@
   <div id="order-details-page" class="page">
     <div class="bg-white">
       <div class="page-back-btn">
-        <button class="back-btn" onclick="navigateTo('order-list')">← Back to Orders</button>
+        <button class="back-btn" onclick="navigateTo('order-list')">â† Back to Orders</button>
       </div>
       <!-- Order Details heading -->
       <p class="page-heading">Order Details</p>
@@ -113,7 +115,7 @@
 
                 <p class="details-text">Payment Status: <span id="detailsPaymentStatus" class="payment-status-tag unpaid">Unpaid</span></p>
                 <p class="details-text">Total Quantity: <span id="detailsTotalQty">0</span></p>
-                <p class="details-text details-total">Total Price: <span id="detailsTotalPrice">₱0.00</span></p>
+                <p class="details-text details-total">Total Price: <span id="detailsTotalPrice">â‚±0.00</span></p>
               </div>
             </div>
           </div>
@@ -153,7 +155,7 @@
   <div id="track-order-page" class="page">
     <div class="bg-white">
       <div class="page-back-btn">
-        <button class="back-btn" onclick="navigateTo('order-details')">← Back to Details</button>
+        <button class="back-btn" onclick="navigateTo('order-details')">â† Back to Details</button>
       </div>
       <!-- Track Order heading -->
       <p class="page-heading">Track Order</p>
