@@ -23,6 +23,9 @@ namespace ProjectName.Models
         [Column("phone")]
         public string phone { get; set; }
 
+        [Column("photo")]
+        public string? photo { get; set; }
+
         [Column("password_hash")]
 		public string password_hash { get; set; }
 

@@ -377,7 +377,30 @@ function normalizeDashboardDeliveryStatus(status) {
     return 'pending';
 }
 
+function getDashboardBackendRequestId(record) {
+    const requestIdentityApi = window.GHRequestIdentity;
+    if (!requestIdentityApi || typeof requestIdentityApi.getRequestId !== 'function') {
+        return '';
+    }
+
+    return String(requestIdentityApi.getRequestId(record) || '').trim();
+}
+
+function isSameDashboardRequestRecord(localRecord, backendRecord) {
+    const requestIdentityApi = window.GHRequestIdentity;
+    if (!requestIdentityApi || typeof requestIdentityApi.isSameRequest !== 'function') {
+        return false;
+    }
+
+    return requestIdentityApi.isSameRequest(localRecord, backendRecord);
+}
+
 function getDashboardOrderKey(record) {
+    const backendRequestId = getDashboardBackendRequestId(record);
+    if (backendRequestId) {
+        return 'request:' + backendRequestId;
+    }
+
     const orderId = String(record.orderId || record.request_id || record.requestId || '').trim();
     if (orderId) {
         return 'order:' + orderId;
@@ -398,13 +421,21 @@ function getLocalDashboardPurchaseOrders() {
         return [];
     }
 
-    return purchases.map(order => ({
-        ...order,
-        orderId: String(order.orderId || order.id || '').trim(),
-        customerName: order.customerName || 'Customer',
-        request_status: normalizeDashboardRequestStatus(order.orderStatus),
-        request_type: 'purchase'
-    }));
+    return purchases.map(order => {
+        const localId = String(order.id || order.orderId || '').trim();
+        const backendRequestId = getDashboardBackendRequestId(order);
+
+        return {
+            ...order,
+            localId,
+            backendRequestId,
+            orderId: String(order.orderId || localId).trim(),
+            customerName: order.customerName || 'Customer',
+            request_status: normalizeDashboardRequestStatus(order.orderStatus),
+            request_type: 'purchase',
+            clientId: Number(order.clientId || order.client_id || 0) || 0
+        };
+    });
 }
 
 function getLocalDashboardReservationOrders() {
@@ -415,13 +446,21 @@ function getLocalDashboardReservationOrders() {
 
     return reservations
         .filter(order => order && order.isPlacedOrder === true)
-        .map(order => ({
-            ...order,
-            orderId: String(order.orderId || order.id || '').trim(),
-            customerName: order.customerName || 'Customer',
-            request_status: normalizeDashboardRequestStatus(order.orderStatus),
-            request_type: 'reservation'
-        }));
+        .map(order => {
+            const localId = String(order.id || order.orderId || '').trim();
+            const backendRequestId = getDashboardBackendRequestId(order);
+
+            return {
+                ...order,
+                localId,
+                backendRequestId,
+                orderId: String(order.orderId || localId).trim(),
+                customerName: order.customerName || 'Customer',
+                request_status: normalizeDashboardRequestStatus(order.orderStatus),
+                request_type: 'reservation',
+                clientId: Number(order.clientId || order.client_id || 0) || 0
+            };
+        });
 }
 
 function mergeDashboardRequestsWithLocal(backendRequests, localRequests) {
@@ -429,29 +468,34 @@ function mergeDashboardRequestsWithLocal(backendRequests, localRequests) {
         return backendRequests;
     }
 
-    const localMap = new Map();
-    localRequests.forEach(order => {
-        const key = String(order.orderId || order.request_id || order.id || '').trim();
-        if (key) {
-            localMap.set(key, order);
-        }
-    });
+    const remainingLocalRequests = [...localRequests];
 
     const merged = backendRequests.map(order => {
-        const key = String(order.orderId || order.request_id || order.id || '').trim();
-        const localOrder = localMap.get(key);
-        if (!localOrder) {
+        const backendRequestId = getDashboardBackendRequestId(order);
+        const localOrderIndex = remainingLocalRequests.findIndex(localOrder => {
+            const localRequestId = getDashboardBackendRequestId(localOrder);
+            if (backendRequestId && localRequestId) {
+                return backendRequestId === localRequestId;
+            }
+
+            return isSameDashboardRequestRecord(localOrder, order);
+        });
+
+        if (localOrderIndex === -1) {
             return order;
         }
 
-        localMap.delete(key);
+        const [localOrder] = remainingLocalRequests.splice(localOrderIndex, 1);
         return {
             ...order,
-            ...localOrder
+            ...localOrder,
+            backendRequestId: backendRequestId || localOrder.backendRequestId || '',
+            localId: localOrder.localId || '',
+            orderId: localOrder.orderId || order.orderId || ''
         };
     });
 
-    return [...Array.from(localMap.values()), ...merged];
+    return [...remainingLocalRequests, ...merged];
 }
 
 
@@ -467,8 +511,11 @@ async function getDashboardData() {
 
         const normalizedBackendRequests = (Array.isArray(backendRequests) ? backendRequests : []).map(request => ({
             ...request,
+            backendRequestId: String(request.request_id || '').trim(),
+            localId: '',
             orderId: String(request.request_id || request.orderId || '').trim(),
-            customerName: request.client_name || request.customerName || request.customer_name || ''
+            customerName: request.client_name || request.customerName || request.customer_name || '',
+            clientId: Number(request.client_id || 0) || 0
         }));
 
         const localRequests = [
@@ -614,26 +661,22 @@ const clientsIconSvg = '<svg width="56" height="59" fill="none" viewBox="0 0 56 
 async function populateDashboard() {
     const data = await getDashboardData();
    
-    // Update user info from backend if possible
     let userName = 'Admin';
-    let userRole = 'Administrator';
-    try {
-        const currentAdmin = JSON.parse(localStorage.getItem('admin') || 'null');
-        if (currentAdmin?.admin_id) {
-            const adminData = await adminAPI.getById(currentAdmin.admin_id);
-            userName = adminData?.full_name || adminData?.name || userName;
-            userRole = adminData?.role || userRole;
-        }
-    } catch (error) {
-        console.warn('Unable to load admin user data:', error);
+    if (window.GHAdminHeader && typeof window.GHAdminHeader.apply === 'function') {
+        const adminProfile = await window.GHAdminHeader.apply({
+            nameSelector: '#dashboardUserName',
+            roleSelector: '#dashboardUserRole',
+            avatarSelector: '.dashboard-topbar .user-avatar img',
+            greetingSelector: '#dashboardGreeting',
+            greetingTemplate: "Welcome back, {name}! Here's your store summary.",
+            fallbackPhoto: '../Profile/cc.jpg'
+        });
+        userName = adminProfile?.fullName || userName;
+    } else {
+        document.getElementById('dashboardUserName').textContent = userName;
+        document.getElementById('dashboardUserRole').textContent = 'Administrator';
+        document.getElementById('dashboardGreeting').textContent = `Welcome back, ${userName}! Here's your store summary.`;
     }
-
-
-
-
-    document.getElementById('dashboardUserName').textContent = userName;
-    document.getElementById('dashboardUserRole').textContent = userRole;
-    document.getElementById('dashboardGreeting').textContent = `Welcome back, ${userName}! Here's your store summary.`;
    
     // Create stat cards
     const statsHtml = `

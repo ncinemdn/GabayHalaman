@@ -3,6 +3,7 @@ using ProjectName.Models;
 using ProjectName.Services;
 using BCrypt.Net;
 using System.Collections.Concurrent;
+using System.IO;
 
 namespace API.Controllers
 {
@@ -374,9 +375,18 @@ namespace API.Controllers
 		// =========================
 
 		[HttpPut]
-		public bool Update(Admin ad)
+		public async Task<ActionResult<bool>> Update(Admin ad)
 		{
-			return adminServices.Updatet(ad);
+			try
+			{
+				ad.photo = await PersistInlinePhotoIfNeeded(ad.photo);
+			}
+			catch (InvalidOperationException error)
+			{
+				return BadRequest(new { message = error.Message });
+			}
+
+			return Ok(adminServices.Updatet(ad));
 		}
 
 		[HttpDelete]
@@ -389,6 +399,75 @@ namespace API.Controllers
 		public bool ChangePassword(int id, [FromBody] ChangePasswordRequest request)
 		{
 			return adminServices.ChangePassword(id, request.CurrentPassword, request.NewPassword);
+		}
+
+		private static bool IsInlineImage(string value)
+		{
+			return (value ?? string.Empty).Trim().StartsWith("data:image/", StringComparison.OrdinalIgnoreCase);
+		}
+
+		private async Task<string> PersistInlinePhotoIfNeeded(string photoValue)
+		{
+			var rawData = (photoValue ?? string.Empty).Trim();
+			if (string.IsNullOrWhiteSpace(rawData) || !IsInlineImage(rawData))
+			{
+				return rawData;
+			}
+
+			var commaIndex = rawData.IndexOf(',');
+			if (commaIndex < 0)
+			{
+				throw new InvalidOperationException("Invalid profile photo data format.");
+			}
+
+			var metadata = rawData.Substring(5, commaIndex - 5);
+			var base64Payload = rawData.Substring(commaIndex + 1);
+			var extension = ".jpg";
+			if (metadata.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+			{
+				var mediaType = metadata.Split(';')[0];
+				var imageType = mediaType.Substring("image/".Length).Trim().ToLowerInvariant();
+				extension = imageType switch
+				{
+					"jpeg" => ".jpg",
+					"jpg" => ".jpg",
+					"png" => ".png",
+					"webp" => ".webp",
+					"gif" => ".gif",
+					_ => ".jpg"
+				};
+			}
+
+			byte[] imageBytes;
+			try
+			{
+				imageBytes = Convert.FromBase64String(base64Payload);
+			}
+			catch
+			{
+				throw new InvalidOperationException("Unable to decode profile photo.");
+			}
+
+			if (imageBytes.Length == 0)
+			{
+				throw new InvalidOperationException("Decoded profile photo is empty.");
+			}
+
+			const int maxImageBytes = 5 * 1024 * 1024;
+			if (imageBytes.Length > maxImageBytes)
+			{
+				throw new InvalidOperationException("Profile photo is too large. Maximum file size is 5 MB.");
+			}
+
+			var uploadsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "admin");
+			Directory.CreateDirectory(uploadsDirectory);
+
+			var token = Guid.NewGuid().ToString("N").Substring(0, 10);
+			var fileName = $"admin-{token}{extension}";
+			var fullFilePath = Path.Combine(uploadsDirectory, fileName);
+			await System.IO.File.WriteAllBytesAsync(fullFilePath, imageBytes);
+
+			return $"/uploads/admin/{fileName}";
 		}
 	}
 }

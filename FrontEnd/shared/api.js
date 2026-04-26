@@ -265,7 +265,7 @@ const categoriesAPI = {
   ),
   update: (data) => apiRequest('/category', 'PUT', data),
   delete: (id) => withAdminActivity(
-    () => apiRequest(`/category/${id}`, 'DELETE'),
+    () => apiRequest(`/category?id=${encodeURIComponent(id)}`, 'DELETE'),
     () => ({
       action_performed: `Deleted category #${id}`,
       module_used: 'Plant Catalog'
@@ -307,7 +307,19 @@ const requestsAPI = {
   create: (data) => apiRequest('/request', 'POST', data),
   update: (data) => apiRequest('/request', 'PUT', data),
   delete: (id) => withAdminActivity(
-    () => apiRequest(`/request/${id}`, 'DELETE'),
+    async () => {
+      try {
+        return await apiRequest(`/request/${id}`, 'DELETE');
+      } catch (error) {
+        const message = String(error?.message || '').toLowerCase();
+        const isUnsupportedRoute = message.includes('405') || message.includes('404');
+        if (!isUnsupportedRoute) {
+          throw error;
+        }
+
+        return apiRequest(`/request?id=${encodeURIComponent(id)}`, 'DELETE');
+      }
+    },
     () => ({
       action_performed: `Deleted request #${id}`,
       module_used: getCurrentAdminModule()
@@ -318,6 +330,275 @@ const requestsAPI = {
     () => buildRequestStatusLogEntry(id, data)
   ),
   getDeliveryWindow: (clientId) => apiRequest(`/request/delivery-window/${clientId}`),
+};
+
+function normalizeRequestIdentityText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function getPositiveRequestIdentityId(value) {
+  const normalized = String(value ?? '').trim();
+  if (!/^\d+$/.test(normalized)) {
+    return '';
+  }
+
+  const numericValue = Number(normalized);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return '';
+  }
+
+  return String(Math.trunc(numericValue));
+}
+
+function getRequestIdentityId(record) {
+  if (!record || typeof record !== 'object') {
+    return '';
+  }
+
+  const directCandidates = [
+    record.backendRequestId,
+    record.backend_request_id,
+    record.request_id,
+    record.requestId
+  ];
+
+  for (const candidate of directCandidates) {
+    const resolvedId = getPositiveRequestIdentityId(candidate);
+    if (resolvedId) {
+      return resolvedId;
+    }
+  }
+
+  const numericOrderId = getPositiveRequestIdentityId(record.orderId);
+  if (numericOrderId) {
+    return numericOrderId;
+  }
+
+  return getPositiveRequestIdentityId(record.id);
+}
+
+function getRequestIdentityTimestamp(record) {
+  if (!record || typeof record !== 'object') {
+    return null;
+  }
+
+  const rawValue = record.request_date
+    || record.requestDate
+    || record.createdAt
+    || record.created_at
+    || record.last_updated
+    || record.lastUpdated
+    || '';
+
+  const parsed = Date.parse(rawValue);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getRequestIdentityPlantSignature(record) {
+  if (!record || typeof record !== 'object') {
+    return '';
+  }
+
+  const directPlantName = record.plantOrdered || record.plant_name || record.plantName;
+  if (directPlantName) {
+    return normalizeRequestIdentityText(directPlantName);
+  }
+
+  if (!Array.isArray(record.items) || !record.items.length) {
+    return '';
+  }
+
+  return record.items
+    .map((item) => normalizeRequestIdentityText(item?.name || item?.plant_name || item?.plantName))
+    .filter(Boolean)
+    .sort()
+    .join('|');
+}
+
+function getRequestIdentityQuantity(record) {
+  if (record && Number.isFinite(Number(record.quantity))) {
+    return Number(record.quantity);
+  }
+
+  if (!record || !Array.isArray(record.items)) {
+    return 0;
+  }
+
+  return record.items.reduce((sum, item) => sum + Number(item?.qty || item?.quantity || 0), 0);
+}
+
+function isSameRequestRecord(localRecord, backendRecord) {
+  const localRequestId = getRequestIdentityId(localRecord);
+  const backendRequestId = getRequestIdentityId(backendRecord);
+  if (localRequestId && backendRequestId) {
+    return localRequestId === backendRequestId;
+  }
+
+  const localType = normalizeRequestIdentityText(localRecord?.requestType || localRecord?.request_type);
+  const backendType = normalizeRequestIdentityText(backendRecord?.requestType || backendRecord?.request_type);
+  if (localType && backendType && localType !== backendType) {
+    return false;
+  }
+
+  const localTotal = Math.round(Number(localRecord?.totalAmount ?? localRecord?.total_amount ?? 0) || 0);
+  const backendTotal = Math.round(Number(backendRecord?.totalAmount ?? backendRecord?.total_amount ?? 0) || 0);
+  if (localTotal !== backendTotal) {
+    return false;
+  }
+
+  const localPayment = normalizeRequestIdentityText(localRecord?.paymentStatus || localRecord?.payment_status);
+  const backendPayment = normalizeRequestIdentityText(backendRecord?.paymentStatus || backendRecord?.payment_status);
+  if (localPayment && backendPayment && localPayment !== backendPayment) {
+    return false;
+  }
+
+  const localStatus = normalizeRequestIdentityText(localRecord?.orderStatus || localRecord?.request_status);
+  const backendStatus = normalizeRequestIdentityText(backendRecord?.orderStatus || backendRecord?.request_status);
+  if (localStatus && backendStatus && localStatus !== backendStatus) {
+    return false;
+  }
+
+  const localClientId = getPositiveRequestIdentityId(localRecord?.clientId || localRecord?.client_id);
+  const backendClientId = getPositiveRequestIdentityId(backendRecord?.clientId || backendRecord?.client_id);
+  if (localClientId && backendClientId) {
+    return localClientId === backendClientId;
+  }
+
+  const localPlantSignature = getRequestIdentityPlantSignature(localRecord);
+  const backendPlantSignature = getRequestIdentityPlantSignature(backendRecord);
+  if (localType === 'reservation' && localPlantSignature && backendPlantSignature && localPlantSignature !== backendPlantSignature) {
+    return false;
+  }
+
+  const localQuantity = getRequestIdentityQuantity(localRecord);
+  const backendQuantity = getRequestIdentityQuantity(backendRecord);
+  if (localType === 'reservation' && localQuantity && backendQuantity && localQuantity !== backendQuantity) {
+    return false;
+  }
+
+  const localTimestamp = getRequestIdentityTimestamp(localRecord);
+  const backendTimestamp = getRequestIdentityTimestamp(backendRecord);
+  if (localTimestamp !== null && backendTimestamp !== null) {
+    return Math.abs(localTimestamp - backendTimestamp) <= 10 * 60 * 1000;
+  }
+
+  const localCustomerName = normalizeRequestIdentityText(localRecord?.customerName || localRecord?.client_name || localRecord?.customer_name);
+  const backendCustomerName = normalizeRequestIdentityText(backendRecord?.customerName || backendRecord?.client_name || backendRecord?.customer_name);
+  if (localCustomerName && backendCustomerName && backendCustomerName !== 'customer') {
+    return localCustomerName === backendCustomerName;
+  }
+
+  return false;
+}
+
+async function captureKnownRequestIds() {
+  if (typeof requestsAPI === 'undefined' || typeof requestsAPI.getAll !== 'function') {
+    return new Set();
+  }
+
+  try {
+    const requests = await requestsAPI.getAll();
+    if (!Array.isArray(requests)) {
+      return new Set();
+    }
+
+    return new Set(
+      requests
+        .map((request) => getRequestIdentityId(request))
+        .filter(Boolean)
+    );
+  } catch (error) {
+    console.warn('Unable to capture existing request IDs:', error);
+    return new Set();
+  }
+}
+
+async function resolveCreatedRequestId(createdResult, requestPayload, knownRequestIds = new Set()) {
+  const directId = getRequestIdentityId(createdResult);
+  if (directId) {
+    return directId;
+  }
+
+  if (typeof requestsAPI === 'undefined' || typeof requestsAPI.getAll !== 'function') {
+    return '';
+  }
+
+  try {
+    const requests = await requestsAPI.getAll();
+    if (!Array.isArray(requests)) {
+      return '';
+    }
+
+    const knownIds = knownRequestIds instanceof Set
+      ? knownRequestIds
+      : new Set(Array.isArray(knownRequestIds) ? knownRequestIds : []);
+
+    const normalizedType = normalizeRequestIdentityText(requestPayload?.request_type);
+    const normalizedStatus = normalizeRequestIdentityText(requestPayload?.request_status);
+    const normalizedPayment = normalizeRequestIdentityText(requestPayload?.payment_status);
+    const expectedClientId = getPositiveRequestIdentityId(requestPayload?.client_id);
+    const expectedTotal = Math.round(Number(requestPayload?.total_amount ?? 0) || 0);
+
+    const candidates = requests
+      .filter((request) => {
+        const requestId = getRequestIdentityId(request);
+        if (requestId && knownIds.has(requestId)) {
+          return false;
+        }
+
+        if (normalizedType && normalizeRequestIdentityText(request?.request_type) !== normalizedType) {
+          return false;
+        }
+
+        if (expectedClientId) {
+          const candidateClientId = getPositiveRequestIdentityId(request?.client_id);
+          if (candidateClientId && candidateClientId !== expectedClientId) {
+            return false;
+          }
+        }
+
+        const candidateTotal = Math.round(Number(request?.total_amount ?? 0) || 0);
+        if (candidateTotal !== expectedTotal) {
+          return false;
+        }
+
+        if (normalizedStatus && normalizeRequestIdentityText(request?.request_status) !== normalizedStatus) {
+          return false;
+        }
+
+        if (normalizedPayment && normalizeRequestIdentityText(request?.payment_status) !== normalizedPayment) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((left, right) => {
+        const rightId = Number(getRequestIdentityId(right) || 0);
+        const leftId = Number(getRequestIdentityId(left) || 0);
+        if (rightId !== leftId) {
+          return rightId - leftId;
+        }
+
+        const rightTimestamp = getRequestIdentityTimestamp(right) || 0;
+        const leftTimestamp = getRequestIdentityTimestamp(left) || 0;
+        return rightTimestamp - leftTimestamp;
+      });
+
+    return candidates.length ? getRequestIdentityId(candidates[0]) : '';
+  } catch (error) {
+    console.warn('Unable to resolve created request identity:', error);
+    return '';
+  }
+}
+
+window.GHRequestIdentity = {
+  getRequestId: getRequestIdentityId,
+  isSameRequest: isSameRequestRecord,
+  captureKnownRequestIds,
+  resolveCreatedRequestId
 };
 
 // PlantSize endpoints

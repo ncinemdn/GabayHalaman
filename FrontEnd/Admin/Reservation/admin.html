@@ -261,7 +261,27 @@
         </div>
     </div>
 
+    <div class="valid-id-preview-modal" id="validIdPreviewModal" aria-hidden="true">
+        <div class="valid-id-preview-card" role="dialog" aria-modal="true" aria-labelledby="validIdPreviewTitle">
+            <div class="valid-id-preview-header">
+                <div>
+                    <p class="valid-id-preview-kicker">Customer Attachment</p>
+                    <h2 class="valid-id-preview-title" id="validIdPreviewTitle">Valid ID Preview</h2>
+                    <p class="valid-id-preview-file" id="validIdPreviewFileName">No file selected</p>
+                </div>
+                <button class="valid-id-preview-close" id="validIdPreviewClose" type="button" aria-label="Close valid ID preview">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="valid-id-preview-body" id="validIdPreviewBody"></div>
+        </div>
+    </div>
+
     <script src="../../shared/api.js"></script>
+    <script src="../../shared/admin-header.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

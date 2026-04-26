@@ -8,6 +8,10 @@ let modalConfirmAction = null;
 let currentOrderFilter = 'all';
 let currentOrderPage = 1;
 const ORDER_PAGE_SIZE = 4;
+const ORDER_DELETE_TOAST_DURATION = 3200;
+
+let orderDeleteToastHideTimeout = null;
+let orderDeleteToastRemoveTimeout = null;
 
 // Plant image mapping
 const plantImages = {
@@ -166,14 +170,17 @@ function loadCurrentOrder() {
         </div>
         <div class="order-history-col total" role="cell">\u20B1${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
         <div class="order-history-col details" role="cell">
-          <button class="history-detail-btn" type="button" onclick="openOrderDetails('${order.id || order.orderId}')">Order Details</button>
-          <button class="history-delete-icon-btn" type="button" aria-label="Delete order" title="Delete order" onclick="confirmDeleteOrder('${order.id || order.orderId}')">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M9 7V5h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M7 7l1 12h8l1-12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <div class="order-history-actions">
+            <button class="history-detail-btn history-pill-btn primary" type="button" onclick="openOrderDetails('${order.id || order.orderId}')">Order Details</button>
+            <button class="history-delete-icon-btn history-pill-btn secondary" type="button" aria-label="Delete order" title="Delete order" onclick="confirmDeleteOrder('${order.id || order.orderId}')">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9 7V5h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 7l1 12h8l1-12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+              <span class="history-delete-label">Delete</span>
+            </button>
+          </div>
         </div>
       </article>
     `;
@@ -212,7 +219,7 @@ function loadCurrentOrder() {
         <div class="order-history-col item" role="columnheader">Item</div>
         <div class="order-history-col status" role="columnheader">Status</div>
         <div class="order-history-col total" role="columnheader">Total</div>
-        <div class="order-history-col details" role="columnheader">Details</div>
+        <div class="order-history-col details" role="columnheader">Actions</div>
       </div>
 
       <div class="order-history-list" role="rowgroup">
@@ -357,12 +364,79 @@ function syncPurchaseOrderStatus(order, status) {
     localStorage.setItem('purchaseOrders', JSON.stringify(updatedOrders));
 }
 
+  function getOrderBackendRequestId(order) {
+    if (!order || typeof order !== 'object') {
+      return 0;
+    }
+
+    const candidates = [order.backendRequestId, order.request_id, order.requestId, order.orderId, order.id];
+    for (const candidate of candidates) {
+      const normalized = String(candidate || '').trim();
+      if (!/^\d+$/.test(normalized)) {
+        continue;
+      }
+
+      const value = Number(normalized);
+      if (Number.isFinite(value) && value > 0) {
+        return value;
+      }
+    }
+
+    return 0;
+  }
+
+function getOrderIdentityCandidates(order) {
+  if (!order || typeof order !== 'object') {
+    return [];
+  }
+
+  const backendRequestId = getOrderBackendRequestId(order);
+
+  return [...new Set([
+    order.id,
+    order.orderId,
+    order.backendRequestId,
+    order.request_id,
+    order.requestId,
+    backendRequestId ? String(backendRequestId) : ''
+  ].map(value => String(value || '').trim()).filter(Boolean))];
+}
+
+function hasMatchingOrderIdentity(leftOrder, rightOrder) {
+  const leftCandidates = getOrderIdentityCandidates(leftOrder);
+  const rightCandidates = getOrderIdentityCandidates(rightOrder);
+
+  if (!leftCandidates.length || !rightCandidates.length) {
+    return false;
+  }
+
+  return leftCandidates.some(value => rightCandidates.includes(value));
+}
+
+function findOrderByIdentity(orders, orderId) {
+  if (!Array.isArray(orders) || !orders.length || !orderId) {
+    return null;
+  }
+
+  const targetIdentity = { id: orderId, orderId };
+  return orders.find(order => hasMatchingOrderIdentity(order, targetIdentity)) || null;
+}
+
+function findMatchingDeliverySchedule(order) {
+  if (!order) {
+    return null;
+  }
+
+  const schedule = getDeliverySchedule();
+  return schedule.find(item => hasMatchingOrderIdentity(item, order)) || null;
+}
+
 async function updateBackendOrderStatus(order) {
     if (typeof requestsAPI === 'undefined') {
         return;
     }
 
-    const requestId = Number(order.id);
+  const requestId = getOrderBackendRequestId(order);
     if (!Number.isFinite(requestId)) {
         return;
     }
@@ -378,7 +452,7 @@ async function updateBackendOrderStatus(order) {
     }
 }
 
-function showConfirmationModal(message, confirmLabel, dismissLabel, confirmAction) {
+function showConfirmationModal(message, confirmLabel, dismissLabel, confirmAction, mode = 'cancel') {
     const overlay = document.getElementById('cancel-confirmation');
     if (!overlay) return;
 
@@ -386,16 +460,19 @@ function showConfirmationModal(message, confirmLabel, dismissLabel, confirmActio
     const messageEl = document.getElementById('cancelModalMessage');
     const confirmBtn = document.getElementById('cancelConfirmBtn');
     const dismissBtn = document.getElementById('cancelDismissBtn');
+  const normalizedMode = mode === 'delete' ? 'delete' : 'cancel';
+
+  overlay.dataset.mode = normalizedMode;
 
     if (titleEl) {
-        titleEl.textContent = confirmLabel === 'Yes, delete order' ? 'Delete Order' : 'Cancel Order';
+    titleEl.textContent = normalizedMode === 'delete' ? 'Delete Order' : 'Cancel Order';
     }
     if (messageEl) {
         messageEl.textContent = message;
     }
     if (confirmBtn) {
         confirmBtn.textContent = confirmLabel;
-        confirmBtn.style.display = 'inline-block';
+    confirmBtn.style.display = 'inline-flex';
     }
     if (dismissBtn) {
         dismissBtn.textContent = dismissLabel;
@@ -410,6 +487,7 @@ function hideCancelConfirmation() {
     if (!overlay) return;
     modalConfirmAction = null;
     pendingDeleteOrderId = null;
+  delete overlay.dataset.mode;
     overlay.classList.remove('active');
 }
 
@@ -435,7 +513,8 @@ function confirmCancelOrder() {
       'Are you sure you want to cancel this order?',
       'Yes, cancel order',
       'Keep order',
-      cancelCurrentOrder
+      cancelCurrentOrder,
+      'cancel'
     );
 }
 
@@ -446,13 +525,66 @@ function confirmDeleteOrder(orderId) {
       'Are you sure you want to delete this order? This action cannot be undone.',
       'Yes, delete order',
       'Keep order',
-      deleteCurrentOrder
+      deleteCurrentOrder,
+      'delete'
     );
 }
 
 function orderMatchesId(order, orderId) {
     const targetId = String(orderId || '');
     return String(order?.id || '') === targetId || String(order?.orderId || '') === targetId;
+}
+
+function showOrderDeleteToast(orderLabel) {
+    const toastRegion = document.getElementById('orderDeleteToastRegion');
+    if (!toastRegion) {
+        return;
+    }
+
+    window.clearTimeout(orderDeleteToastHideTimeout);
+    window.clearTimeout(orderDeleteToastRemoveTimeout);
+
+    toastRegion.innerHTML = '';
+
+    const toast = document.createElement('section');
+    toast.className = 'order-delete-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = `
+      <div class="order-delete-toast-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M7 12.5L10.1 15.6L17.25 8.45" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="order-delete-toast-copy">
+        <p class="order-delete-toast-title">Order deleted</p>
+        <p class="order-delete-toast-text"></p>
+      </div>
+      <div class="order-delete-toast-progress"></div>
+    `;
+
+    const textElement = toast.querySelector('.order-delete-toast-text');
+    if (textElement) {
+        textElement.textContent = `${orderLabel} was removed from your order history.`;
+    }
+
+    toastRegion.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add('is-visible');
+        const progressBar = toast.querySelector('.order-delete-toast-progress');
+        if (progressBar) {
+            progressBar.style.animation = `orderDeleteToastCountdown ${ORDER_DELETE_TOAST_DURATION}ms linear forwards`;
+        }
+    });
+
+    orderDeleteToastHideTimeout = window.setTimeout(() => {
+        toast.classList.remove('is-visible');
+        orderDeleteToastRemoveTimeout = window.setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 220);
+    }, ORDER_DELETE_TOAST_DURATION);
 }
 
 async function deleteCurrentOrder() {
@@ -463,22 +595,55 @@ async function deleteCurrentOrder() {
 
     const purchaseOrders = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
     const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const deletedPurchase = Array.isArray(purchaseOrders)
+      ? purchaseOrders.find(order => orderMatchesId(order, pendingDeleteOrderId))
+      : null;
+    const deletedReservation = Array.isArray(reservations)
+      ? reservations.find(order => orderMatchesId(order, pendingDeleteOrderId))
+      : null;
+    const deletedOrder = deletedPurchase || deletedReservation;
+    const deletedOrderLabel = deletedOrder?.orderId || deletedOrder?.id || 'The order';
 
-    const filteredPurchases = Array.isArray(purchaseOrders)
-      ? purchaseOrders.filter(order => !orderMatchesId(order, pendingDeleteOrderId))
+    const deletedAt = new Date().toISOString();
+    const updatedPurchases = Array.isArray(purchaseOrders)
+      ? purchaseOrders.map(order => {
+          if (!orderMatchesId(order, pendingDeleteOrderId)) {
+            return order;
+          }
+
+          return {
+            ...order,
+            orderStatus: 'deleted',
+            userDeleted: true,
+            userDeletedAt: deletedAt
+          };
+        })
       : [];
-    const filteredReservations = Array.isArray(reservations)
-      ? reservations.filter(order => !orderMatchesId(order, pendingDeleteOrderId))
+    const updatedReservations = Array.isArray(reservations)
+      ? reservations.map(order => {
+          if (!orderMatchesId(order, pendingDeleteOrderId)) {
+            return order;
+          }
+
+          return {
+            ...order,
+            orderStatus: 'deleted',
+            userDeleted: true,
+            userDeletedAt: deletedAt
+          };
+        })
       : [];
 
-    localStorage.setItem('purchaseOrders', JSON.stringify(filteredPurchases));
-    localStorage.setItem('reservations', JSON.stringify(filteredReservations));
+    localStorage.setItem('purchaseOrders', JSON.stringify(updatedPurchases));
+    localStorage.setItem('reservations', JSON.stringify(updatedReservations));
+
     pendingDeleteOrderId = null;
     modalConfirmAction = null;
 
     loadCurrentOrder();
     navigateTo('order-list');
     hideCancelConfirmation();
+    showOrderDeleteToast(deletedOrderLabel);
 }
 
 async function cancelCurrentOrder() {
@@ -503,11 +668,16 @@ function showCancelNotification(message) {
         return;
     }
 
+  const titleEl = document.getElementById('cancelModalTitle');
     const messageEl = document.getElementById('cancelModalMessage');
+  if (titleEl) {
+    titleEl.textContent = 'Order Update';
+  }
     if (messageEl) {
         messageEl.textContent = message;
     }
 
+  overlay.dataset.mode = 'notice';
     overlay.classList.add('active');
     const confirmBtn = document.getElementById('cancelConfirmBtn');
     const dismissBtn = document.getElementById('cancelDismissBtn');
@@ -683,8 +853,21 @@ function getPurchaseOrders() {
   const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
   const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
 
+  const isVisibleToUser = (order) => {
+    if (!order || typeof order !== 'object') {
+      return false;
+    }
+
+    if (order.userDeleted === true || order.userDeletedAt) {
+      return false;
+    }
+
+    return String(order.orderStatus || '').toLowerCase() !== 'deleted';
+  };
+
   const reservationOrders = Array.isArray(reservations)
     ? reservations
+        .filter(isVisibleToUser)
         .filter(order => order && (order.isPlacedOrder === true || String(order.orderId || '').indexOf('#RES-') === 0))
         .map(order => {
           const items = Array.isArray(order.items)
@@ -706,7 +889,7 @@ function getPurchaseOrders() {
     : [];
 
   const allOrders = ([])
-    .concat(Array.isArray(purchases) ? purchases : [])
+    .concat(Array.isArray(purchases) ? purchases.filter(isVisibleToUser) : [])
     .concat(reservationOrders);
 
   return allOrders.map(order => {
@@ -822,8 +1005,7 @@ function getResolvedTrackingStatus(order) {
     return 'placed_order';
   }
 
-  const schedule = getDeliverySchedule();
-  const matchedDelivery = schedule.find(item => String(item.orderId || '') === String(order.orderId || ''));
+  const matchedDelivery = findMatchingDeliverySchedule(order);
 
   if (matchedDelivery) {
     return normalizeTrackingStatus(matchedDelivery.trackingStatus);
@@ -1161,7 +1343,7 @@ async function renderTrackRouteEstimate(trackPayload) {
 
 async function loadTrackOrder(orderId) {
   const purchases = getPurchaseOrders();
-  const order = purchases.find(item => String(item.id || '') === String(orderId || '')) || getSelectedOrLatestOrder(purchases);
+  const order = findOrderByIdentity(purchases, orderId) || getSelectedOrLatestOrder(purchases);
   const trackSteps = document.getElementById('track-steps');
 
   if (!order) {
@@ -1178,9 +1360,25 @@ async function loadTrackOrder(orderId) {
     return;
   }
 
+  selectedOrderId = String(order.id || order.orderId || selectedOrderId || '');
+
   const payload = getTrackingPayload(order);
   renderTrackSteps(payload);
   await renderTrackRouteEstimate(payload);
+}
+
+function refreshVisibleOrderViews() {
+  loadCurrentOrder();
+
+  const activeDetailsPage = document.getElementById('order-details-page');
+  if (activeDetailsPage && activeDetailsPage.classList.contains('active')) {
+    loadOrderDetails();
+  }
+
+  const activeTrackPage = document.getElementById('track-order-page');
+  if (activeTrackPage && activeTrackPage.classList.contains('active')) {
+    loadTrackOrder(selectedOrderId);
+  }
 }
 
 // Initialize - show order list by default
@@ -1194,14 +1392,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    loadCurrentOrder();
-    const activeDetailsPage = document.getElementById('order-details-page');
-    if (activeDetailsPage && activeDetailsPage.classList.contains('active')) {
-      loadOrderDetails();
-    }
-    const activeTrackPage = document.getElementById('track-order-page');
-    if (activeTrackPage && activeTrackPage.classList.contains('active')) {
-      loadTrackOrder(selectedOrderId);
+    refreshVisibleOrderViews();
+  });
+
+  window.addEventListener('focus', () => {
+    refreshVisibleOrderViews();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      refreshVisibleOrderViews();
     }
   });
 

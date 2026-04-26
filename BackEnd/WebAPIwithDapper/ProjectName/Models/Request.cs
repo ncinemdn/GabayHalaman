@@ -23,6 +23,12 @@ namespace ProjectName.Models
 		public string payment_status { get; set; }
 		[Column("total_amount")]
 		public int total_amount { get; set; }
+		[Column("valid_id_attachment")]
+		public string valid_id_attachment { get; set; }
+		[Column("valid_id_file_name")]
+		public string valid_id_file_name { get; set; }
+		[Column("valid_id_content_type")]
+		public string valid_id_content_type { get; set; }
 		[Column("request_date")]
 		public DateTime request_date { get; set; }
 		[Column("last_updated")]

@@ -141,20 +141,112 @@ function formatDateForDisplay(value) {
     });
 }
 
+function getBackendRequestId(order) {
+    const requestIdentityApi = window.GHRequestIdentity;
+    if (!requestIdentityApi || typeof requestIdentityApi.getRequestId !== 'function') {
+        return '';
+    }
+
+    return String(requestIdentityApi.getRequestId(order) || '');
+}
+
+function getOrderIdentityCandidates(record) {
+    if (!record || typeof record !== 'object') {
+        return [];
+    }
+
+    return [...new Set([
+        record.orderId,
+        record.id,
+        record.backendRequestId,
+        record.request_id,
+        record.requestId,
+        getBackendRequestId(record)
+    ].map(value => String(value || '').trim()).filter(Boolean))];
+}
+
+function hasMatchingOrderIdentity(leftRecord, rightRecord) {
+    const leftCandidates = getOrderIdentityCandidates(leftRecord);
+    const rightCandidates = getOrderIdentityCandidates(rightRecord);
+
+    if (!leftCandidates.length || !rightCandidates.length) {
+        return false;
+    }
+
+    return leftCandidates.some(value => rightCandidates.includes(value));
+}
+
+function findPersistedTrackingEntry(delivery, schedule = getDeliveryScheduleSnapshot()) {
+    if (!delivery || !Array.isArray(schedule) || !schedule.length) {
+        return null;
+    }
+
+    return schedule.find(item => hasMatchingOrderIdentity(item, delivery)) || null;
+}
+
+function applyPersistedTrackingState(delivery, schedule = getDeliveryScheduleSnapshot()) {
+    if (!delivery) {
+        return delivery;
+    }
+
+    const persistedEntry = findPersistedTrackingEntry(delivery, schedule);
+    if (!persistedEntry) {
+        return delivery;
+    }
+
+    const trackingStatus = normalizeTrackingStatus(persistedEntry.trackingStatus || delivery.trackingStatus);
+
+    return {
+        ...delivery,
+        trackingStatus,
+        status: mapTrackingToDeliveryStatus(trackingStatus)
+    };
+}
+
+function isSameRequestRecord(localOrder, backendOrder) {
+    const requestIdentityApi = window.GHRequestIdentity;
+    if (!requestIdentityApi || typeof requestIdentityApi.isSameRequest !== 'function') {
+        return false;
+    }
+
+    return requestIdentityApi.isSameRequest(localOrder, backendOrder);
+}
+
+function isHiddenFromDelivery(order) {
+    if (!order || typeof order !== 'object') {
+        return false;
+    }
+
+    if (order.userDeleted === true || order.userDeletedAt) {
+        return true;
+    }
+
+    const statusValue = String(order.orderStatus || order.request_status || '').toLowerCase();
+    return statusValue === 'deleted';
+}
+
 function getLocalPurchaseOrders() {
     const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
     if (!Array.isArray(purchases)) {
         return [];
     }
 
-    return purchases.map(order => ({
-        ...order,
-        id: String(order.id || order.orderId || ''),
-        orderId: String(order.orderId || ''),
-        customerName: order.customerName || 'Customer',
-        orderStatus: normalizeOrderStatus(order.orderStatus),
-        requestType: 'purchase'
-    }));
+    return purchases.map(order => {
+        const localId = String(order.id || order.orderId || '');
+        const backendRequestId = getBackendRequestId(order);
+
+        return {
+            ...order,
+            localId,
+            id: String(backendRequestId || localId),
+            backendRequestId,
+            orderId: String(order.orderId || ''),
+            customerName: order.customerName || 'Customer',
+            orderStatus: normalizeOrderStatus(order.orderStatus),
+            requestType: 'purchase',
+            clientId: Number(order.clientId || order.client_id || 0) || 0
+        };
+    });
 }
 
 function getLocalReservationOrders() {
@@ -165,14 +257,22 @@ function getLocalReservationOrders() {
 
     return reservations
         .filter(order => order && order.isPlacedOrder === true)
-        .map(order => ({
-            ...order,
-            id: String(order.id || order.orderId || ''),
-            orderId: String(order.orderId || ''),
-            customerName: order.customerName || 'Customer',
-            orderStatus: normalizeOrderStatus(order.orderStatus),
-            requestType: 'reservation'
-        }));
+        .map(order => {
+            const localId = String(order.id || order.orderId || '');
+            const backendRequestId = getBackendRequestId(order);
+
+            return {
+                ...order,
+                localId,
+                id: String(backendRequestId || localId),
+                backendRequestId,
+                orderId: String(order.orderId || ''),
+                customerName: order.customerName || 'Customer',
+                orderStatus: normalizeOrderStatus(order.orderStatus),
+                requestType: 'reservation',
+                clientId: Number(order.clientId || order.client_id || 0) || 0
+            };
+        });
 }
 
 function mergeOrdersWithLocalOrders(backendOrders, localOrders) {
@@ -180,45 +280,51 @@ function mergeOrdersWithLocalOrders(backendOrders, localOrders) {
         return backendOrders;
     }
 
-    const localOrderMap = new Map();
-    localOrders.forEach(order => {
-        const key = String(order.orderId || order.id || '');
-        if (key) {
-            localOrderMap.set(key, order);
-        }
-    });
+    const remainingLocalOrders = [...localOrders];
 
     const merged = backendOrders.map(order => {
-        const key = String(order.orderId || order.id || '');
-        const localOrder = localOrderMap.get(key);
-        if (!localOrder) {
+        const backendRequestId = getBackendRequestId(order);
+        const localOrderIndex = remainingLocalOrders.findIndex(localOrder => {
+            const localRequestId = getBackendRequestId(localOrder);
+            if (backendRequestId && localRequestId) {
+                return backendRequestId === localRequestId;
+            }
+
+            return isSameRequestRecord(localOrder, order);
+        });
+
+        if (localOrderIndex === -1) {
             return order;
         }
 
-        localOrderMap.delete(key);
+        const [localOrder] = remainingLocalOrders.splice(localOrderIndex, 1);
 
         return {
             ...order,
-            ...localOrder
+            ...localOrder,
+            id: String(backendRequestId || order.id || localOrder.id || ''),
+            backendRequestId: String(backendRequestId || localOrder.backendRequestId || ''),
+            localId: localOrder.localId || String(localOrder.id || ''),
+            orderId: localOrder.orderId || order.orderId || ''
         };
     });
 
-    const remainingLocalOrders = Array.from(localOrderMap.values());
     return [...remainingLocalOrders, ...merged];
 }
 
 async function loadRequestOrders() {
     const localPurchaseOrders = getLocalPurchaseOrders();
     const localReservationOrders = getLocalReservationOrders();
+    const localVisibleOrders = [...localPurchaseOrders, ...localReservationOrders].filter(order => !isHiddenFromDelivery(order));
 
     if (typeof requestsAPI === 'undefined') {
-        return [...localPurchaseOrders, ...localReservationOrders];
+        return localVisibleOrders;
     }
 
     try {
         const allRequests = await requestsAPI.getAll();
         if (!Array.isArray(allRequests)) {
-            return [...localPurchaseOrders, ...localReservationOrders];
+            return localVisibleOrders;
         }
 
         const backendPurchaseOrders = allRequests
@@ -226,10 +332,13 @@ async function loadRequestOrders() {
             .map(order => ({
                 ...order,
                 id: String(order.request_id || ''),
+                backendRequestId: String(order.request_id || ''),
+                localId: '',
                 orderId: order.request_id ? String(order.request_id) : '',
                 customerName: order.client_name || 'Customer',
                 orderStatus: normalizeOrderStatus(order.request_status),
-                requestType: 'purchase'
+                requestType: 'purchase',
+                clientId: Number(order.client_id || 0) || 0
             }));
 
         const backendReservationOrders = allRequests
@@ -237,18 +346,21 @@ async function loadRequestOrders() {
             .map(order => ({
                 ...order,
                 id: String(order.request_id || ''),
+                backendRequestId: String(order.request_id || ''),
+                localId: '',
                 orderId: order.request_id ? String(order.request_id) : '',
                 customerName: order.client_name || 'Customer',
                 orderStatus: normalizeOrderStatus(order.request_status),
-                requestType: 'reservation'
+                requestType: 'reservation',
+                clientId: Number(order.client_id || 0) || 0
             }));
 
         const purchaseOrders = mergeOrdersWithLocalOrders(backendPurchaseOrders, localPurchaseOrders);
         const reservationOrders = mergeOrdersWithLocalOrders(backendReservationOrders, localReservationOrders);
-        return [...purchaseOrders, ...reservationOrders];
+        return [...purchaseOrders, ...reservationOrders].filter(order => !isHiddenFromDelivery(order));
     } catch (error) {
         console.error('Failed to load request orders for delivery view:', error);
-        return [...localPurchaseOrders, ...localReservationOrders];
+        return localVisibleOrders;
     }
 }
 
@@ -256,6 +368,7 @@ function buildSyntheticDeliveryFromOrder(order, index) {
     const orderId = String(order.orderId || order.id || '').trim();
     const normalizedStatus = normalizeOrderStatus(order.orderStatus || order.request_status);
     const trackingStatus = normalizeTrackingStatus(normalizedStatus);
+    const backendRequestId = String(order.backendRequestId || getBackendRequestId(order) || '').trim();
     const deliveryAddress =
         order.delivery_address ||
         (order.deliveryDetails && order.deliveryDetails.address) ||
@@ -271,6 +384,7 @@ function buildSyntheticDeliveryFromOrder(order, index) {
         id: String(order.id || order.orderId || 'local') + '-synthetic-' + index,
         deliveryId: '',
         orderId,
+        backendRequestId,
         customerName: order.customerName || order.client_name || order.full_name || 'Customer',
         deliveryAddress,
         scheduledDate: formatDateForDisplay(scheduledDate),
@@ -283,11 +397,13 @@ function buildSyntheticDeliveryFromOrder(order, index) {
 
 async function loadDeliveries() {
     try {
+        const persistedSchedule = getDeliveryScheduleSnapshot();
         const allDeliveries = await deliveriesAPI.getAll();
-        const backendDeliveries = (Array.isArray(allDeliveries) ? allDeliveries : []).map(d => ({
+        const backendDeliveries = (Array.isArray(allDeliveries) ? allDeliveries : []).map(d => applyPersistedTrackingState({
             id: String(d.delivery_id || ''),
             deliveryId: '#DEL-' + d.delivery_id,
             orderId: d.request_id ? String(d.request_id) : '',
+            backendRequestId: d.request_id ? String(d.request_id) : '',
             customerName: d.client_name || d.full_name || 'Customer',
             deliveryAddress: d.delivery_address || 'Address not provided',
             scheduledDate: formatDateForDisplay(d.scheduled_date),
@@ -295,19 +411,20 @@ async function loadDeliveries() {
             trackingStatus: normalizeTrackingStatus(d.delivery_status || d.status),
             requestType: String(d.request_type || '').toLowerCase(),
             typeLabel: getDeliveryTypeLabel(d.request_type)
-        }));
+        }, persistedSchedule));
 
         const requestOrders = await loadRequestOrders();
         const backendOrderIds = new Set(backendDeliveries.map(item => String(item.orderId || '').trim()).filter(Boolean));
         const syntheticDeliveries = requestOrders
-            .map((order, index) => buildSyntheticDeliveryFromOrder(order, index))
+            .map((order, index) => applyPersistedTrackingState(buildSyntheticDeliveryFromOrder(order, index), persistedSchedule))
             .filter(item => item.orderId && !backendOrderIds.has(String(item.orderId)));
 
         deliveries = [...backendDeliveries, ...syntheticDeliveries];
     } catch (error) {
         console.error('Failed to load deliveries:', error);
         const requestOrders = await loadRequestOrders();
-        deliveries = requestOrders.map((order, index) => buildSyntheticDeliveryFromOrder(order, index));
+        const persistedSchedule = getDeliveryScheduleSnapshot();
+        deliveries = requestOrders.map((order, index) => applyPersistedTrackingState(buildSyntheticDeliveryFromOrder(order, index), persistedSchedule));
     }
 }
 
@@ -334,6 +451,16 @@ function applyFiltersAndRender() {
 }
 
 async function populateSignedInAdminHeader() {
+    if (window.GHAdminHeader && typeof window.GHAdminHeader.apply === 'function') {
+        await window.GHAdminHeader.apply({
+            nameSelector: '.profile-name',
+            roleSelector: '.profile-role',
+            avatarSelector: '.profile-avatar img',
+            fallbackPhoto: '../Profile/cc.jpg'
+        });
+        return;
+    }
+
     let userName = 'Admin';
     let userRole = 'Administrator';
 
@@ -562,12 +689,13 @@ function upsertDeliveryScheduleEntry(delivery) {
     const orderId = String(delivery.orderId);
     const nextEntry = {
         orderId,
+        backendRequestId: String(delivery.backendRequestId || delivery.orderId || ''),
         trackingStatus: delivery.trackingStatus,
         status: delivery.status,
         updatedAt: new Date().toISOString()
     };
 
-    const index = schedule.findIndex(item => String(item.orderId || '') === orderId);
+    const index = schedule.findIndex(item => hasMatchingOrderIdentity(item, delivery));
     if (index >= 0) {
         schedule[index] = {
             ...schedule[index],
@@ -580,20 +708,20 @@ function upsertDeliveryScheduleEntry(delivery) {
     localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(schedule));
 }
 
-function syncOrderTrackingStatus(orderId, trackingStatus) {
-    if (!orderId) {
+function syncOrderTrackingStatus(record, trackingStatus) {
+    if (!record) {
         return;
     }
 
     const normalizedStatus = normalizeTrackingStatus(trackingStatus);
+    const targetRecord = typeof record === 'object' ? record : { orderId: record, id: record };
     const updateTracking = (items) => {
         if (!Array.isArray(items)) {
             return items;
         }
 
         return items.map(item => {
-            const itemOrderId = String(item.orderId || item.id || '');
-            if (itemOrderId !== String(orderId)) {
+            if (!hasMatchingOrderIdentity(item, targetRecord)) {
                 return item;
             }
 
@@ -617,7 +745,7 @@ async function persistDeliveryStatusUpdate(delivery) {
     }
 
     upsertDeliveryScheduleEntry(delivery);
-    syncOrderTrackingStatus(delivery.orderId, delivery.trackingStatus);
+    syncOrderTrackingStatus(delivery, delivery.trackingStatus);
 
     const requestId = Number(delivery.orderId || delivery.id);
     if (!Number.isFinite(requestId) || typeof requestsAPI === 'undefined') {

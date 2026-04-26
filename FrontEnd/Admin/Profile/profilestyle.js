@@ -8,26 +8,40 @@ function logout() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     const ADMIN_KEY = 'admin';
+    const DEFAULT_PROFILE_PHOTO = 'cc.jpg';
+    const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
+    const SUPPORTED_PROFILE_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-    const currentAdmin = loadAdminSession();
+    let currentAdmin = loadAdminSession();
     if (!currentAdmin) {
         window.location.href = '../../Admin/Auth/signin.html';
         return;
     }
 
+    let adminRecord = { ...currentAdmin };
+    let pendingPhotoDataUrl = '';
+    let lastServerPhoto = '';
+
     let profile = {
         fullName: currentAdmin.full_name || currentAdmin.name || 'Admin',
-        role: 'Administrator',
+        role: currentAdmin.role || 'Administrator',
         email: currentAdmin.email || '',
-        phone: currentAdmin.phone || ''
+        phone: currentAdmin.phone || '',
+        photo: currentAdmin.photo || ''
     };
 
     try {
         if (typeof adminAPI !== 'undefined' && Number.isFinite(Number(currentAdmin.admin_id))) {
             const adminData = await adminAPI.getById(currentAdmin.admin_id);
+            adminRecord = {
+                ...adminRecord,
+                ...adminData
+            };
+            lastServerPhoto = String(adminData.photo || '').trim();
             profile.fullName = adminData.full_name || adminData.name || profile.fullName;
             profile.email = adminData.email || profile.email;
             profile.phone = adminData.phone || profile.phone;
+            profile.photo = adminData.photo || profile.photo;
         }
     } catch (error) {
         console.error('Failed to fetch admin data:', error);
@@ -39,6 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const detailRole = document.getElementById('detailRole');
     const detailEmail = document.getElementById('detailEmail');
     const detailPhone = document.getElementById('detailPhone');
+    const headerAvatarImage = document.getElementById('headerAvatarImage');
+    const heroAvatarImage = document.getElementById('heroAvatarImage');
 
     const editProfileBtn = document.getElementById('editProfileBtn');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
@@ -48,6 +64,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editEmail = document.getElementById('editEmail');
     const editPhone = document.getElementById('editPhone');
     const editRole = document.getElementById('editRole');
+    const editPhotoInput = document.getElementById('editPhotoInput');
+    const editPhotoPreview = document.getElementById('editPhotoPreview');
+    const editPhotoFileName = document.getElementById('editPhotoFileName');
 
     const changePasswordBtn = document.getElementById('changePasswordBtn');
     const passwordModal = document.getElementById('passwordModal');
@@ -73,10 +92,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (editProfileBtn && profileEditForm) {
         editProfileBtn.addEventListener('click', () => {
             profileEditError.textContent = '';
+            pendingPhotoDataUrl = '';
             editFullName.value = profile.fullName;
             editEmail.value = profile.email;
             editPhone.value = profile.phone;
             editRole.value = profile.role;
+            if (editPhotoInput) {
+                editPhotoInput.value = '';
+            }
+            updatePhotoPreview(profile.photo, 'Current photo');
             profileEditForm.classList.remove('hidden');
             editFullName.focus();
         });
@@ -85,7 +109,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (cancelEditBtn && profileEditForm) {
         cancelEditBtn.addEventListener('click', () => {
             profileEditError.textContent = '';
+            pendingPhotoDataUrl = '';
+            if (editPhotoInput) {
+                editPhotoInput.value = '';
+            }
             profileEditForm.classList.add('hidden');
+        });
+    }
+
+    if (editPhotoInput) {
+        editPhotoInput.addEventListener('change', async () => {
+            profileEditError.textContent = '';
+
+            const selectedFile = editPhotoInput.files && editPhotoInput.files[0];
+            if (!selectedFile) {
+                pendingPhotoDataUrl = '';
+                updatePhotoPreview(profile.photo, 'Current photo');
+                return;
+            }
+
+            const validationMessage = validateProfilePhoto(selectedFile);
+            if (validationMessage) {
+                pendingPhotoDataUrl = '';
+                editPhotoInput.value = '';
+                updatePhotoPreview(profile.photo, 'Current photo');
+                profileEditError.textContent = validationMessage;
+                return;
+            }
+
+            try {
+                pendingPhotoDataUrl = await readFileAsDataUrl(selectedFile);
+                updatePhotoPreview(pendingPhotoDataUrl, selectedFile.name);
+            } catch (error) {
+                pendingPhotoDataUrl = '';
+                editPhotoInput.value = '';
+                updatePhotoPreview(profile.photo, 'Current photo');
+                profileEditError.textContent = 'Unable to read the selected image. Please try again.';
+            }
         });
     }
 
@@ -108,13 +168,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            profile.fullName = fullName;
-            profile.email = email;
-            profile.phone = phone;
-            await saveProfile(profile);
-            renderProfile(profile);
-            profileEditForm.classList.add('hidden');
-            showToast('Profile updated successfully.');
+            const nextProfile = {
+                ...profile,
+                fullName,
+                email,
+                phone,
+                photo: pendingPhotoDataUrl || profile.photo || ''
+            };
+
+            try {
+                profile = await saveProfile(nextProfile);
+                pendingPhotoDataUrl = '';
+                if (editPhotoInput) {
+                    editPhotoInput.value = '';
+                }
+                renderProfile(profile);
+                profileEditForm.classList.add('hidden');
+                showToast('Profile updated successfully.');
+            } catch (error) {
+                console.error('Profile update error:', error);
+                profileEditError.textContent = error.message || 'Unable to update profile right now.';
+            }
         });
     }
 
@@ -254,19 +328,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function saveProfile(data) {
         if (!currentAdmin || !currentAdmin.admin_id) {
-            return;
+            throw new Error('Admin session not found. Please sign in again.');
         }
 
-        try {
-            await adminAPI.update({
-                ...currentAdmin,
-                full_name: data.fullName,
-                email: data.email,
-                phone: data.phone
-            });
-        } catch (error) {
-            console.warn('Failed to save profile to backend:', error);
+        const requestedPhotoValue = String(data.photo || '').trim();
+        const requestedInlinePhoto = isInlineProfilePhoto(requestedPhotoValue);
+        const shouldRequirePhotoChange = requestedInlinePhoto && requestedPhotoValue !== lastServerPhoto;
+
+        const payload = {
+            ...adminRecord,
+            ...currentAdmin,
+            admin_id: currentAdmin.admin_id,
+            full_name: data.fullName,
+            email: data.email,
+            phone: data.phone,
+            photo: data.photo || '',
+            updated_at: new Date().toISOString()
+        };
+
+        const updated = await adminAPI.update(payload);
+        if (updated === false) {
+            throw new Error('Profile update was rejected by the server.');
         }
+
+        let refreshedAdmin = payload;
+        if (typeof adminAPI !== 'undefined' && Number.isFinite(Number(currentAdmin.admin_id))) {
+            refreshedAdmin = await adminAPI.getById(currentAdmin.admin_id);
+        }
+
+        const persistedServerPhoto = String(refreshedAdmin?.photo || '').trim();
+        const serverPhotoUnchanged = Boolean(lastServerPhoto) && persistedServerPhoto === lastServerPhoto;
+
+        if (shouldRequirePhotoChange && (!persistedServerPhoto || serverPhotoUnchanged)) {
+            throw new Error('Profile photo was not saved by the running admin API. Restart the backend so the latest AdminController update is loaded.');
+        }
+
+        lastServerPhoto = persistedServerPhoto;
+
+        adminRecord = {
+            ...adminRecord,
+            ...refreshedAdmin
+        };
+
+        currentAdmin = {
+            ...currentAdmin,
+            ...adminRecord,
+            full_name: adminRecord.full_name || data.fullName,
+            email: adminRecord.email || data.email,
+            phone: adminRecord.phone || data.phone,
+            photo: adminRecord.photo || data.photo || ''
+        };
+
+        localStorage.setItem(ADMIN_KEY, JSON.stringify(currentAdmin));
+
+        return {
+            fullName: currentAdmin.full_name || currentAdmin.name || data.fullName,
+            role: currentAdmin.role || data.role || 'Administrator',
+            email: currentAdmin.email || data.email,
+            phone: currentAdmin.phone || data.phone,
+            photo: currentAdmin.photo || data.photo || ''
+        };
     }
 
     function renderProfile(data) {
@@ -276,6 +397,89 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (detailRole) detailRole.textContent = data.role;
         if (detailEmail) detailEmail.textContent = data.email;
         if (detailPhone) detailPhone.textContent = data.phone || 'Not set';
+        setProfilePhotoImage(headerAvatarImage, data.photo);
+        setProfilePhotoImage(heroAvatarImage, data.photo);
+        updatePhotoPreview(pendingPhotoDataUrl || data.photo, pendingPhotoDataUrl ? 'Selected photo' : 'Current photo');
+    }
+
+    function getApiOrigin() {
+        const configuredBase = (window.GH_API_BASE_URL && String(window.GH_API_BASE_URL).trim())
+            || String(localStorage.getItem('gh_api_base_url') || '').trim()
+            || 'http://localhost:5007/api';
+
+        return configuredBase.replace(/\/api\/?$/i, '');
+    }
+
+    function resolveProfilePhotoUrl(value) {
+        const raw = String(value || '').trim();
+        if (!raw) {
+            return DEFAULT_PROFILE_PHOTO;
+        }
+
+        if (/^(data:image\/|https?:\/\/|blob:|file:)/i.test(raw)) {
+            return raw;
+        }
+
+        if (raw.startsWith('/uploads/') || raw.startsWith('uploads/')) {
+            return `${getApiOrigin()}/${raw.replace(/^\/+/, '')}`;
+        }
+
+        return raw;
+    }
+
+    function setProfilePhotoImage(imageElement, photoValue) {
+        if (!imageElement) {
+            return;
+        }
+
+        const fallback = DEFAULT_PROFILE_PHOTO;
+        const nextSource = resolveProfilePhotoUrl(photoValue);
+
+        imageElement.onerror = () => {
+            if (imageElement.getAttribute('src') === fallback) {
+                imageElement.onerror = null;
+                return;
+            }
+
+            imageElement.src = fallback;
+        };
+        imageElement.src = nextSource;
+    }
+
+    function updatePhotoPreview(photoValue, label) {
+        setProfilePhotoImage(editPhotoPreview, photoValue);
+        if (editPhotoFileName) {
+            editPhotoFileName.textContent = label || 'Current photo';
+        }
+    }
+
+    function validateProfilePhoto(file) {
+        if (!file) {
+            return 'Please choose an image file.';
+        }
+
+        if (!SUPPORTED_PROFILE_PHOTO_TYPES.includes(file.type)) {
+            return 'Profile photo must be JPG, PNG, WEBP, or GIF.';
+        }
+
+        if (file.size > MAX_PROFILE_PHOTO_BYTES) {
+            return 'Profile photo must be 5 MB or less.';
+        }
+
+        return '';
+    }
+
+    function readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(new Error('Unable to read file.'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function isInlineProfilePhoto(value) {
+        return String(value || '').trim().startsWith('data:image/');
     }
 
     function loadAdminSession() {

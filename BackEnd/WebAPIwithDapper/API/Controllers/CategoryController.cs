@@ -35,6 +35,7 @@ namespace API.Controllers
 			return categoryServices.Updatet(ct);
 		}
 
+		[HttpDelete("{id:int}")]
 		[HttpDelete]
 		public bool Delete(int id)
 		{

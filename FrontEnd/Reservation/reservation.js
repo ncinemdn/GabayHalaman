@@ -103,6 +103,12 @@ let selectedPlants = [];
 const RESERVATION_PREFILL_KEY = 'reservationPrefillPlant';
 const REQUIRED_CATEGORIES = ['Citrus', 'Coconut', 'Cuttings', 'Flowering', 'Forest', 'Grafted', 'Guava', 'Mango'];
 let backendPlantsByCategory = null;
+const RESERVATION_TOAST_DURATION = 1800;
+
+let reservationRedirectTimeout = null;
+let reservationToastHideTimeout = null;
+let reservationToastRemoveTimeout = null;
+let isReservationRedirecting = false;
 
 const GH_CATEGORY_BY_UI_CATEGORY = {
     'Citrus Variety': 'Citrus',
@@ -112,6 +118,61 @@ const GH_CATEGORY_BY_UI_CATEGORY = {
     'Flowering Trees': 'Flowering',
     'Forest Trees': 'Forest'
 };
+
+function getReservationToastRegion() {
+    return document.getElementById('reservationToastRegion');
+}
+
+function getReserveButton() {
+    return document.querySelector('.reserve-btn');
+}
+
+function showReservationSuccessToast() {
+    const toastRegion = getReservationToastRegion();
+    if (!toastRegion) {
+        return;
+    }
+
+    window.clearTimeout(reservationToastHideTimeout);
+    window.clearTimeout(reservationToastRemoveTimeout);
+
+    toastRegion.innerHTML = '';
+
+    const toast = document.createElement('section');
+    toast.className = 'reservation-success-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = `
+        <div class="reservation-success-toast-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M7 12.5L10.1 15.6L17.25 8.45" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="reservation-success-toast-copy">
+            <p class="reservation-success-toast-title">Reservation saved</p>
+            <p class="reservation-success-toast-text">Your plants were reserved successfully. Opening reserved plants...</p>
+        </div>
+        <div class="reservation-success-toast-progress"></div>
+    `;
+
+    toastRegion.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add('is-visible');
+        const progressBar = toast.querySelector('.reservation-success-toast-progress');
+        if (progressBar) {
+            progressBar.style.animation = `reservationToastCountdown ${RESERVATION_TOAST_DURATION}ms linear forwards`;
+        }
+    });
+
+    reservationToastHideTimeout = window.setTimeout(() => {
+        toast.classList.remove('is-visible');
+        reservationToastRemoveTimeout = window.setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 220);
+    }, RESERVATION_TOAST_DURATION);
+}
 
 function normalizeText(value) {
     return String(value || '')
@@ -688,6 +749,10 @@ function selectPlant(plantId, category) {
 
 // Handle reservation
 function handleReserve() {
+    if (isReservationRedirecting) {
+        return;
+    }
+
     const selectedCategory = document.getElementById('category').value;
     const deliveryDate = document.getElementById('deliveryDate').value;
 
@@ -775,7 +840,20 @@ function handleReserve() {
     }
 
     localStorage.removeItem('deliveryDetails');
-    window.location.href = 'reserved-plants.html';
+    isReservationRedirecting = true;
+
+    const reserveButton = getReserveButton();
+    if (reserveButton) {
+        reserveButton.disabled = true;
+        reserveButton.textContent = 'Reserving...';
+    }
+
+    showReservationSuccessToast();
+
+    window.clearTimeout(reservationRedirectTimeout);
+    reservationRedirectTimeout = window.setTimeout(() => {
+        window.location.href = 'reserved-plants.html';
+    }, RESERVATION_TOAST_DURATION);
 }
 
 
