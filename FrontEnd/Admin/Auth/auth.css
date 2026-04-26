@@ -525,6 +525,85 @@ body[data-page="forgot-password"] .auth-shell {
     }
 }
 
+.admin-signin-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    place-items: center;
+    padding: 1rem;
+    background:
+        radial-gradient(900px 500px at 10% 15%, rgba(111, 149, 96, 0.22), transparent 60%),
+        radial-gradient(700px 420px at 88% 85%, rgba(79, 111, 69, 0.2), transparent 60%),
+        linear-gradient(155deg, rgba(244, 247, 242, 0.95), rgba(225, 234, 217, 0.95));
+    backdrop-filter: blur(3px);
+}
+
+.admin-signin-loader.is-visible {
+    display: grid;
+}
+
+.admin-signin-loader__card {
+    width: min(360px, 92vw);
+    padding: 1.5rem 1.25rem;
+    border-radius: 18px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.74);
+    box-shadow: 0 16px 34px rgba(45, 66, 35, 0.16);
+}
+
+.admin-signin-loader__dots {
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.48rem;
+    margin-bottom: 0.6rem;
+}
+
+.admin-signin-loader__dots span {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #214421;
+    opacity: 0.35;
+    animation: adminDotPulse 0.9s ease-in-out infinite;
+}
+
+.admin-signin-loader__dots span:nth-child(2) {
+    animation-delay: 0.12s;
+}
+
+.admin-signin-loader__dots span:nth-child(3) {
+    animation-delay: 0.24s;
+}
+
+.admin-signin-loader__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #214421;
+}
+
+.admin-signin-loader__subtitle {
+    margin: 0.3rem 0 0;
+    font-size: 0.9rem;
+    color: #42573a;
+}
+
+@keyframes adminDotPulse {
+    0%,
+    100% {
+        transform: translateY(0) scale(0.9);
+        opacity: 0.35;
+    }
+
+    50% {
+        transform: translateY(-3px) scale(1);
+        opacity: 1;
+    }
+}
+
 @media (max-width: 900px) {
     .auth-shell {
         grid-template-columns: 1fr;

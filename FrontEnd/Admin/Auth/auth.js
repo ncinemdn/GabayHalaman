@@ -8,6 +8,20 @@ async function login(email, password) {
         localStorage.setItem("admin", JSON.stringify(response));
         localStorage.setItem("role", response.role); 
 
+        const signInError = document.getElementById("signInError");
+        const signInSuccess = document.getElementById("signInSuccess");
+        if (signInError) {
+            signInError.textContent = "";
+        }
+        if (signInSuccess) {
+            signInSuccess.textContent = "Signing you in...";
+        }
+
+        showAdminSignInLoader();
+        await new Promise(function (resolve) {
+            window.setTimeout(resolve, 1900);
+        });
+
         window.location.href = "../Dashboard/dashboard.html";
 
     } catch (error) {
@@ -18,6 +32,30 @@ async function login(email, password) {
                 ? "Incorrect password."
                 : error.message || "Login failed";
     }
+}
+
+function showAdminSignInLoader() {
+    if (!document.body || document.body.dataset.page !== "signin") {
+        return;
+    }
+
+    let overlay = document.getElementById("adminSignInLoader");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "adminSignInLoader";
+        overlay.className = "admin-signin-loader";
+        overlay.setAttribute("role", "status");
+        overlay.setAttribute("aria-live", "polite");
+        overlay.innerHTML =
+            '<div class="admin-signin-loader__card">' +
+            '<div class="admin-signin-loader__dots" aria-hidden="true"><span></span><span></span><span></span></div>' +
+            '<p class="admin-signin-loader__title">Loading dashboard</p>' +
+            '<p class="admin-signin-loader__subtitle">Please wait a moment...</p>' +
+            '</div>';
+        document.body.appendChild(overlay);
+    }
+
+    overlay.classList.add("is-visible");
 }
 
 async function verifyAccount() {
