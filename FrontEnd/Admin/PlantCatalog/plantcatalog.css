@@ -966,7 +966,8 @@ textarea,
 }
 
 #addPlantModal .image-upload-container {
-    height: 150px;
+    min-height: 180px;
+    height: auto;
     margin-bottom: 0.7rem;
 }
 
@@ -1024,27 +1025,32 @@ textarea,
     border: 1px dashed #afc2a4;
     border-radius: 16px;
     box-shadow: none;
-    height: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 0.6rem;
+    min-height: 180px;
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: 0.65rem;
+    padding: 14px 16px 18px;
     background: #f8fbf5;
     position: relative;
     margin-bottom: 0.9rem;
+    overflow: hidden;
 }
 
 .image-preview-grid {
     width: 100%;
+    max-width: 440px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    padding: 0 12px;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 88px));
+    justify-content: center;
+    gap: 10px;
+    padding: 0;
 }
 
 .image-preview-tile {
     position: relative;
+    width: 88px;
+    height: 72px;
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid #d2dccb;
@@ -1052,9 +1058,11 @@ textarea,
 }
 
 .image-preview-tile img {
+    display: block;
     width: 100%;
-    height: 62px;
+    height: 100%;
     object-fit: cover;
+    object-position: center;
 }
 
 .remove-image-btn {
@@ -1066,6 +1074,7 @@ textarea,
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+    align-self: center;
 }
 
 .remove-image-item-btn {
@@ -1091,7 +1100,11 @@ textarea,
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    width: 100%;
+    text-align: center;
+    padding-top: 0.1rem;
 }
 
 .upload-icon {
@@ -1109,6 +1122,7 @@ textarea,
 .upload-label span {
     color: #60725e;
     font-weight: 700;
+    line-height: 1.35;
 }
 
 .form-input-container {
