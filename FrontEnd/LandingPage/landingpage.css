@@ -775,20 +775,28 @@ body {
 
 
 .stars-display {
-    display: flex;
-    gap: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.32rem;
+    line-height: 1;
 }
 
 
 .star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: #78a240;
-    font-size: 24px;
+    font-size: 1.85rem;
 }
 
 
 .reviews-note {
     color: #666;
     font-size: 16px;
+    line-height: 1.4;
+    margin: 0;
 }
 
 
@@ -850,9 +858,13 @@ body {
 }
 
 .review-item-stars {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
     color: #b6be4a;
     letter-spacing: 1px;
     font-size: 0.95rem;
+    line-height: 1;
 }
 
 .review-item-comment {
@@ -991,17 +1003,24 @@ body {
 .review-stars {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 0.4rem;
     margin-bottom: 0.9rem;
 }
 
 .review-star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     background: transparent;
     cursor: pointer;
     font-size: 1.55rem;
     color: #c5c5c5;
     line-height: 1;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
 }
 
 .review-star.active {
@@ -1995,10 +2014,12 @@ body {
 
 .reviews-summary {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.55rem;
     margin-bottom: 1.2rem;
+    text-align: center;
 }
 
 .reviews-btn-container {

@@ -849,74 +849,201 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    width: min(360px, calc(100vw - 24px));
-    background: linear-gradient(145deg, #f4f9ef 0%, #e6f0da 100%);
-    border: 1px solid #a9c488;
-    border-radius: 16px;
-    box-shadow: 0 16px 35px rgba(32, 69, 18, 0.2);
-    padding: 18px;
+    width: min(390px, calc(100vw - 24px));
+    background: linear-gradient(180deg, rgba(251, 253, 248, 0.98) 0%, rgba(238, 244, 231, 0.98) 100%);
+    border: 1px solid rgba(111, 145, 81, 0.22);
+    border-radius: 24px;
+    box-shadow: 0 24px 58px rgba(30, 54, 19, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.76);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 22px 20px 18px;
     z-index: 3000;
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-14px) scale(0.98);
     transition: opacity 0.22s ease, transform 0.22s ease;
+    overflow: hidden;
+}
+
+.cart-toast::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: linear-gradient(90deg, #6f9954 0%, #89b25e 46%, #bfd692 100%);
 }
 
 .cart-toast.show {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 .cart-toast-close {
     position: absolute;
-    top: 10px;
-    right: 12px;
-    background: none;
-    border: none;
-    font-size: 36px;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: rgba(53, 84, 34, 0.08);
+    border: 1px solid rgba(80, 117, 50, 0.12);
+    font-size: 24px;
     line-height: 1;
-    color: #365322;
+    color: #35511f;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+.cart-toast-close:hover {
+    background: rgba(53, 84, 34, 0.14);
+    transform: rotate(90deg);
+}
+
+.cart-toast-kicker {
+    margin: 0 46px 8px 0;
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #6b8c4e;
 }
 
 .cart-toast-title {
-    font-size: 30px;
-    line-height: 1.1;
-    margin-right: 34px;
-    margin-bottom: 14px;
-    font-family: 'Inria Serif', serif;
-    color: #2f4f1b;
+    font-size: 24px;
+    line-height: 1.08;
+    margin: 0 46px 16px 0;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #24381a;
 }
 
 .cart-toast-content {
     display: flex;
     gap: 14px;
-    margin-bottom: 16px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.cart-toast-media {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 auto;
+    border-radius: 18px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 26% 24%, rgba(255, 255, 255, 0.92), transparent 26%),
+        linear-gradient(145deg, #ddeacd 0%, #c3d8a7 100%);
+    border: 1px solid rgba(111, 145, 81, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-toast-media::before {
+    content: 'GH';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(46, 74, 28, 0.42);
+}
+
+.cart-toast-media.is-fallback::after {
+    content: 'Plant';
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(46, 74, 28, 0.58);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .cart-toast-image {
-    width: 58px;
-    height: 58px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    flex: 0 0 auto;
-    border-radius: 10px;
-    border: 1px solid #b5cf97;
+    position: relative;
+    z-index: 1;
 }
 
 .cart-toast-details {
     min-width: 0;
+    flex: 1;
+}
+
+.cart-toast-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .cart-toast-product {
     font-size: 17px;
     line-height: 1.2;
-    margin-bottom: 6px;
-    color: #1f3313;
-    font-weight: 600;
+    margin: 0;
+    color: #1d2d15;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
-.cart-toast-meta {
-    font-size: 14px;
-    color: #476633;
+.cart-toast-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(111, 153, 84, 0.12);
+    border: 1px solid rgba(111, 153, 84, 0.18);
+    color: #406126;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.cart-toast-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cart-toast-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(111, 145, 81, 0.14);
+    font-size: 13px;
+    font-weight: 600;
+    color: #3e5b29;
+}
+
+.cart-toast-pill.accent {
+    background: rgba(111, 153, 84, 0.13);
+    color: #2e491c;
+}
+
+.cart-toast-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .cart-toast-view {
@@ -924,29 +1051,42 @@ body {
     width: 100%;
     text-align: center;
     text-decoration: none;
-    border: 1px solid #547a33;
-    background-color: #6e9843;
+    border: 1px solid #5d8440;
+    background: linear-gradient(135deg, #6d9646 0%, #587d38 100%);
     color: #ffffff;
-    font-size: 24px;
-    letter-spacing: 1px;
-    padding: 11px 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 14px 16px;
+    border-radius: 14px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    box-shadow: 0 12px 20px rgba(72, 104, 43, 0.22);
 }
 
 .cart-toast-view:hover {
-    background-color: #5f8738;
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+    box-shadow: 0 16px 24px rgba(72, 104, 43, 0.26);
 }
 
 .cart-toast-continue {
     width: 100%;
-    background: none;
-    border: none;
-    color: #4b6f2f;
-    font-size: 24px;
-    text-decoration: underline;
+    background: rgba(255, 255, 255, 0.64);
+    border: 1px solid rgba(111, 145, 81, 0.16);
+    color: #45642d;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 13px 16px;
+    border-radius: 14px;
     cursor: pointer;
+    transition: background-color 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.cart-toast-continue:hover {
+    background: rgba(255, 255, 255, 0.86);
+    border-color: rgba(111, 145, 81, 0.26);
+    transform: translateY(-1px);
 }
 
 .fly-to-cart-image {
@@ -2176,16 +2316,20 @@ body {
         top: 10px;
         right: 10px;
         width: calc(100vw - 20px);
-        padding: 14px;
+        padding: 20px 16px 16px;
     }
 
     .cart-toast-title {
-        font-size: 24px;
+        font-size: 22px;
     }
 
-    .cart-toast-view,
-    .cart-toast-continue {
-        font-size: 18px;
+    .cart-toast-content {
+        align-items: flex-start;
+    }
+
+    .cart-toast-media {
+        width: 64px;
+        height: 64px;
     }
 }
 

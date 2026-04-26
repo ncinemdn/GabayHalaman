@@ -360,7 +360,9 @@ function changeQty(delta) {
         return;
     }
 
-    orderItem.quantity = Math.max(1, Number(orderItem.quantity || 1) + delta);
+    const nextQty = Math.max(1, Number(orderItem.quantity || 1) + delta);
+    const stockLimit = Math.max(0, Number(orderItem.availableStock || 0));
+    orderItem.quantity = stockLimit > 0 ? Math.min(stockLimit, nextQty) : nextQty;
     localStorage.setItem('orderNowItem', JSON.stringify(orderItem));
     renderOrderItem();
 }
@@ -394,20 +396,50 @@ function generatePurchaseOrderId(existingOrders) {
     return '#ORD-' + String(Math.max(fallbackNumber, maxExisting + 1));
 }
 
-function saveOrderNowPurchase() {
+function createEstimatedDeliveryWindow(createdAtValue) {
+    const baseDate = new Date(createdAtValue || Date.now());
+
+    if (Number.isNaN(baseDate.getTime())) {
+        return null;
+    }
+
+    const earliest = new Date(baseDate);
+    earliest.setHours(12, 0, 0, 0);
+    earliest.setDate(earliest.getDate() + 3);
+
+    const latest = new Date(baseDate);
+    latest.setHours(12, 0, 0, 0);
+    latest.setDate(latest.getDate() + 5);
+
+    return {
+        earliest: earliest.toISOString(),
+        latest: latest.toISOString()
+    };
+}
+
+async function saveOrderNowPurchase() {
     if (!orderItem) {
         return;
     }
 
     const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
     const existingPurchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const stockSyncApi = window.GHStockSync;
+    const createdAt = new Date().toISOString();
+
+    if (!stockSyncApi || typeof stockSyncApi.reservePurchaseStock !== 'function' || typeof stockSyncApi.rollbackReservedPurchaseStock !== 'function') {
+        throw new Error('Stock sync is unavailable. Please refresh the page and try again.');
+    }
 
     const purchaseEntry = {
         id: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
         orderId: generatePurchaseOrderId(existingPurchases),
         customerName: deliveryDetails.fullName || 'Guest Customer',
         items: [{
+            plantId: Number(orderItem.plantId || orderItem.id || 0),
+            plantSizeId: Number(orderItem.plantSizeId || 0) || null,
             name: orderItem.name,
+            size: orderItem.size || '',
             qty: Number(orderItem.quantity || 1),
             price: Number(orderItem.price || 0),
             image: orderItem.image
@@ -415,27 +447,47 @@ function saveOrderNowPurchase() {
         totalAmount: Number(orderItem.price || 0) * Number(orderItem.quantity || 1),
         paymentStatus: 'unpaid',
         orderStatus: 'pending',
-        createdAt: new Date().toISOString(),
+        requestType: 'purchase',
+        createdAt: createdAt,
+        estimatedDeliveryWindow: createEstimatedDeliveryWindow(createdAt),
         deliveryDetails: deliveryDetails
     };
 
+    const stockReservation = await stockSyncApi.reservePurchaseStock(purchaseEntry.items);
+
+    try {
+        await createBackendRequest('purchase', purchaseEntry, { requireSuccess: true });
+    } catch (error) {
+        await stockSyncApi.rollbackReservedPurchaseStock(stockReservation);
+        throw error;
+    }
+
     existingPurchases.unshift(purchaseEntry);
     localStorage.setItem('purchaseOrders', JSON.stringify(existingPurchases));
-    createBackendRequest('purchase', purchaseEntry);
+
+    return purchaseEntry;
 }
 
-async function createBackendRequest(requestType, order) {
+async function createBackendRequest(requestType, order, options = {}) {
     if (typeof requestsAPI === 'undefined') {
-        console.warn('requestsAPI is not available; skipping backend persistence.');
-        return;
+        const message = 'Order API is not available.';
+        console.warn(message);
+        if (options.requireSuccess) {
+            throw new Error(message);
+        }
+        return null;
     }
 
     const deliveryDetails = order.deliveryDetails || {};
     const clientId = await resolveClientId(deliveryDetails, order.clientId);
 
     if (!Number.isFinite(Number(clientId)) || Number(clientId) <= 0) {
-        console.warn('Skipping backend request creation because no valid client_id was resolved.');
-        return;
+        const message = 'Unable to match your delivery details to a client record.';
+        console.warn(message);
+        if (options.requireSuccess) {
+            throw new Error(message);
+        }
+        return null;
     }
 
     const requestPayload = {
@@ -449,13 +501,22 @@ async function createBackendRequest(requestType, order) {
     };
 
     try {
-        await requestsAPI.create(requestPayload);
+        const created = await requestsAPI.create(requestPayload);
+        if (options.requireSuccess && created === false) {
+            throw new Error('Unable to save order to the database.');
+        }
+        return created;
     } catch (error) {
         console.warn('Unable to persist order to backend:', error);
+        if (options.requireSuccess) {
+            throw error;
+        }
+        return null;
     }
 }
 
 async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
+    const MAX_CLIENT_CONTACT_NUMBER = 2147483647;
     const explicitClientId = Number(deliveryDetails.clientId || fallbackClientId || 0);
     if (Number.isFinite(explicitClientId) && explicitClientId > 0) {
         return explicitClientId;
@@ -468,7 +529,10 @@ async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
     const fullName = String(deliveryDetails.fullName || '').trim();
     const email = String(deliveryDetails.email || '').trim().toLowerCase();
     const phoneDigits = String(deliveryDetails.phone || '').replace(/\D/g, '');
-    const contactNumber = Number(phoneDigits);
+    const parsedContactNumber = Number(phoneDigits);
+    const contactNumber = Number.isFinite(parsedContactNumber) && parsedContactNumber <= MAX_CLIENT_CONTACT_NUMBER
+        ? parsedContactNumber
+        : 0;
 
     const matchExistingClient = (clients) => {
         if (!Array.isArray(clients)) {
@@ -509,28 +573,41 @@ async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
             contact_number: Number.isFinite(contactNumber) ? contactNumber : 0,
             created_at: new Date().toISOString()
         });
+    } catch (error) {
+        console.warn('Unable to resolve client_id for request:', error);
+    }
 
+    try {
         const refreshedClients = await clientsAPI.getAll();
         const createdClient = matchExistingClient(refreshedClients);
         if (createdClient && Number(createdClient.client_id) > 0) {
             return Number(createdClient.client_id);
         }
     } catch (error) {
-        console.warn('Unable to resolve client_id for request:', error);
+        console.warn('Unable to verify created client record:', error);
     }
 
     return null;
 }
 
-function handleOrderNow() {
+async function handleOrderNow() {
     if (!orderItem || isSubmittingOrderNow) {
         return;
     }
 
     isSubmittingOrderNow = true;
-    saveOrderNowPurchase();
-    localStorage.removeItem('orderNowItem');
-    window.location.href = '../OrderPage/orderpage.html';
+
+    try {
+        await saveOrderNowPurchase();
+        localStorage.removeItem('orderNowItem');
+        window.location.href = '../OrderPage/orderpage.html';
+    } catch (error) {
+        console.error('Failed to place order-now purchase:', error);
+        alert(error?.message || 'Unable to place your order. Please try again.');
+    } finally {
+        isSubmittingOrderNow = false;
+        updateButtonStates();
+    }
 }
 
 function updateButtonStates() {

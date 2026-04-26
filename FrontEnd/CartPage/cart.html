@@ -392,6 +392,8 @@ body {
     font-weight: 700;
     color: #2a3a24;
     margin-top: 0.2rem;
+    display: inline-flex;
+    align-items: center;
 }
 
 .item-actions {
@@ -420,11 +422,24 @@ body {
     font-size: 0.95rem;
     color: #33482a;
     cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    transition: background-color 0.18s ease;
+}
+
+.qty-btn:hover {
+    background: rgba(126, 163, 61, 0.14);
 }
 
 .qty-value {
     font-size: 0.8rem;
     font-weight: 600;
+    min-width: 18px;
+    text-align: center;
 }
 
 .del-btn {
@@ -434,8 +449,22 @@ body {
     width: 30px;
     height: 30px;
     border-radius: 999px;
-    font-size: 0.9rem;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.del-btn:hover {
+    background: #ffe3e8;
+    transform: translateY(-1px);
+}
+
+.del-btn svg {
+    width: 15px;
+    height: 15px;
+    display: block;
 }
 
 /* Checkbox Styling */
@@ -464,7 +493,7 @@ body {
 }
 
 .product-checkbox:checked::after {
-    content: 'âœ“';
+    content: '\2713';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -673,7 +702,7 @@ body {
 <div>
 <div class="summary-row">
 <span id="count">Subtotal (3 items)</span>
-<span id="subtotal" class="font-semibold">â‚±1,999.00</span>
+<span id="subtotal" class="font-semibold">&#8369;1,999.00</span>
 </div>
 
 <div class="summary-row">
@@ -690,7 +719,7 @@ Shipping charges are determined based on the delivery distance to the destinatio
 
 <div class="summary-total">
 <span>Total</span>
-<span id="total">â‚±1,999.00</span>
+<span id="total">&#8369;1,999.00</span>
 </div>
 
 <button id="deliveryBtn" class="summary-btn delivery">
@@ -772,6 +801,12 @@ function saveCartItems(items) {
     localStorage.setItem(CART_ITEMS_KEY, JSON.stringify(Array.isArray(items) ? items : []));
 }
 
+function formatCurrency(amount) {
+    const safeAmount = Number(amount || 0);
+    const pesoSymbol = String.fromCharCode(8369);
+    return `${pesoSymbol}${safeAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function loadReservationsToCart() {
     const selectedReservations = JSON.parse(localStorage.getItem(SELECTED_RESERVATIONS_KEY) || '[]');
     const records = Array.isArray(selectedReservations) ? selectedReservations : [];
@@ -797,6 +832,10 @@ function loadPurchaseCart() {
         price: Number(item.price || 0),
         qty: Number(item.quantity || 1),
         img: item.image || getPlantImage(item.name),
+        plantId: Number(item.plantId || item.id || 0),
+        plantSizeId: Number(item.plantSizeId || 0) || null,
+        size: item.size || '',
+        availableStock: Math.max(0, Number(item.availableStock || 0)),
         selected: true
     }));
 }
@@ -865,21 +904,25 @@ function render(){
             <div class="cart-item-main">
                 <input type="checkbox" class="product-checkbox" id="checkbox-${item.id}" ${item.selected ? 'checked' : ''} onchange="toggleSelect(${item.id})" style="width: 24px; height: 24px; cursor: pointer; flex-shrink: 0;">
                 <img src="${item.img}" class="item-thumb" onerror="this.src='${DEFAULT_PLANT_IMAGE}'">
-                <div>
+                <div class="item-copy">
                     <h3 class="item-name">${item.name}</h3>
-                    <p class="item-price">â‚± ${item.price}</p>
+                    <p class="item-price">${formatCurrency(item.price)}</p>
                 </div>
             </div>
 
             <div class="item-actions">
 
                 <div class="qty-chip">
-                    <button class="qty-btn" onclick="qty(${item.id},-1)">âˆ’</button>
+                    <button class="qty-btn" onclick="qty(${item.id},-1)" aria-label="Decrease quantity">&minus;</button>
                     <span class="qty-value">${item.qty}</span>
-                    <button class="qty-btn" onclick="qty(${item.id},1)">+</button>
+                    <button class="qty-btn" onclick="qty(${item.id},1)" aria-label="Increase quantity">+</button>
                 </div>
 
-                <button onclick="del(${item.id})" class="del-btn" aria-label="Delete item">ðŸ—‘</button>
+                <button onclick="del(${item.id})" class="del-btn" aria-label="Delete item">
+                    <svg viewBox="0 0 16 19" fill="currentColor" aria-hidden="true">
+                        <path d="M3.45775 18.6345C2.75908 18.6345 2.17475 18.3996 1.70475 17.9298C1.23492 17.4598 1 16.8754 1 16.1768V3.2345H0V1.0845H5.2V0H11.35V1.0845H16.55V3.2345H15.55V16.1768C15.55 16.8606 15.3113 17.4412 14.834 17.9185C14.3567 18.3958 13.7761 18.6345 13.0923 18.6345H3.45775ZM13.4 3.2345H3.15V16.1768C3.15 16.2666 3.17883 16.3403 3.2365 16.398C3.29417 16.4557 3.36792 16.4845 3.45775 16.4845H13.0923C13.1693 16.4845 13.2398 16.4524 13.3038 16.3883C13.3679 16.3243 13.4 16.2538 13.4 16.1768V3.2345ZM5.129 14.4595H7.27875V5.2595H5.129V14.4595ZM9.27125 14.4595H11.421V5.2595H9.27125V14.4595Z"/>
+                    </svg>
+                </button>
 
             </div>
 
@@ -892,7 +935,9 @@ function render(){
 
 function qty(id,change){
     let item = data.find(i=>i.id===id);
-    item.qty = Math.max(1, item.qty + change);
+    const nextQty = Math.max(1, item.qty + change);
+    const stockLimit = Math.max(0, Number(item.availableStock || 0));
+    item.qty = stockLimit > 0 ? Math.min(stockLimit, nextQty) : nextQty;
 
     if (checkoutMode === 'purchase') {
         const cartItems = getCartItems();
@@ -934,7 +979,7 @@ function update(){
 
     document.getElementById("count").innerText = `Subtotal (${totalQty} items)`;
 
-    let price = "â‚± " + totalPrice.toLocaleString("en-PH",{minimumFractionDigits:2});
+    let price = formatCurrency(totalPrice);
 
     document.getElementById("subtotal").innerText = price;
     document.getElementById("total").innerText = price;
@@ -966,18 +1011,47 @@ function generatePurchaseOrderId(existingOrders) {
     return '#ORD-' + String(Math.max(fallbackNumber, maxExisting + 1));
 }
 
-async function createBackendRequest(requestType, order) {
+function createEstimatedDeliveryWindow(createdAtValue) {
+    const baseDate = new Date(createdAtValue || Date.now());
+
+    if (Number.isNaN(baseDate.getTime())) {
+        return null;
+    }
+
+    const earliest = new Date(baseDate);
+    earliest.setHours(12, 0, 0, 0);
+    earliest.setDate(earliest.getDate() + 3);
+
+    const latest = new Date(baseDate);
+    latest.setHours(12, 0, 0, 0);
+    latest.setDate(latest.getDate() + 5);
+
+    return {
+        earliest: earliest.toISOString(),
+        latest: latest.toISOString()
+    };
+}
+
+async function createBackendRequest(requestType, order, options = {}) {
     if (typeof requestsAPI === 'undefined') {
-        console.warn('requestsAPI is not available; skipping backend persistence.');
-        return;
+        const message = 'Order API is not available.';
+        console.warn(message);
+        if (options.requireSuccess) {
+            throw new Error(message);
+        }
+        return null;
     }
 
     const deliveryDetails = order.deliveryDetails || {};
     const clientId = await resolveClientId(deliveryDetails, order.clientId);
 
     if (!Number.isFinite(Number(clientId)) || Number(clientId) <= 0) {
-        console.warn('Skipping backend request creation because no valid client_id was resolved.');
-        return;
+        const message = 'Unable to match your delivery details to a client record.';
+        console.warn(message);
+        if (options.requireSuccess) {
+            throw new Error(message);
+        }
+        return null;
     }
 
     const requestPayload = {
@@ -991,13 +1065,22 @@ async function createBackendRequest(requestType, order) {
     };
 
     try {
-        await requestsAPI.create(requestPayload);
+        const created = await requestsAPI.create(requestPayload);
+        if (options.requireSuccess && created === false) {
+            throw new Error('Unable to save order to the database.');
+        }
+        return created;
     } catch (error) {
         console.warn('Unable to persist order to backend:', error);
+        if (options.requireSuccess) {
+            throw error;
+        }
+        return null;
     }
 }
 
 async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
+    const MAX_CLIENT_CONTACT_NUMBER = 2147483647;
     const explicitClientId = Number(deliveryDetails.clientId || fallbackClientId || 0);
     if (Number.isFinite(explicitClientId) && explicitClientId > 0) {
         return explicitClientId;
@@ -1010,7 +1093,10 @@ async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
     const fullName = String(deliveryDetails.fullName || '').trim();
     const email = String(deliveryDetails.email || '').trim().toLowerCase();
     const phoneDigits = String(deliveryDetails.phone || '').replace(/\D/g, '');
-    const contactNumber = Number(phoneDigits);
+    const parsedContactNumber = Number(phoneDigits);
+    const contactNumber = Number.isFinite(parsedContactNumber) && parsedContactNumber <= MAX_CLIENT_CONTACT_NUMBER
+        ? parsedContactNumber
+        : 0;
 
     const matchExistingClient = (clients) => {
         if (!Array.isArray(clients)) {
@@ -1051,14 +1137,18 @@ async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
             contact_number: Number.isFinite(contactNumber) ? contactNumber : 0,
             created_at: new Date().toISOString()
         });
+    } catch (error) {
+        console.warn('Unable to resolve client_id for request:', error);
+    }
 
+    try {
         const refreshedClients = await clientsAPI.getAll();
         const createdClient = matchExistingClient(refreshedClients);
         if (createdClient && Number(createdClient.client_id) > 0) {
             return Number(createdClient.client_id);
         }
     } catch (error) {
-        console.warn('Unable to resolve client_id for request:', error);
+        console.warn('Unable to verify created client record:', error);
     }
 
     return null;
@@ -1067,13 +1157,22 @@ async function resolveClientId(deliveryDetails = {}, fallbackClientId = 0) {
 async function createPurchaseOrderFromCartItems(items) {
     const deliveryDetails = JSON.parse(localStorage.getItem('deliveryDetails') || '{}');
     const existingPurchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const stockSyncApi = window.GHStockSync;
+    const createdAt = new Date().toISOString();
+
+    if (!stockSyncApi || typeof stockSyncApi.reservePurchaseStock !== 'function' || typeof stockSyncApi.rollbackReservedPurchaseStock !== 'function') {
+        throw new Error('Stock sync is unavailable. Please refresh the page and try again.');
+    }
 
     const purchaseEntry = {
         id: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
         orderId: generatePurchaseOrderId(existingPurchases),
         customerName: deliveryDetails.fullName || 'Guest Customer',
         items: items.map(item => ({
+            plantId: Number(item.plantId || 0),
+            plantSizeId: Number(item.plantSizeId || 0) || null,
             name: item.name,
+            size: item.size || '',
             qty: Number(item.qty || 1),
             price: Number(item.price || 0),
             image: item.img
@@ -1081,18 +1180,30 @@ async function createPurchaseOrderFromCartItems(items) {
         totalAmount: items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 1)), 0),
         paymentStatus: 'unpaid',
         orderStatus: 'pending',
-        createdAt: new Date().toISOString(),
+        requestType: 'purchase',
+        createdAt: createdAt,
+        estimatedDeliveryWindow: createEstimatedDeliveryWindow(createdAt),
         deliveryDetails: deliveryDetails
     };
 
+    const stockReservation = await stockSyncApi.reservePurchaseStock(purchaseEntry.items);
+
+    try {
+        await createBackendRequest('purchase', purchaseEntry, { requireSuccess: true });
+    } catch (error) {
+        await stockSyncApi.rollbackReservedPurchaseStock(stockReservation);
+        throw error;
+    }
+
     existingPurchases.unshift(purchaseEntry);
     localStorage.setItem('purchaseOrders', JSON.stringify(existingPurchases));
-    await createBackendRequest('purchase', purchaseEntry);
 
     const selectedIndexes = new Set(items.map(item => Number(item.sourceIndex)));
     const existingCartItems = getCartItems();
     const remainingItems = existingCartItems.filter((_, index) => !selectedIndexes.has(index));
     saveCartItems(remainingItems);
+
+    return purchaseEntry;
 }
 
 async function createReservationOrderFromCartItems(items) {
@@ -1137,7 +1248,7 @@ async function createReservationOrderFromCartItems(items) {
     await createBackendRequest('reservation', reservationEntry);
 }
 
-function placeOrder(){
+async function placeOrder(){
     if (isPlacingOrder) {
         return;
     }
@@ -1151,17 +1262,25 @@ function placeOrder(){
 
     isPlacingOrder = true;
 
-    if (checkoutMode === 'reservation') {
-        createReservationOrderFromCartItems(selectedItems);
-    } else {
-        createPurchaseOrderFromCartItems(selectedItems);
+    try {
+        if (checkoutMode === 'reservation') {
+            await createReservationOrderFromCartItems(selectedItems);
+        } else {
+            await createPurchaseOrderFromCartItems(selectedItems);
+        }
+
+        data = data.filter(item => !item.selected).map((entry, index) => ({ ...entry, id: index + 1 }));
+        localStorage.removeItem(CHECKOUT_SOURCE_KEY);
+
+        render();
+        window.location.href = '../OrderPage/orderpage.html';
+    } catch (error) {
+        console.error('Failed to place order:', error);
+        alert(error?.message || 'Unable to place your order. Please try again.');
+    } finally {
+        isPlacingOrder = false;
+        updateButtonStates();
     }
-
-    data = data.filter(item => !item.selected).map((entry, index) => ({ ...entry, id: index + 1 }));
-    localStorage.removeItem(CHECKOUT_SOURCE_KEY);
-
-    render();
-    window.location.href = '../OrderPage/orderpage.html';
 }
 
 function updateButtonStates() {
@@ -1218,6 +1337,7 @@ window.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script src="../search-plants.js"></script>
+<script src="../shared/api.js"></script>
 <script src="../shared/navbar-dropdown.js"></script>
 </body>
 </html>

@@ -687,22 +687,34 @@ function showAddToCartToast() {
     
     localStorage.setItem('cartItems', JSON.stringify(cart));
 
+    const toastQuantity = existingItem ? existingItem.quantity : state.quantity;
+
     const toast = document.createElement('aside');
     toast.className = 'cart-toast';
     toast.setAttribute('role', 'status');
     toast.setAttribute('aria-live', 'polite');
     toast.innerHTML = `
         <button class="cart-toast-close" type="button" aria-label="Close">×</button>
-        <p class="cart-toast-title">Just added to your cart</p>
+        <p class="cart-toast-kicker">Cart Updated</p>
+        <p class="cart-toast-title">Added to cart</p>
         <div class="cart-toast-content">
-            <img src="${productImage}" alt="${productTitle}" class="cart-toast-image">
+            <div class="cart-toast-media">
+                <img src="${productImage || DEFAULT_PLANT_IMAGE}" alt="${productTitle}" class="cart-toast-image" onerror="this.onerror=null;this.parentElement.classList.add('is-fallback');this.src='${DEFAULT_PLANT_IMAGE}';">
+            </div>
             <div class="cart-toast-details">
-                <p class="cart-toast-product">${productTitle} (${selectedSizeLabel})</p>
-                <p class="cart-toast-meta">Qty: ${state.quantity}</p>
+                <div class="cart-toast-topline">
+                    <p class="cart-toast-product">${productTitle}</p>
+                    <span class="cart-toast-badge">${selectedSizeLabel}</span>
+                </div>
+                <div class="cart-toast-pills">
+                    <span class="cart-toast-pill">Qty ${toastQuantity}</span>
+                </div>
             </div>
         </div>
-        <a href="../CartPage/cart.html" class="cart-toast-view">VIEW CART</a>
-        <button class="cart-toast-continue" type="button">Continue shopping</button>
+        <div class="cart-toast-actions">
+            <a href="../CartPage/cart.html" class="cart-toast-view">View Cart</a>
+            <button class="cart-toast-continue" type="button">Continue shopping</button>
+        </div>
     `;
 
     document.body.appendChild(toast);
