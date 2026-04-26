@@ -406,16 +406,6 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.site-footer {
-    text-align: center;
-    padding: 15px 18px;
-    background: linear-gradient(180deg, #273221 0%, #1d2719 100%);
-    color: #f5f7f2;
-    font-size: 0.82rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
 @media (max-width: 900px) {
     .header-inner {
         grid-template-columns: 1fr auto;
