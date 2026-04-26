@@ -110,7 +110,7 @@
                     </div>
                     <div class="user-details">
                         <div class="user-name">Admin</div>
-                        <div class="user-role">Administrator</div>
+                        <div id="headerRole" class="user-role">Administrator</div>
                     </div>
                 </div>
             </div>
@@ -125,7 +125,7 @@
                             <div class="profile-hero-copy">
                                 <p class="profile-eyebrow">Admin Account</p>
                                 <h2 id="heroName">Admin</h2>
-                                <p class="profile-role-line">Administrator for catalog, reservations, and delivery operations</p>
+                                <p id="heroRoleLine" class="profile-role-line">Administrator for catalog, reservations, and delivery operations</p>
                                 <div class="profile-chip-row">
                                     <span class="profile-chip">Active</span>
                                     <span class="profile-chip muted">Last updated today</span>
@@ -135,7 +135,7 @@
                         <div class="btn-group profile-action-row">
                             <button id="editProfileBtn" class="btn btn-primary" type="button">Edit Profile</button>
                             <button id="changePasswordBtn" class="btn btn-secondary" type="button">Change Password</button>
-                            <button id="manageAdminsBtn" style="display:none;">
+                            <button id="manageAdminsBtn" class="btn btn-secondary hidden" type="button">
                                 Manage Admins
                             </button>
                         </div>
@@ -199,10 +199,54 @@
                     </form>
                 </section>
 
-        <section class="section-card" id="adminSection" style="display:none; margin-top:20px;">
-            <h2>Admin Management</h2>
-            <div id="adminList"></div>
-        </section>
+                <section class="section-card admin-shell hidden" id="adminSection">
+                    <div class="admin-shell-header">
+                        <div>
+                            <h2 class="admin-title">Admin Management</h2>
+                            <p class="admin-subtitle">View all admins, create new admin accounts, and maintain access.</p>
+                        </div>
+                        <button id="addAdminToggleBtn" class="btn btn-primary add-admin-trigger hidden" type="button">Add Admin</button>
+                    </div>
+
+                    <form id="addAdminForm" class="admin-add-form hidden" novalidate>
+                        <h3 class="admin-add-title">Create Admin Account</h3>
+                        <div class="edit-fields-grid">
+                            <label class="edit-field">
+                                <span>Full Name</span>
+                                <input id="newAdminFullName" type="text" required>
+                            </label>
+                            <label class="edit-field">
+                                <span>Email Address</span>
+                                <input id="newAdminEmail" type="email" required>
+                            </label>
+                            <label class="edit-field">
+                                <span>Phone</span>
+                                <input id="newAdminPhone" type="text" required>
+                            </label>
+                            <label class="edit-field">
+                                <span>Password</span>
+                                <div class="password-field-wrap">
+                                    <input id="newAdminPassword" type="password" minlength="6" required>
+                                    <button id="toggleNewAdminPasswordBtn" class="password-toggle-btn" type="button" aria-label="Show password" aria-pressed="false">Show</button>
+                                </div>
+                            </label>
+                            <label class="edit-field">
+                                <span>Role</span>
+                                <select id="newAdminRole" required>
+                                    <option value="Administrator">Administrator</option>
+                                    <option value="SuperAdmin">SuperAdmin</option>
+                                </select>
+                            </label>
+                        </div>
+                        <p id="addAdminError" class="form-error" aria-live="polite"></p>
+                        <div class="btn-group edit-form-actions">
+                            <button class="btn btn-primary" type="submit">Create Admin</button>
+                            <button id="cancelAddAdminBtn" class="btn btn-secondary" type="button">Cancel</button>
+                        </div>
+                    </form>
+
+                    <div id="adminList" class="admin-list"></div>
+                </section>
 
                 <section class="section-card log-shell">
                     <div class="log-shell-header">
