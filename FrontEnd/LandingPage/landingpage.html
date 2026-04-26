@@ -160,6 +160,9 @@
                     <button class="reviews-btn" type="button">Write a review</button>
                 </div>
                 <div class="reviews-list" id="reviewsList" aria-live="polite"></div>
+                <div class="reviews-more-container">
+                    <button class="reviews-more-btn" id="viewMoreReviewsBtn" type="button">View all reviews</button>
+                </div>
             </div>
         </section>
 
@@ -199,6 +202,28 @@
                     to serving you again.
                 </p>
                 <button class="review-success-btn" id="closeSuccessModal" type="button">Confirm</button>
+            </div>
+        </div>
+
+        <div class="review-all-modal" id="reviewAllModal" aria-hidden="true">
+            <div class="review-all-card" role="dialog" aria-modal="true" aria-labelledby="reviewAllModalTitle">
+                <button class="review-modal-close" id="closeAllReviewsModal" type="button" aria-label="Close all reviews">x</button>
+                <h3 class="review-modal-title" id="reviewAllModalTitle">All Customer Reviews</h3>
+                <p class="review-all-description">Browse all customer feedback below.</p>
+                <div class="review-filter-row" aria-label="Filter reviews by rating">
+                    <button class="review-filter-btn active" type="button" data-filter-rating="all">All</button>
+                    <button class="review-filter-btn" type="button" data-filter-rating="5">5 Stars</button>
+                    <button class="review-filter-btn" type="button" data-filter-rating="4">4 Stars</button>
+                    <button class="review-filter-btn" type="button" data-filter-rating="3">3 Stars</button>
+                    <button class="review-filter-btn" type="button" data-filter-rating="2">2 Stars</button>
+                    <button class="review-filter-btn" type="button" data-filter-rating="1">1 Star</button>
+                </div>
+                <div class="review-all-scroll" id="allReviewsList" aria-live="polite"></div>
+                <div class="review-all-pagination">
+                    <button class="review-page-btn" id="allReviewsPrevBtn" type="button">Previous</button>
+                    <p class="review-page-info" id="allReviewsPageInfo">Page 1 of 1</p>
+                    <button class="review-page-btn" id="allReviewsNextBtn" type="button">Next</button>
+                </div>
             </div>
         </div>
 
