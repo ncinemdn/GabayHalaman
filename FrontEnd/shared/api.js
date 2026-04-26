@@ -8,6 +8,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
     method,
     headers: {
       'Content-Type': 'application/json',
+      'role': localStorage.getItem("role") || ''
     },
   };
 
@@ -216,7 +217,6 @@ const adminAPI = {
   ),
 
   // 🔥 ADD THESE (IMPORTANT)
-  signup: (data) => apiRequest('/admin/signup', 'POST', data),
   verify: (data) => apiRequest('/admin/verify', 'POST', data),
   login: (data) => apiRequest('/admin/login', 'POST', data),
 

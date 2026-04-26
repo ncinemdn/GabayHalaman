@@ -29,6 +29,9 @@ namespace ProjectName.Models
         [Column("password_hash")]
 		public string password_hash { get; set; }
 
+		[Column("role")]
+		public string role { get; set; }
+
 		[Column("created_at")]
         public DateTime created_at { get; set; }
 

@@ -1,3 +1,17 @@
+const admin = JSON.parse(localStorage.getItem("admin"));
+
+if (!admin) {
+    window.location.href = "../Auth/signin.html";
+}
+
+const role = localStorage.getItem("role");
+
+if (role !== "SuperAdmin") {
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.style.display = "none";
+    });
+}   
+
 // Page content templates
 const pages = {
     dashboard: `
@@ -1003,6 +1017,39 @@ function loadPage(pageName) {
     currentPage = pageName;
     const mainContent = document.getElementById('mainContent');
     mainContent.innerHTML = pages[pageName] || pages.dashboard;
+
+    function loadPage(pageName) {
+    currentPage = pageName;
+    const mainContent = document.getElementById('mainContent');
+    mainContent.innerHTML = pages[pageName] || pages.dashboard;
+
+    // 🔐 ROLE CHECK (PUT HERE)
+    const role = localStorage.getItem("role");
+
+    if (role !== "SuperAdmin") {
+        setTimeout(() => {
+            document.querySelectorAll(".delete-btn").forEach(btn => {
+                btn.style.display = "none";
+            });
+        }, 0);
+    }
+
+    // existing code...
+    if (pageName === 'dashboard') {
+        populateDashboard();
+    }
+
+    document.querySelectorAll('.nav-item, .bottom-action').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    const matchedNavItem = document.querySelector(`.nav-item[data-page="${pageName}"], .bottom-action[data-page="${pageName}"]`);
+    if (matchedNavItem) {
+        matchedNavItem.classList.add('active');
+    }
+
+    history.pushState({ page: pageName }, '', `#${pageName}`);
+}
    
     // Populate dashboard if it's the dashboard page
     if (pageName === 'dashboard') {

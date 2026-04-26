@@ -109,55 +109,9 @@ namespace API.Controllers
 		// =========================
 
 		[HttpPost("signup")]
-		public async Task<IActionResult> Signup([FromBody] Admin admin)
+		public IActionResult Signup()
 		{
-			var normalizedEmail = admin.email?.Trim().ToLower();
-
-			if (string.IsNullOrWhiteSpace(admin.full_name) ||
-				string.IsNullOrWhiteSpace(normalizedEmail) ||
-				string.IsNullOrWhiteSpace(admin.phone) ||
-				string.IsNullOrWhiteSpace(admin.password_hash))
-			{
-				return BadRequest("All signup fields are required.");
-			}
-
-			var existingAdmin = adminServices.GetByEmail(normalizedEmail);
-			if (existingAdmin != null)
-			{
-				if (existingAdmin.is_verified)
-					return BadRequest("Email is already registered.");
-
-				return BadRequest("This email already has a pending account. Verify it first.");
-			}
-
-			if (PendingSignups.TryGetValue(normalizedEmail, out var pending) && pending.CodeExpiry > DateTime.Now)
-			{
-				return BadRequest("Verification code already sent. Wait for the current code to expire.");
-			}
-
-			var code = new Random().Next(100000, 999999).ToString();
-			PendingSignups[normalizedEmail] = new PendingSignup
-			{
-				FullName = admin.full_name.Trim(),
-				Email = normalizedEmail,
-				Phone = admin.phone.Trim(),
-				PasswordHash = BCrypt.Net.BCrypt.HashPassword(admin.password_hash),
-				VerificationCode = code,
-				CodeExpiry = DateTime.Now.AddMinutes(5)
-			};
-
-			EmailService emailService = new EmailService();
-			await emailService.SendEmail(
-				normalizedEmail,
-				"Verify your Gabay Halaman Account 🌿",
-				GenerateEmailTemplate(
-					"Account Verification",
-					"Welcome! Use the code below to verify your account:",
-					code
-				)
-			);
-
-			return Ok("Verification code sent.");
+			return BadRequest("Admin registration is disabled.");
 		}
 
 		// =========================
@@ -236,7 +190,13 @@ namespace API.Controllers
 			if (!BCrypt.Net.BCrypt.Verify(data.Password, admin.password_hash))
 				return BadRequest("Incorrect password");
 
-			return Ok(admin);
+			return Ok(new
+			{
+				admin_id = admin.admin_id,
+				full_name = admin.full_name,
+				email = admin.email,
+				role = admin.role   // 🔥 THIS IS THE KEY
+			});
 		}
 
 		// =========================
@@ -377,6 +337,13 @@ namespace API.Controllers
 		[HttpPut]
 		public async Task<ActionResult<bool>> Update(Admin ad)
 		{
+			var role = Request.Headers["role"].FirstOrDefault();
+
+			if (string.IsNullOrEmpty(role) || role != "SuperAdmin")
+			{
+				return Unauthorized("Only Super Admin can perform this action.");
+			}
+
 			try
 			{
 				ad.photo = await PersistInlinePhotoIfNeeded(ad.photo);
@@ -390,9 +357,17 @@ namespace API.Controllers
 		}
 
 		[HttpDelete]
-		public bool Delete(int id)
+		public IActionResult Delete(int id)
 		{
-			return adminServices.Delete(id);
+			var role = Request.Headers["role"].FirstOrDefault();
+
+			if (string.IsNullOrEmpty(role) || role != "SuperAdmin")
+			{
+				return Unauthorized("Only Super Admin can perform this action.");
+			}
+
+			var result = adminServices.Delete(id);
+			return Ok(result);
 		}
 
 		[HttpPut("change-password/{id}")]
