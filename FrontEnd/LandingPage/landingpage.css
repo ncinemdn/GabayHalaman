@@ -26,7 +26,7 @@ body {
 .header {
     background: rgba(104, 150, 84, 0.3);
     padding: 14px 0;
-    position: fixed;
+    position: sticky;
     top: 0;
     left: 0;
     width: 100%;
@@ -121,6 +121,9 @@ body {
     border: none;
     cursor: pointer;
     padding: 0;
+    line-height: inherit;
+    letter-spacing: inherit;
+    transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .nav-dropdown-toggle:hover {
@@ -802,6 +805,29 @@ body {
     gap: 0.85rem;
 }
 
+.reviews-more-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.2rem;
+}
+
+.reviews-more-btn {
+    border: 1px solid #3c5830;
+    background: #ffffff;
+    color: #2f4a24;
+    border-radius: 999px;
+    padding: 0.48rem 1.05rem;
+    font-family: 'Inria Serif', serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.reviews-more-btn:hover {
+    background: #3c5830;
+    color: #ffffff;
+}
+
 .review-item {
     background: #f6f4f9;
     border: 1px solid #dedede;
@@ -880,7 +906,8 @@ body {
 }
 
 .review-modal,
-.review-success-modal {
+.review-success-modal,
+.review-all-modal {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
@@ -895,7 +922,8 @@ body {
 }
 
 .review-modal.is-open,
-.review-success-modal.is-open {
+.review-success-modal.is-open,
+.review-all-modal.is-open {
     opacity: 1;
     pointer-events: auto;
 }
@@ -1020,6 +1048,112 @@ body {
 .review-success-card {
     max-width: 410px;
     padding: 1.25rem 1.1rem 0.95rem;
+}
+
+.review-all-card {
+    width: min(100%, 860px);
+    max-height: 84vh;
+    background: #f6f4f9;
+    border-radius: 8px;
+    border: 1px solid #d8d8d8;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    color: #3d4d2b;
+    position: relative;
+    padding: 1.2rem 1.2rem 1rem;
+}
+
+.review-all-description {
+    text-align: center;
+    color: #4a4a4a;
+    margin: 0 0 0.7rem;
+    font-size: 0.95rem;
+}
+
+.review-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.45rem;
+    margin: 0 0 0.8rem;
+}
+
+.review-filter-btn {
+    border: 1px solid #8aa078;
+    background: #ffffff;
+    color: #2f4a24;
+    border-radius: 999px;
+    padding: 0.32rem 0.72rem;
+    font-family: 'Inria Serif', serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.review-filter-btn:hover {
+    border-color: #3c5830;
+}
+
+.review-filter-btn.active {
+    background: #3c5830;
+    border-color: #3c5830;
+    color: #ffffff;
+}
+
+.review-all-scroll {
+    max-height: min(64vh, 520px);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.review-all-empty {
+    text-align: center;
+    color: #5f6f5b;
+    padding: 1.2rem 0.5rem;
+}
+
+.review-all-pagination {
+    margin-top: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+}
+
+.review-page-btn {
+    border: 1px solid #3c5830;
+    background: #ffffff;
+    color: #2f4a24;
+    border-radius: 999px;
+    padding: 0.4rem 0.95rem;
+    font-family: 'Inria Serif', serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.review-page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.review-page-btn:not(:disabled):hover {
+    background: #3c5830;
+    color: #ffffff;
+}
+
+.review-page-info {
+    min-width: 108px;
+    text-align: center;
+    color: #32402a;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .review-filter-btn {
+        font-size: 0.76rem;
+        padding: 0.28rem 0.62rem;
+    }
 }
 
 .review-success-text {
@@ -2094,6 +2228,12 @@ body {
     letter-spacing: 0.01em;
 }
 
+.nav-dropdown-toggle:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
 .hero-btn {
     align-self: flex-start;
     min-width: clamp(220px, 34vw, 340px);
@@ -2512,12 +2652,12 @@ body {
 
 /* Footer compact pass */
 .site-footer {
-    padding-top: clamp(2.1rem, 3.8vw, 3rem);
+    padding-top: clamp(1rem, 1.8vw, 1.4rem);
 }
 
 .footer-main {
     max-width: 1020px;
-    padding: 1.1rem 0 1.4rem;
+    padding: 0.45rem 0 1.15rem;
 }
 
 .footer-kicker {
