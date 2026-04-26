@@ -9,6 +9,7 @@ const SAFE_DB_IMAGE_PATH_LENGTH = 220;
 
 let editingPlantId = null;
 let currentImagePreviews = [];
+let imageSelectionDirty = false;
 let customCategories = new Set();
 
 // DOM Elements
@@ -105,10 +106,6 @@ let actionLoadingTimer = null;
 let successToastTimer = null;
 
 function parsePlantImages(imageValue) {
-    if (window.GHPlantData && typeof window.GHPlantData.parsePlantImages === 'function') {
-        return window.GHPlantData.parsePlantImages(imageValue).slice(0, MAX_PLANT_IMAGES);
-    }
-
     if (Array.isArray(imageValue)) {
         return imageValue.map(item => String(item || '').trim()).filter(Boolean).slice(0, MAX_PLANT_IMAGES);
     }
@@ -129,6 +126,10 @@ function parsePlantImages(imageValue) {
         }
     }
 
+    if (window.GHPlantData && typeof window.GHPlantData.parsePlantImages === 'function') {
+        return window.GHPlantData.parsePlantImages(raw).slice(0, MAX_PLANT_IMAGES);
+    }
+
     return [raw];
 }
 
@@ -144,6 +145,35 @@ function serializePlantImages(images) {
 function getPrimaryImage(images) {
     const safeImages = Array.isArray(images) ? images : [];
     return safeImages[0] || DEFAULT_PLANT_IMAGE;
+}
+
+function hasAttachedPlantImages(plant) {
+    const images = Array.isArray(plant?.images) ? plant.images : [];
+    return images.some((img) => Boolean(String(img || '').trim()));
+}
+
+function renderPlantImageMarkup(plant, imageClass, wrapperClass = '') {
+    const hasImages = hasAttachedPlantImages(plant);
+    const classes = ['plant-image-shell'];
+    if (wrapperClass) {
+        classes.push(wrapperClass);
+    }
+
+    if (!hasImages) {
+        return `<div class="${classes.join(' ')}"><div class="no-plant-image">No image</div></div>`;
+    }
+
+    return `
+        <div class="${classes.join(' ')}">
+            <img
+                src="${plant.image}"
+                alt="${plant.name}"
+                class="${imageClass}"
+                onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+            >
+            <div class="no-plant-image hidden">No image</div>
+        </div>
+    `;
 }
 
 function isSafeDbImagePath(value) {
@@ -217,12 +247,14 @@ function removeImageAt(index) {
     }
 
     currentImagePreviews.splice(index, 1);
+    imageSelectionDirty = true;
     imageInput.value = '';
     renderImagePreviews();
 }
 
 function removeAllImages() {
     currentImagePreviews = [];
+    imageSelectionDirty = true;
     imageInput.value = '';
     renderImagePreviews();
 }
@@ -308,16 +340,22 @@ async function loadPlantInventory() {
         }, {});
 
         plants = (Array.isArray(allPlants) ? allPlants : []).map((plant) => {
-            const imageList = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
+            const resolvedImageList = (window.GHPlantData && typeof window.GHPlantData.resolvePlantImagesById === 'function')
                 ? window.GHPlantData.resolvePlantImagesById(plant.plant_id, plant.image_path || plant.image || '')
                 : parsePlantImages(plant.image_path || plant.image || '');
+
+            const imageList = parsePlantImages(resolvedImageList);
+            const normalizedImages = (imageList.length === 1 && imageList[0] === DEFAULT_PLANT_IMAGE)
+                ? []
+                : imageList;
+
             return {
                 id: String(plant.plant_id),
                 name: plant.plant_name || '',
                 category: getCategoryName(plant.category_id),
                 description: plant.description || '',
-                image: getPrimaryImage(imageList),
-                images: imageList,
+                image: getPrimaryImage(normalizedImages),
+                images: normalizedImages,
                 sizes: sizesByPlant[plant.plant_id] || {}
             };
         }).map(normalizePlantData);
@@ -465,7 +503,7 @@ function renderDesktopTable(filteredPlants) {
         return `
             <div class="table-row">
                 <div class="table-cell">
-                    <img src="${plant.image}" alt="${plant.name}" class="plant-image">
+                    ${renderPlantImageMarkup(plant, 'plant-image')}
                 </div>
                 <div class="table-cell plant-name">${plant.name}</div>
                 <div class="table-cell plant-category">${plant.category}</div>
@@ -513,7 +551,7 @@ function renderMobileCards(filteredPlants) {
         return `
             <div class="plant-card">
                 <div class="card-header">
-                    <img src="${plant.image}" alt="${plant.name}" class="card-image">
+                    ${renderPlantImageMarkup(plant, 'card-image', 'card-image-shell')}
                     <div class="card-info">
                         <h3 class="card-name">${plant.name}</h3>
                         <p class="card-category">${plant.category}</p>
@@ -592,6 +630,7 @@ function editPlant(id) {
     plantDescription.value = plant.description || '';
     
     currentImagePreviews = parsePlantImages(plant.images || plant.image || '');
+    imageSelectionDirty = false;
     renderImagePreviews();
 
     addPlantModal.classList.add('active');
@@ -770,7 +809,7 @@ async function savePlant() {
         if (index !== -1) {
             const existing = plants[index];
             const existingImages = parsePlantImages(existing.images || existing.image || DEFAULT_PLANT_IMAGE);
-            const finalImages = selectedImages.length ? selectedImages : existingImages;
+            const finalImages = imageSelectionDirty ? selectedImages : existingImages;
             const updatedSizes = { ...existing.sizes };
             updatedSizes[selectedSize] = { ...updatedSizes[selectedSize], ...newSizeData };
             const hasAnyStock = Object.values(updatedSizes).some(size => Number(size.stock) > 0 && Boolean(size.available));
@@ -781,12 +820,19 @@ async function savePlant() {
                 return;
             }
 
+            const nextImagePath = (imageSelectionDirty && !finalImages.length)
+                ? ''
+                : buildSafeDbImagePath(
+                    finalImages,
+                    imageSelectionDirty ? DEFAULT_PLANT_IMAGE : (existing.image || DEFAULT_PLANT_IMAGE)
+                );
+
             const plantPayload = {
                 plant_id: Number(editingPlantId),
                 plant_name: name,
                 category_id: categoryId,
                 description,
-                image_path: buildSafeDbImagePath(finalImages, existing.image || DEFAULT_PLANT_IMAGE)
+                image_path: nextImagePath
             };
 
             let plantUpdated = false;
@@ -801,8 +847,16 @@ async function savePlant() {
                 return;
             }
 
-            if (window.GHPlantData && typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
-                window.GHPlantData.savePlantImagesForPlant(editingPlantId, finalImages);
+            try {
+                if (window.GHPlantData) {
+                    if (imageSelectionDirty && !finalImages.length && typeof window.GHPlantData.removePlantImagesForPlant === 'function') {
+                        window.GHPlantData.removePlantImagesForPlant(editingPlantId);
+                    } else if (typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
+                        window.GHPlantData.savePlantImagesForPlant(editingPlantId, finalImages);
+                    }
+                }
+            } catch (error) {
+                console.warn('Unable to persist plant image map locally:', error);
             }
 
             const sizeEntry = existing.sizes?.[selectedSize];
@@ -874,8 +928,12 @@ async function savePlant() {
                 return;
             }
 
-            if (window.GHPlantData && typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
-                window.GHPlantData.savePlantImagesForPlant(newPlantId, finalImages);
+            try {
+                if (window.GHPlantData && typeof window.GHPlantData.savePlantImagesForPlant === 'function') {
+                    window.GHPlantData.savePlantImagesForPlant(newPlantId, finalImages);
+                }
+            } catch (error) {
+                console.warn('Unable to persist plant image map locally:', error);
             }
         } catch (error) {
             console.error('Failed to create plant:', error);
@@ -1043,6 +1101,7 @@ function resetForm() {
     plantDescription.value = '';
     imageInput.value = '';
     currentImagePreviews = [];
+    imageSelectionDirty = false;
     renderImagePreviews();
 }
 
@@ -1071,6 +1130,9 @@ function handleImageUpload(e) {
         .then((results) => {
             const validImages = results.filter(Boolean);
             currentImagePreviews = [...currentImagePreviews, ...validImages].slice(0, MAX_PLANT_IMAGES);
+            if (validImages.length) {
+                imageSelectionDirty = true;
+            }
             renderImagePreviews();
 
             if (files.length > selectedFiles.length) {

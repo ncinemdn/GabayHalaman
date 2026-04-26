@@ -657,6 +657,31 @@ textarea,
     border: 1px solid #dde5d7;
 }
 
+.plant-image-shell {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    border-radius: 14px;
+    border: 1px solid #dde5d7;
+    background: #f4f7f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.no-plant-image {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    color: #768774;
+    text-align: center;
+    padding: 0 0.4rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
 .plant-name {
     text-align: center;
     font-family: 'Inter', sans-serif;
@@ -807,6 +832,14 @@ textarea,
     height: 100px;
     border-radius: 15px;
     object-fit: cover;
+    flex-shrink: 0;
+}
+
+.card-image-shell {
+    width: 100px;
+    height: 100px;
+    margin: 0;
+    border-radius: 15px;
     flex-shrink: 0;
 }
 
