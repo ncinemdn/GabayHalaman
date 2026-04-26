@@ -16,15 +16,17 @@
             }
 
             .nav-dropdown-toggle {
-                font-family: 'Inria Serif', serif;
-                font-weight: 700;
-                font-size: 18px;
-                color: black;
+                font-family: inherit;
+                font-weight: inherit;
+                font-size: inherit;
+                color: inherit;
                 background: none;
                 border: none;
                 cursor: pointer;
                 padding: 0;
                 white-space: nowrap;
+                line-height: inherit;
+                letter-spacing: inherit;
             }
 
             .nav-dropdown-toggle:hover {
