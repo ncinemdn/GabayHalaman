@@ -7,12 +7,30 @@ function logout() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    const manageBtn = document.getElementById("manageAdminsBtn");
+
+if (manageBtn) {
+    manageBtn.addEventListener("click", () => {
+        document.getElementById("adminSection").style.display = "block";
+        loadAdmins();
+    });
+}
+
     const ADMIN_KEY = 'admin';
     const DEFAULT_PROFILE_PHOTO = 'cc.jpg';
     const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
     const SUPPORTED_PROFILE_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
     let currentAdmin = loadAdminSession();
+
+    const role = localStorage.getItem("role");
+
+        if (role === "SuperAdmin") {
+            const btn = document.getElementById("manageAdminsBtn");
+            if (btn) btn.style.display = "block";
+        }
+
     if (!currentAdmin) {
         window.location.href = '../../Admin/Auth/signin.html';
         return;
@@ -515,6 +533,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2200);
     }
 });
+
+async function loadAdmins() {
+    try {
+        const admins = await apiRequest('/admin', 'GET');
+
+        const container = document.getElementById("adminList");
+
+        container.innerHTML = admins.map(a => `
+            <div style="margin-bottom:10px;">
+                ${a.full_name} (${a.email})
+                <button onclick="deleteAdmin(${a.admin_id})" class="delete-btn">
+                    Delete
+                </button>
+            </div>
+        `).join('');
+
+        // Hide delete if NOT superadmin
+        const role = localStorage.getItem("role");
+        if (role !== "SuperAdmin") {
+            document.querySelectorAll(".delete-btn").forEach(btn => {
+                btn.style.display = "none";
+            });
+        }
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function deleteAdmin(id) {
+    if (!confirm("Are you sure you want to delete this admin?")) return;
+
+    try {
+        await apiRequest(`/admin?id=${id}`, 'DELETE');
+        alert("Admin deleted successfully!");
+        loadAdmins();
+    } catch (err) {
+        alert("Error deleting admin");
+    }
+}
 
 // Logout button handler
 document.addEventListener('DOMContentLoaded', () => {

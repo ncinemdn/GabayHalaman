@@ -5,8 +5,8 @@ async function login(email, password) {
             password: password
         });
 
-        // save session
         localStorage.setItem("admin", JSON.stringify(response));
+        localStorage.setItem("role", response.role); 
 
         window.location.href = "../Dashboard/dashboard.html";
 
@@ -17,38 +17,6 @@ async function login(email, password) {
                 : error.message?.includes("password")
                 ? "Incorrect password."
                 : error.message || "Login failed";
-    }
-}
-
-async function signup(name, email, contactNumber, password) {
-    try {
-        if (!name || !email || !contactNumber || !password) {
-            document.getElementById("signUpError").textContent = "All fields are required";
-            return;
-        }
-
-        const data = {
-            full_name: name,
-            email: email,
-            phone: contactNumber,
-            password_hash: password
-        };
-
-        await adminAPI.signup(data);
-
-        document.getElementById("signUpError").textContent = "";
-        document.getElementById("signUpSuccess").textContent =
-            "Verification code sent to your email!";
-
-        localStorage.setItem("tempPassword", password);
-        localStorage.setItem("verifyEmail", email);
-
-        openVerificationModal();
-        startCountdown();
-
-    } catch (error) {
-        document.getElementById("signUpError").textContent =
-            error.message || "Signup failed";
     }
 }
 
@@ -249,30 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 btn.disabled = false;
             }
-        });
-    }
-
-    const signUpForm = document.getElementById("signUpForm");
-    console.log('Sign-up form found:', !!signUpForm);
-    clearFormOnLoad(signUpForm);
-    
-    if (signUpForm) {
-        signUpForm.addEventListener("submit", async function (e) {
-            e.preventDefault();
-            console.log('Sign-up form submitted');
-
-            const name = document.getElementById("signupName").value;
-            const email = document.getElementById("signupEmail").value;
-            const contactNumber = document.getElementById("signupContact").value;
-            const password = document.getElementById("signupPassword").value;
-            const confirmPassword = document.getElementById("signupConfirmPassword").value;
-
-            if (password !== confirmPassword) {
-                document.getElementById("signUpError").textContent = "Passwords do not match";
-                return;
-            }
-
-            await signup(name, email, contactNumber, password);
         });
     }
 

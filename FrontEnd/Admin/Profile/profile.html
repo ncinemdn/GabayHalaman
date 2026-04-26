@@ -135,6 +135,9 @@
                         <div class="btn-group profile-action-row">
                             <button id="editProfileBtn" class="btn btn-primary" type="button">Edit Profile</button>
                             <button id="changePasswordBtn" class="btn btn-secondary" type="button">Change Password</button>
+                            <button id="manageAdminsBtn" style="display:none;">
+                                Manage Admins
+                            </button>
                         </div>
                     </div>
 
@@ -195,6 +198,11 @@
                         </div>
                     </form>
                 </section>
+
+        <section class="section-card" id="adminSection" style="display:none; margin-top:20px;">
+            <h2>Admin Management</h2>
+            <div id="adminList"></div>
+        </section>
 
                 <section class="section-card log-shell">
                     <div class="log-shell-header">
