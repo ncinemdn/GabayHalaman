@@ -39,6 +39,10 @@ body {
         linear-gradient(180deg, #f8fbf5 0%, #eef4eb 100%);
 }
 
+body.has-modal-open {
+    overflow: hidden;
+}
+
 .serif {
     font-family: 'Playfair Display', serif;
     letter-spacing: -0.3px;
@@ -579,6 +583,205 @@ body {
     border: 1px solid rgba(126, 163, 61, 0.45);
 }
 
+.cart-delete-toast-stack {
+    position: fixed;
+    top: 96px;
+    right: 24px;
+    z-index: 1350;
+    pointer-events: none;
+}
+
+.cart-delete-toast {
+    position: relative;
+    width: min(360px, calc(100vw - 32px));
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 0.95rem 1rem 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(126, 163, 61, 0.28);
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 18px 32px rgba(26, 42, 20, 0.16);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    opacity: 0;
+    transform: translate3d(16px, -8px, 0);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.cart-delete-toast.is-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.cart-delete-toast-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #4b6a2b;
+    background: linear-gradient(145deg, #edf6df, #f8fbf2);
+    border: 1px solid rgba(126, 163, 61, 0.3);
+}
+
+.cart-delete-toast-badge svg {
+    width: 18px;
+    height: 18px;
+}
+
+.cart-delete-toast-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.cart-delete-toast-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #213319;
+}
+
+.cart-delete-toast-text {
+    margin-top: 0.16rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #5c6d53;
+}
+
+.cart-delete-toast-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #7ea33d, #b8cf87);
+    transform-origin: left center;
+}
+
+@keyframes cartToastCountdown {
+    from {
+        transform: scaleX(1);
+    }
+
+    to {
+        transform: scaleX(0);
+    }
+}
+
+.cart-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(25, 37, 21, 0.44);
+    backdrop-filter: blur(6px);
+    z-index: 1450;
+}
+
+.cart-confirm-overlay.is-open {
+    display: flex;
+}
+
+.cart-confirm-card {
+    width: min(460px, 100%);
+    padding: 1.35rem;
+    border-radius: 24px;
+    border: 1px solid rgba(126, 163, 61, 0.22);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbf5 100%);
+    box-shadow: 0 24px 60px rgba(21, 35, 16, 0.2);
+    animation: cartConfirmCardIn 0.22s ease;
+}
+
+@keyframes cartConfirmCardIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.cart-confirm-badge {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #fff4e5, #fffaf2);
+    border: 1px solid rgba(246, 177, 68, 0.3);
+    color: #b66815;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.cart-confirm-badge svg {
+    width: 24px;
+    height: 24px;
+}
+
+.cart-confirm-title {
+    margin-top: 1rem;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #1f3118;
+}
+
+.cart-confirm-desc {
+    margin-top: 0.45rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #5e6d56;
+}
+
+.cart-confirm-actions {
+    margin-top: 1.15rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.7rem;
+}
+
+.cart-confirm-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 0.76rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.cart-confirm-btn:hover {
+    transform: translateY(-1px);
+}
+
+.cart-confirm-btn.secondary {
+    background: #eef2ea;
+    color: #304427;
+    border: 1px solid #dbe4d4;
+}
+
+.cart-confirm-btn.secondary:hover {
+    background: #e6ede0;
+}
+
+.cart-confirm-btn.danger {
+    background: linear-gradient(145deg, #a4372f, #c24139);
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(164, 55, 47, 0.22);
+}
+
+.cart-confirm-btn.danger:hover {
+    background: linear-gradient(145deg, #963128, #b53b33);
+}
+
 @media (max-width: 1024px) {
     .nav {
         display: none;
@@ -621,6 +824,33 @@ body {
     .item-actions {
         width: 100%;
         justify-content: flex-end;
+    }
+
+    .cart-delete-toast-stack {
+        top: 84px;
+        right: 12px;
+        left: 12px;
+    }
+
+    .cart-delete-toast {
+        width: 100%;
+    }
+
+    .cart-confirm-card {
+        padding: 1.1rem;
+    }
+
+    .cart-confirm-title {
+        font-size: 1.28rem;
+    }
+
+    .cart-confirm-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .cart-confirm-btn {
+        width: 100%;
     }
 
     .summary-panel {
@@ -736,6 +966,26 @@ Place Order
 </div>
 </div>
 
+<div id="deleteToastRegion" class="cart-delete-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+<div id="deleteConfirmOverlay" class="cart-confirm-overlay" aria-hidden="true">
+    <div class="cart-confirm-card" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" aria-describedby="deleteConfirmMessage">
+        <div class="cart-confirm-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="16.5" r="1" fill="currentColor"/>
+                <path d="M10.2846 3.85996L2.6166 17.14C1.84676 18.4732 2.80913 20.14 4.3488 20.14H19.6848C21.2244 20.14 22.1868 18.4732 21.417 17.14L13.749 3.85996C12.9791 2.52676 11.0544 2.52676 10.2846 3.85996Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <h2 id="deleteConfirmTitle" class="serif cart-confirm-title">Remove item from cart?</h2>
+        <p id="deleteConfirmMessage" class="cart-confirm-desc">This plant will be removed from your cart.</p>
+        <div class="cart-confirm-actions">
+            <button type="button" id="deleteConfirmCancel" class="cart-confirm-btn secondary">Keep Item</button>
+            <button type="button" id="deleteConfirmAccept" class="cart-confirm-btn danger">Delete Item</button>
+        </div>
+    </div>
+</div>
+
 <script src="../shared/themed-alert.js"></script>
 
 <script>
@@ -791,6 +1041,18 @@ const CART_ITEMS_KEY = 'cartItems';
 const RESERVATIONS_KEY = 'reservations';
 const CHECKOUT_SOURCE_KEY = 'checkoutSource';
 const SELECTED_RESERVATIONS_KEY = 'selectedReservations';
+const DELETE_TOAST_DURATION = 3200;
+const ORDER_TOAST_DURATION = 1800;
+
+const deleteConfirmOverlay = document.getElementById('deleteConfirmOverlay');
+const deleteConfirmMessage = document.getElementById('deleteConfirmMessage');
+const deleteConfirmCancel = document.getElementById('deleteConfirmCancel');
+const deleteConfirmAccept = document.getElementById('deleteConfirmAccept');
+const deleteToastRegion = document.getElementById('deleteToastRegion');
+
+let pendingDeleteId = null;
+let deleteToastHideTimeout = null;
+let deleteToastRemoveTimeout = null;
 
 function getCartItems() {
     const stored = JSON.parse(localStorage.getItem(CART_ITEMS_KEY) || '[]');
@@ -918,7 +1180,7 @@ function render(){
                     <button class="qty-btn" onclick="qty(${item.id},1)" aria-label="Increase quantity">+</button>
                 </div>
 
-                <button onclick="del(${item.id})" class="del-btn" aria-label="Delete item">
+                <button type="button" onclick="del(${item.id})" class="del-btn" aria-label="Delete item">
                     <svg viewBox="0 0 16 19" fill="currentColor" aria-hidden="true">
                         <path d="M3.45775 18.6345C2.75908 18.6345 2.17475 18.3996 1.70475 17.9298C1.23492 17.4598 1 16.8754 1 16.1768V3.2345H0V1.0845H5.2V0H11.35V1.0845H16.55V3.2345H15.55V16.1768C15.55 16.8606 15.3113 17.4412 14.834 17.9185C14.3567 18.3958 13.7761 18.6345 13.0923 18.6345H3.45775ZM13.4 3.2345H3.15V16.1768C3.15 16.2666 3.17883 16.3403 3.2365 16.398C3.29417 16.4557 3.36792 16.4845 3.45775 16.4845H13.0923C13.1693 16.4845 13.2398 16.4524 13.3038 16.3883C13.3679 16.3243 13.4 16.2538 13.4 16.1768V3.2345ZM5.129 14.4595H7.27875V5.2595H5.129V14.4595ZM9.27125 14.4595H11.421V5.2595H9.27125V14.4595Z"/>
                     </svg>
@@ -950,10 +1212,112 @@ function qty(id,change){
     render();
 }
 
-function del(id){
-    const item = data.find(i => i.id === id);
+function showCartToast(title, message, duration) {
+    if (!deleteToastRegion) {
+        return;
+    }
 
-    if (item && checkoutMode === 'purchase') {
+    window.clearTimeout(deleteToastHideTimeout);
+    window.clearTimeout(deleteToastRemoveTimeout);
+
+    deleteToastRegion.innerHTML = '';
+
+    const toast = document.createElement('section');
+    toast.className = 'cart-delete-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = `
+        <div class="cart-delete-toast-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M7 12.5L10.1 15.6L17.25 8.45" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="cart-delete-toast-copy">
+            <p class="cart-delete-toast-title"></p>
+            <p class="cart-delete-toast-text"></p>
+        </div>
+        <div class="cart-delete-toast-progress"></div>
+    `;
+
+    const titleElement = toast.querySelector('.cart-delete-toast-title');
+    const textElement = toast.querySelector('.cart-delete-toast-text');
+    if (titleElement) {
+        titleElement.textContent = title;
+    }
+    if (textElement) {
+        textElement.textContent = message;
+    }
+
+    deleteToastRegion.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add('is-visible');
+        const progressBar = toast.querySelector('.cart-delete-toast-progress');
+        if (progressBar) {
+            progressBar.style.animation = `cartToastCountdown ${duration}ms linear forwards`;
+        }
+    });
+
+    deleteToastHideTimeout = window.setTimeout(() => {
+        toast.classList.remove('is-visible');
+        deleteToastRemoveTimeout = window.setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 220);
+    }, duration);
+}
+
+function showDeleteToast(itemName) {
+    showCartToast('Item removed', `${itemName} was removed from your cart.`, DELETE_TOAST_DURATION);
+}
+
+function showOrderPlacedToast() {
+    const orderLabel = checkoutMode === 'reservation' ? 'Reservation order placed' : 'Order placed';
+    const orderMessage = checkoutMode === 'reservation'
+        ? 'Your reserved plants were submitted successfully. Opening your purchases...'
+        : 'Your order was placed successfully. Opening your purchases...';
+
+    showCartToast(orderLabel, orderMessage, ORDER_TOAST_DURATION);
+}
+
+function openDeleteConfirmation(id) {
+    const item = data.find(entry => entry.id === id);
+    if (!item || !deleteConfirmOverlay || !deleteConfirmMessage) {
+        return;
+    }
+
+    pendingDeleteId = id;
+    deleteConfirmMessage.textContent = `${item.name} will be removed from your cart. You can add it again anytime from the shop.`;
+    deleteConfirmOverlay.classList.add('is-open');
+    deleteConfirmOverlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('has-modal-open');
+
+    if (deleteConfirmCancel) {
+        deleteConfirmCancel.focus();
+    }
+}
+
+function closeDeleteConfirmation() {
+    pendingDeleteId = null;
+
+    if (!deleteConfirmOverlay) {
+        return;
+    }
+
+    deleteConfirmOverlay.classList.remove('is-open');
+    deleteConfirmOverlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('has-modal-open');
+}
+
+function removeCartItem(id) {
+    const item = data.find(i => i.id === id);
+    if (!item) {
+        return;
+    }
+
+    const removedItemName = item.name || 'The item';
+
+    if (checkoutMode === 'purchase') {
         const cartItems = getCartItems();
         const nextItems = cartItems.filter((_, index) => index !== item.sourceIndex);
         saveCartItems(nextItems);
@@ -962,6 +1326,27 @@ function del(id){
     data = data.filter(i=>i.id!==id);
     data = data.map((entry, index) => ({ ...entry, id: index + 1 }));
     render();
+    showDeleteToast(removedItemName);
+}
+
+function confirmDeleteItem() {
+    const idToDelete = pendingDeleteId;
+
+    if (deleteConfirmOverlay) {
+        deleteConfirmOverlay.classList.remove('is-open');
+        deleteConfirmOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    document.body.classList.remove('has-modal-open');
+    pendingDeleteId = null;
+
+    if (idToDelete !== null) {
+        removeCartItem(idToDelete);
+    }
+}
+
+function del(id){
+    openDeleteConfirmation(id);
 }
 
 function toggleSelect(id){
@@ -1054,21 +1439,39 @@ async function createBackendRequest(requestType, order, options = {}) {
         return null;
     }
 
+    order.clientId = Number(clientId);
+
     const requestPayload = {
         client_id: Number(clientId),
         request_type: requestType,
         request_status: order.orderStatus || 'pending',
         payment_status: order.paymentStatus || 'unpaid',
         total_amount: Math.round(order.totalAmount || 0),
+        valid_id_attachment: order.validIdAttachment || deliveryDetails.validIdAttachment || null,
+        valid_id_file_name: order.validIdFileName || deliveryDetails.validIdFileName || null,
+        valid_id_content_type: order.validIdContentType || deliveryDetails.validIdContentType || null,
         request_date: new Date().toISOString(),
         last_updated: new Date().toISOString()
     };
+
+    const requestIdentityApi = window.GHRequestIdentity;
+    const knownRequestIds = requestIdentityApi && typeof requestIdentityApi.captureKnownRequestIds === 'function'
+        ? await requestIdentityApi.captureKnownRequestIds()
+        : new Set();
 
     try {
         const created = await requestsAPI.create(requestPayload);
         if (options.requireSuccess && created === false) {
             throw new Error('Unable to save order to the database.');
         }
+
+        if (created !== false && requestIdentityApi && typeof requestIdentityApi.resolveCreatedRequestId === 'function') {
+            const backendRequestId = await requestIdentityApi.resolveCreatedRequestId(created, requestPayload, knownRequestIds);
+            if (backendRequestId) {
+                order.backendRequestId = String(backendRequestId);
+            }
+        }
+
         return created;
     } catch (error) {
         console.warn('Unable to persist order to backend:', error);
@@ -1168,6 +1571,9 @@ async function createPurchaseOrderFromCartItems(items) {
         id: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
         orderId: generatePurchaseOrderId(existingPurchases),
         customerName: deliveryDetails.fullName || 'Guest Customer',
+        validIdAttachment: deliveryDetails.validIdAttachment || '',
+        validIdFileName: deliveryDetails.validIdFileName || '',
+        validIdContentType: deliveryDetails.validIdContentType || '',
         items: items.map(item => ({
             plantId: Number(item.plantId || 0),
             plantSizeId: Number(item.plantSizeId || 0) || null,
@@ -1218,6 +1624,9 @@ async function createReservationOrderFromCartItems(items) {
         adminReservationId: String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)),
         orderId: reservationOrderId,
         customerName: deliveryDetails.fullName || 'Guest Customer',
+        validIdAttachment: deliveryDetails.validIdAttachment || '',
+        validIdFileName: deliveryDetails.validIdFileName || '',
+        validIdContentType: deliveryDetails.validIdContentType || '',
         items: items.map(item => ({
             name: item.name,
             qty: item.qty,
@@ -1228,6 +1637,7 @@ async function createReservationOrderFromCartItems(items) {
         totalAmount: items.reduce((sum, item) => sum + (item.price * item.qty), 0),
         paymentStatus: 'paid',
         orderStatus: 'pending',
+        requestType: 'reservation',
         isPlacedOrder: true,
         createdAt: new Date().toISOString(),
         deliveryDetails: deliveryDetails
@@ -1242,10 +1652,11 @@ async function createReservationOrderFromCartItems(items) {
         return !selectedReservationKeys.has(reservationKey);
     });
 
+    await createBackendRequest('reservation', reservationEntry);
+
     remainingReservations.unshift(reservationEntry);
     localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(remainingReservations));
     localStorage.removeItem(SELECTED_RESERVATIONS_KEY);
-    await createBackendRequest('reservation', reservationEntry);
 }
 
 async function placeOrder(){
@@ -1273,6 +1684,9 @@ async function placeOrder(){
         localStorage.removeItem(CHECKOUT_SOURCE_KEY);
 
         render();
+        showOrderPlacedToast();
+
+        await new Promise(resolve => window.setTimeout(resolve, ORDER_TOAST_DURATION));
         window.location.href = '../OrderPage/orderpage.html';
     } catch (error) {
         console.error('Failed to place order:', error);
@@ -1328,6 +1742,28 @@ function initializeStickyHeaderBlur() {
     syncHeaderState();
     window.addEventListener('scroll', syncHeaderState, { passive: true });
 }
+
+if (deleteConfirmCancel) {
+    deleteConfirmCancel.addEventListener('click', closeDeleteConfirmation);
+}
+
+if (deleteConfirmAccept) {
+    deleteConfirmAccept.addEventListener('click', confirmDeleteItem);
+}
+
+if (deleteConfirmOverlay) {
+    deleteConfirmOverlay.addEventListener('click', function(event) {
+        if (event.target === deleteConfirmOverlay) {
+            closeDeleteConfirmation();
+        }
+    });
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && deleteConfirmOverlay && deleteConfirmOverlay.classList.contains('is-open')) {
+        closeDeleteConfirmation();
+    }
+});
 
 window.addEventListener('DOMContentLoaded', function() {
     initializeStickyHeaderBlur();

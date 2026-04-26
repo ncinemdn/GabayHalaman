@@ -925,6 +925,14 @@ textarea,
     backdrop-filter: none;
 }
 
+#categoryManagementModal {
+    z-index: 60;
+}
+
+#confirmationModal {
+    z-index: 70;
+}
+
 #successModal .modal-content-small {
     pointer-events: auto;
     border-radius: 12px;

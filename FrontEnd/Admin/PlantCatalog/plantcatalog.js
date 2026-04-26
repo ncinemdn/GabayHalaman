@@ -335,6 +335,16 @@ function logout() {
 }
 
 async function populateSignedInAdminHeader() {
+    if (window.GHAdminHeader && typeof window.GHAdminHeader.apply === 'function') {
+        await window.GHAdminHeader.apply({
+            nameSelector: '.top-bar .user-name',
+            roleSelector: '.top-bar .user-role',
+            avatarSelector: '.top-bar .user-avatar img',
+            fallbackPhoto: '../Profile/cc.jpg'
+        });
+        return;
+    }
+
     let userName = 'Admin';
     let userRole = 'Administrator';
 
@@ -450,6 +460,11 @@ function syncPlantInventory() {
         // Keep UI responsive even when localStorage is full from large base64 images.
         console.warn('Unable to sync plant inventory locally:', error);
     }
+}
+
+function syncBodyScrollLock() {
+    const hasBlockingModal = Boolean(document.querySelector('.modal.active:not(#successModal)'));
+    document.body.style.overflow = hasBlockingModal ? 'hidden' : '';
 }
 
 // Event Listeners
@@ -679,7 +694,7 @@ function openAddModal() {
     btnSave.textContent = 'Save New Plant';
     resetForm();
     addPlantModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    syncBodyScrollLock();
 }
 
 // Edit plant
@@ -708,7 +723,7 @@ function editPlant(id) {
     renderImagePreviews();
 
     addPlantModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    syncBodyScrollLock();
 }
 
 // Delete plant
@@ -716,7 +731,7 @@ function deletePlant(id) {
     pendingDeleteId = id;
     confirmationMessage.textContent = 'Are you sure you want to delete this plant?';
     confirmationModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    syncBodyScrollLock();
 }
 
 // Confirm delete
@@ -753,7 +768,7 @@ async function confirmDelete() {
 // Close confirmation modal
 function closeConfirmationModal() {
     confirmationModal.classList.remove('active');
-    document.body.style.overflow = '';
+    syncBodyScrollLock();
     pendingDeleteId = null;
 }
 
@@ -781,13 +796,13 @@ function updateSizeOptions(sizeOptions = [], selectedSize = 'Medium') {
 function openCategoryManagementModal() {
     renderCategoriesList();
     categoryManagementModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    syncBodyScrollLock();
 }
 
 // Close category management modal
 function closeCategoryManagementModal() {
     categoryManagementModal.classList.remove('active');
-    document.body.style.overflow = '';
+    syncBodyScrollLock();
     newCategoryInput.value = '';
 }
 
@@ -1076,7 +1091,7 @@ async function savePlant() {
 // Close add modal
 function closeAddModal() {
     addPlantModal.classList.remove('active');
-    document.body.style.overflow = '';
+    syncBodyScrollLock();
     resetForm();
 }
 
@@ -1109,7 +1124,7 @@ function refreshCategories() {
 function showErrorMessage(message) {
     confirmationMessage.textContent = message;
     confirmationModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    syncBodyScrollLock();
     btnConfirmDelete.style.display = 'none';
     btnConfirmCancel.textContent = 'Close';
     const closeErrorModal = () => {

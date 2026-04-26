@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&family=Poppins:wght@400;500;600;700&family=Karla:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@400;700&family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Karla:wght@700&display=swap" rel="stylesheet">
    
     <!-- External CSS -->
     <link rel="stylesheet" href="reserved-plants.css">
@@ -64,18 +64,29 @@
         </div>
     </header>
 
+    <div class="page-wrap">
+        <h1 class="page-title">Reserved Plants</h1>
+        <div class="reservation-list-shell" id="reservationsContainer">
+            <!-- Content will be loaded here by JavaScript -->
+        </div>
+    </div>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="page-shell">
-            <div class="page-hero">
-                <p class="page-kicker">Reservation Cart</p>
-                <h1 class="page-title">Reserved Plants</h1>
-                <p class="page-subtitle">Review your reserved items by delivery date and continue to checkout when ready.</p>
+    <div id="reservedDeleteToastRegion" class="reserved-delete-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="reservedDeleteConfirmOverlay" class="reserved-confirm-overlay" aria-hidden="true">
+        <div class="reserved-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reservedDeleteConfirmTitle" aria-describedby="reservedDeleteConfirmMessage">
+            <div class="reserved-confirm-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="16.5" r="1" fill="currentColor"/>
+                    <path d="M10.2846 3.85996L2.6166 17.14C1.84676 18.4732 2.80913 20.14 4.3488 20.14H19.6848C21.2244 20.14 22.1868 18.4732 21.417 17.14L13.749 3.85996C12.9791 2.52676 11.0544 2.52676 10.2846 3.85996Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
             </div>
-
-            <div class="content-box" id="reservationsContainer">
-                <!-- Content will be loaded here by JavaScript -->
+            <h2 id="reservedDeleteConfirmTitle" class="page-title serif reserved-confirm-title">Remove reserved plant?</h2>
+            <p id="reservedDeleteConfirmMessage" class="reserved-confirm-desc">This reserved plant will be removed from your list.</p>
+            <div class="reserved-confirm-actions">
+                <button type="button" id="reservedDeleteConfirmCancel" class="reserved-confirm-btn secondary">Keep Reservation</button>
+                <button type="button" id="reservedDeleteConfirmAccept" class="reserved-confirm-btn danger">Delete Reservation</button>
             </div>
         </div>
     </div>

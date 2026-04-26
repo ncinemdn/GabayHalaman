@@ -106,7 +106,7 @@
                 </div>
                 <div class="user-info">
                     <div class="user-avatar">
-                        <img src="cc.jpg" alt="Admin Profile Picture">
+                        <img id="headerAvatarImage" src="cc.jpg" alt="Admin Profile Picture">
                     </div>
                     <div class="user-details">
                         <div class="user-name">Admin</div>
@@ -120,7 +120,7 @@
                     <div class="profile-shell-top">
                         <div class="profile-hero">
                             <div class="profile-hero-avatar">
-                                <img src="cc.jpg" alt="Admin Profile Picture">
+                                <img id="heroAvatarImage" src="cc.jpg" alt="Admin Profile Picture">
                             </div>
                             <div class="profile-hero-copy">
                                 <p class="profile-eyebrow">Admin Account</p>
@@ -159,6 +159,17 @@
 
                     <form id="profileEditForm" class="profile-edit-form hidden" novalidate>
                         <h3 class="edit-form-title">Edit Profile Details</h3>
+                        <div class="edit-photo-row">
+                            <div class="edit-photo-preview">
+                                <img id="editPhotoPreview" src="cc.jpg" alt="Profile photo preview">
+                            </div>
+                            <div class="edit-photo-controls">
+                                <label class="photo-upload-btn" for="editPhotoInput">Choose Photo</label>
+                                <input id="editPhotoInput" class="photo-input-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+                                <p id="editPhotoFileName" class="edit-photo-file-name">Current photo</p>
+                                <p class="edit-photo-hint">Use JPG, PNG, WEBP, or GIF up to 5 MB.</p>
+                            </div>
+                        </div>
                         <div class="edit-fields-grid">
                             <label class="edit-field">
                                 <span>Full Name</span>

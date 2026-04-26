@@ -605,10 +605,12 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(14, 20, 13, 0.46);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 1rem;
   z-index: 1000;
 }
 
@@ -617,35 +619,237 @@ body {
 }
 
 .modal-card {
-  width: min(420px, 100%);
-  background: #ffffff;
+  width: min(380px, 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbf5 100%);
+  border: 1px solid rgba(193, 210, 178, 0.72);
   border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-  padding: 2rem;
+  box-shadow: 0 24px 60px rgba(17, 27, 15, 0.22);
+  padding: 1.45rem 1.25rem 1.2rem;
   text-align: center;
 }
 
+.modal-badge {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 0.85rem;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #eef7e6, #dfeecf);
+  color: #486b2d;
+  border: 1px solid #d0dfbe;
+  box-shadow: 0 12px 24px rgba(71, 107, 45, 0.14);
+}
+
+.modal-badge-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.modal-overlay[data-mode="delete"] .modal-badge {
+  background: linear-gradient(145deg, #fff2f2, #ffe3e3);
+  color: #b83232;
+  border-color: #efc0c0;
+  box-shadow: 0 12px 24px rgba(184, 50, 50, 0.14);
+}
+
+.modal-overlay[data-mode="notice"] .modal-badge {
+  background: linear-gradient(145deg, #fbf7e6, #f2e8bf);
+  color: #8b702c;
+  border-color: #e9d79a;
+  box-shadow: 0 12px 24px rgba(139, 112, 44, 0.14);
+}
+
 .modal-title {
-  font-size: 24px;
+  font-family: 'Inria Serif', serif;
+  font-size: 1.45rem;
   font-weight: 700;
-  margin-bottom: 0.75rem;
+  color: #1d2f18;
+  line-height: 1.15;
+  margin-bottom: 0.55rem;
 }
 
 .modal-message {
-  font-size: 16px;
-  color: #3a3a3a;
-  margin-bottom: 1.5rem;
+  max-width: 28ch;
+  margin: 0 auto 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #55624d;
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  width: min(100%, 318px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  gap: 10px;
 }
 
 .modal-actions .order-btn {
-  width: 160px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  box-shadow: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.modal-actions .order-btn.primary {
+  background: #eef4e8;
+  color: #29411f;
+  border: 1px solid #cad8bc;
+}
+
+.modal-actions .order-btn.primary:hover {
+  background: #e4efdc;
+  transform: translateY(-1px);
+}
+
+.modal-actions .order-btn.secondary {
+  background: linear-gradient(145deg, #6f9a3a, #5a7d2e);
+  color: #ffffff;
+}
+
+.modal-actions .order-btn.secondary:hover {
+  background: linear-gradient(145deg, #648d35, #4f7128);
+  transform: translateY(-1px);
+}
+
+.modal-overlay[data-mode="delete"] .modal-actions .order-btn.secondary {
+  background: linear-gradient(145deg, #d34a4a, #b83030);
+}
+
+.modal-overlay[data-mode="delete"] .modal-actions .order-btn.secondary:hover {
+  background: linear-gradient(145deg, #c34141, #a72b2b);
+}
+
+.modal-overlay[data-mode="notice"] .modal-actions .order-btn.primary {
+  background: linear-gradient(145deg, #f4ecd0, #eadca7);
+  color: #6a5520;
+  border-color: #e0cc86;
+}
+
+.modal-overlay[data-mode="notice"] .modal-actions .order-btn.primary:hover {
+  background: linear-gradient(145deg, #eee3bc, #e2d08b);
+}
+
+.order-delete-toast-stack {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  z-index: 1350;
+  pointer-events: none;
+}
+
+.order-delete-toast {
+  position: relative;
+  width: min(360px, calc(100vw - 32px));
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.95rem 1rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(126, 163, 61, 0.28);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 18px 32px rgba(26, 42, 20, 0.16);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  opacity: 0;
+  transform: translate3d(16px, -8px, 0);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.order-delete-toast.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.order-delete-toast-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b6a2b;
+  background: linear-gradient(145deg, #edf6df, #f8fbf2);
+  border: 1px solid rgba(126, 163, 61, 0.3);
+}
+
+.order-delete-toast-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.order-delete-toast-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.order-delete-toast-title {
+  font-family: 'Inria Serif', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #213319;
+}
+
+.order-delete-toast-text {
+  margin-top: 0.16rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #5c6d53;
+}
+
+.order-delete-toast-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #7ea33d, #b8cf87);
+  transform-origin: left center;
+}
+
+@keyframes orderDeleteToastCountdown {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-card {
+    width: min(340px, 100%);
+    padding: 1.25rem 1rem 1rem;
+  }
+
+  .modal-actions {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .order-delete-toast-stack {
+    top: 84px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .order-delete-toast {
+    width: 100%;
+  }
 }
 
 .orders-empty-state {
@@ -1506,27 +1710,38 @@ svg {
 
   .order-history-actions {
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   .history-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
     border-radius: 999px;
-    padding: 7px 16px;
-    font-size: 0.76rem;
+    padding: 0 16px;
+    font-size: 0.8rem;
     font-weight: 600;
+    line-height: 1;
     border: 1px solid transparent;
     cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   .history-pill-btn.secondary {
-    background: #f7fbf2;
-    color: #426126;
-    border-color: #c5d7b0;
+    background: #fff7f7;
+    color: #aa3434;
+    border-color: #efcaca;
   }
 
   .history-pill-btn.primary {
-    background: #6f9a3a;
+    background: linear-gradient(145deg, #6f9a3a, #56792b);
     color: #f9fbff;
+    box-shadow: 0 10px 20px rgba(84, 121, 43, 0.18);
   }
 
   .history-pill-btn:disabled {
@@ -1619,45 +1834,51 @@ svg {
 
   .history-detail-btn {
     border: 0;
-    border-radius: 999px;
-    background: #6f9a3a;
-    color: #ffffff;
-    padding: 6px 12px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    cursor: pointer;
   }
 
   .history-detail-btn:hover {
-    background: #5f8732;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 24px rgba(84, 121, 43, 0.24);
   }
 
   .order-history-col.details {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: flex-end;
   }
 
   .history-delete-icon-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    border: 1px solid #d9b5b5;
-    background: #fff6f6;
-    color: #b72a2a;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(183, 42, 42, 0.08);
   }
 
   .history-delete-icon-btn svg {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
   }
 
   .history-delete-icon-btn:hover {
-    background: #ffeaea;
+    background: #fff0f0;
+    border-color: #e3a7a7;
+    color: #912929;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px rgba(183, 42, 42, 0.12);
+  }
+
+  .history-delete-icon-btn:focus-visible,
+  .history-detail-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(114, 154, 58, 0.18);
+  }
+
+  .history-delete-icon-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(183, 42, 42, 0.16);
+  }
+
+  .history-delete-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
   }
 
   .order-history-empty {

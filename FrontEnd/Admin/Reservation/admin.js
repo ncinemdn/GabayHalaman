@@ -41,6 +41,10 @@ function formatPaymentStatusLabel(status) {
 function normalizeStatus(status) {
     const value = String(status || '').toLowerCase();
 
+    if (value === 'deleted') {
+        return 'deleted';
+    }
+
     if (value === 'delivered' || value === 'completed' || value === 'reserved') {
         return 'delivered';
     }
@@ -69,11 +73,11 @@ function getPlantOrdered(order) {
         return order.plantName;
     }
 
-    if (order.request_type) {
-        return order.request_type.toLowerCase() === 'reservation' ? 'Reserved Plants' : 'Purchase Order';
-    }
-
     if (!Array.isArray(order.items) || !order.items.length) {
+        if (order.request_type) {
+            return order.request_type.toLowerCase() === 'reservation' ? 'Reserved Plants' : 'Purchase Order';
+        }
+
         return 'N/A';
     }
 
@@ -91,25 +95,183 @@ function getPlantOrdered(order) {
 }
 
 function getQuantity(order) {
-    if (Number.isFinite(Number(order.quantity))) {
-        return Number(order.quantity);
+    const explicitQuantity = Number(order.quantity);
+    if (Number.isFinite(explicitQuantity) && explicitQuantity > 0) {
+        return explicitQuantity;
+    }
+
+    if (Array.isArray(order.items) && order.items.length) {
+        return order.items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
     }
 
     if (Number.isFinite(Number(order.total_amount))) {
         return 1;
     }
 
-    if (!Array.isArray(order.items)) {
-        return 0;
-    }
-
-    return order.items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+    return 0;
 }
 
 function getTotalAmount(order) {
     const amount = order.totalAmount ?? order.total_amount ?? (Array.isArray(order.items) ? order.items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0) : 0);
     return formatPeso(amount);
 }
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function getValidIdAttachment(order) {
+    const deliveryDetails = order && typeof order === 'object' ? (order.deliveryDetails || {}) : {};
+    return String(
+        order?.validIdAttachment ||
+        order?.valid_id_attachment ||
+        deliveryDetails.validIdAttachment ||
+        deliveryDetails.valid_id_attachment ||
+        ''
+    ).trim();
+}
+
+function getValidIdFileName(order) {
+    const deliveryDetails = order && typeof order === 'object' ? (order.deliveryDetails || {}) : {};
+    return String(
+        order?.validIdFileName ||
+        order?.valid_id_file_name ||
+        deliveryDetails.validIdFileName ||
+        deliveryDetails.valid_id_file_name ||
+        'Valid ID'
+    ).trim();
+}
+
+function hasSupportedValidIdAttachment(attachment) {
+    return (
+        attachment.indexOf('data:application/pdf;base64,') === 0 ||
+        attachment.indexOf('data:image/jpeg;base64,') === 0 ||
+        attachment.indexOf('data:image/png;base64,') === 0
+    );
+}
+
+function getValidIdContentType(order) {
+    const deliveryDetails = order && typeof order === 'object' ? (order.deliveryDetails || {}) : {};
+    return String(
+        order?.validIdContentType ||
+        order?.valid_id_content_type ||
+        deliveryDetails.validIdContentType ||
+        deliveryDetails.valid_id_content_type ||
+        ''
+    ).trim().toLowerCase();
+}
+
+function getOrderByType(type, orderId) {
+    const orderCollection = type === 'purchase' ? purchaseOrders : reservationOrders;
+    return orderCollection.find(order => String(order.id) === String(orderId)) || null;
+}
+
+function getValidIdLinkMarkup(type, order) {
+    const attachment = getValidIdAttachment(order);
+    if (!attachment || !hasSupportedValidIdAttachment(attachment)) {
+        return '<span class="valid-id-empty">N/A</span>';
+    }
+
+    return `
+        <button
+            class="valid-id-link"
+            type="button"
+            title="${escapeHtml(getValidIdFileName(order))}"
+            onclick="openValidIdPreviewByType('${escapeHtml(type)}', '${escapeHtml(String(order?.id || ''))}')"
+        >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M2 12C4.8 7.8 8.13333 5.7 12 5.7C15.8667 5.7 19.2 7.8 22 12C19.2 16.2 15.8667 18.3 12 18.3C8.13333 18.3 4.8 16.2 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+            <span>View ID</span>
+        </button>
+    `;
+}
+
+function buildValidIdPreviewMarkup(order) {
+    const attachment = getValidIdAttachment(order);
+    const contentType = getValidIdContentType(order);
+
+    if (!attachment || !hasSupportedValidIdAttachment(attachment)) {
+        return `
+            <div class="valid-id-preview-stage valid-id-preview-empty">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 9V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="17" r="1" fill="currentColor"/>
+                    <path d="M10.3 3.86L2.62 17.14C1.85 18.47 2.81 20.14 4.35 20.14H19.68C21.22 20.14 22.19 18.47 21.42 17.14L13.74 3.86C12.97 2.53 11.05 2.53 10.3 3.86Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+                <p class="valid-id-preview-empty-title">No valid ID uploaded</p>
+                <p class="valid-id-preview-empty-text">This request does not have a supported valid ID image or PDF yet.</p>
+            </div>
+        `;
+    }
+
+    if (contentType.indexOf('application/pdf') === 0 || attachment.indexOf('data:application/pdf;base64,') === 0) {
+        return `
+            <div class="valid-id-preview-stage">
+                <iframe class="valid-id-preview-frame" src="${escapeHtml(attachment)}" title="${escapeHtml(getValidIdFileName(order))}"></iframe>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="valid-id-preview-stage valid-id-preview-image-wrap">
+            <img class="valid-id-preview-image" src="${escapeHtml(attachment)}" alt="${escapeHtml(getValidIdFileName(order))}">
+        </div>
+    `;
+}
+
+function closeValidIdPreview() {
+    const modal = document.getElementById('validIdPreviewModal');
+    const body = document.getElementById('validIdPreviewBody');
+    const fileName = document.getElementById('validIdPreviewFileName');
+
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    if (body) {
+        body.innerHTML = '';
+    }
+
+    if (fileName) {
+        fileName.textContent = 'No file selected';
+    }
+
+    document.body.classList.remove('valid-id-preview-open');
+}
+
+function openValidIdPreviewByType(type, orderId) {
+    const order = getOrderByType(type, orderId);
+    if (!order) {
+        return;
+    }
+
+    const modal = document.getElementById('validIdPreviewModal');
+    const body = document.getElementById('validIdPreviewBody');
+    const fileName = document.getElementById('validIdPreviewFileName');
+    const title = document.getElementById('validIdPreviewTitle');
+
+    if (!modal || !body || !fileName || !title) {
+        return;
+    }
+
+    title.textContent = `${order.customerName || 'Customer'} Valid ID`;
+    fileName.textContent = getValidIdFileName(order) || 'Valid ID';
+    body.innerHTML = buildValidIdPreviewMarkup(order);
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('valid-id-preview-open');
+}
+
+window.openValidIdPreviewByType = openValidIdPreviewByType;
 
 function isLegacyDemoPurchase(order) {
     if (!order || typeof order !== 'object') {
@@ -124,22 +286,98 @@ function isLegacyDemoPurchase(order) {
     return false;
 }
 
+function getRequestIdentityApi() {
+    return window.GHRequestIdentity || null;
+}
+
+function getBackendRequestId(order) {
+    const requestIdentityApi = getRequestIdentityApi();
+    if (!requestIdentityApi || typeof requestIdentityApi.getRequestId !== 'function') {
+        return '';
+    }
+
+    return String(requestIdentityApi.getRequestId(order) || '');
+}
+
+function isSameRequestRecord(localOrder, backendOrder) {
+    const requestIdentityApi = getRequestIdentityApi();
+    if (!requestIdentityApi || typeof requestIdentityApi.isSameRequest !== 'function') {
+        return false;
+    }
+
+    return requestIdentityApi.isSameRequest(localOrder, backendOrder);
+}
+
+function persistResolvedBackendIds(storageKey, mergedOrders) {
+    const rawOrders = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    if (!Array.isArray(rawOrders) || !rawOrders.length || !Array.isArray(mergedOrders) || !mergedOrders.length) {
+        return;
+    }
+
+    let hasChanges = false;
+    const updatedOrders = rawOrders.map(rawOrder => {
+        if (getBackendRequestId(rawOrder)) {
+            return rawOrder;
+        }
+
+        const rawId = String(rawOrder.id || '');
+        const rawOrderId = String(rawOrder.orderId || '');
+        const matchedOrder = mergedOrders.find(order => {
+            if (!order || !order.backendRequestId) {
+                return false;
+            }
+
+            if (rawOrderId && String(order.orderId || '') === rawOrderId) {
+                return true;
+            }
+
+            return rawId && String(order.localId || '') === rawId;
+        });
+
+        if (!matchedOrder) {
+            return rawOrder;
+        }
+
+        hasChanges = true;
+
+        const resolvedClientId = Number(rawOrder.clientId || rawOrder.client_id || matchedOrder.clientId || matchedOrder.client_id || 0);
+        return {
+            ...rawOrder,
+            backendRequestId: String(matchedOrder.backendRequestId || ''),
+            clientId: resolvedClientId > 0 ? resolvedClientId : rawOrder.clientId
+        };
+    });
+
+    if (hasChanges) {
+        localStorage.setItem(storageKey, JSON.stringify(updatedOrders));
+    }
+}
+
 async function getLocalPurchaseOrders() {
     const purchases = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
     if (!Array.isArray(purchases)) {
         return [];
     }
 
-    return purchases.map(order => ({
-        ...order,
-        id: String(order.id || order.orderId || ''),
-        orderId: String(order.orderId || ''),
-        customerName: order.customerName || 'Customer',
-        paymentStatus: normalizePaymentStatus(order.paymentStatus),
-        orderStatus: normalizeStatus(order.orderStatus),
-        totalAmount: order.totalAmount || 0,
-        items: order.items || []
-    }));
+    return purchases.map(order => {
+        const localId = String(order.id || order.orderId || '');
+        const backendRequestId = getBackendRequestId(order);
+
+        return {
+            ...order,
+            localId,
+            id: String(backendRequestId || localId),
+            backendRequestId,
+            orderId: String(order.orderId || ''),
+            customerName: order.customerName || 'Customer',
+            paymentStatus: normalizePaymentStatus(order.paymentStatus),
+            orderStatus: normalizeStatus(order.orderStatus),
+            totalAmount: order.totalAmount || 0,
+            items: order.items || [],
+            requestType: 'purchase',
+            clientId: Number(order.clientId || order.client_id || 0) || 0
+        };
+    });
 }
 
 async function getLocalReservationOrders() {
@@ -148,19 +386,28 @@ async function getLocalReservationOrders() {
         return [];
     }
 
-    return reservations.filter(order => order && order.isPlacedOrder === true).map(order => ({
-        ...order,
-        id: String(order.id || order.orderId || ''),
-        adminReservationId: String(order.adminReservationId || order.orderId || ''),
-        orderId: String(order.orderId || ''),
-        customerName: order.customerName || 'Customer',
-        plantOrdered: order.plantOrdered || order.plant_name || undefined,
-        quantity: order.quantity || 0,
-        totalAmount: order.totalAmount || 0,
-        paymentStatus: normalizePaymentStatus(order.paymentStatus),
-        orderStatus: normalizeStatus(order.orderStatus),
-        items: order.items || []
-    }));
+    return reservations.filter(order => order && order.isPlacedOrder === true).map(order => {
+        const localId = String(order.id || order.orderId || '');
+        const backendRequestId = getBackendRequestId(order);
+
+        return {
+            ...order,
+            localId,
+            id: String(backendRequestId || localId),
+            backendRequestId,
+            adminReservationId: String(order.adminReservationId || order.orderId || ''),
+            orderId: String(order.orderId || ''),
+            customerName: order.customerName || 'Customer',
+            plantOrdered: order.plantOrdered || order.plant_name || undefined,
+            quantity: order.quantity || 0,
+            totalAmount: order.totalAmount || 0,
+            paymentStatus: normalizePaymentStatus(order.paymentStatus),
+            orderStatus: normalizeStatus(order.orderStatus),
+            items: order.items || [],
+            requestType: 'reservation',
+            clientId: Number(order.clientId || order.client_id || 0) || 0
+        };
+    });
 }
 
 function mergeOrdersWithLocalOrders(backendOrders, localOrders) {
@@ -168,32 +415,49 @@ function mergeOrdersWithLocalOrders(backendOrders, localOrders) {
         return backendOrders;
     }
 
-    const localOrderMap = new Map();
-    localOrders.forEach(order => {
-        const key = String(order.orderId || order.id || '');
-        if (key) {
-            localOrderMap.set(key, order);
-        }
-    });
+    const remainingLocalOrders = [...localOrders];
 
     const merged = backendOrders.map(order => {
-        const key = String(order.orderId || order.id || '');
-        const localOrder = localOrderMap.get(key);
-        if (!localOrder) {
+        const backendRequestId = getBackendRequestId(order);
+        const localOrderIndex = remainingLocalOrders.findIndex(localOrder => {
+            const localRequestId = getBackendRequestId(localOrder);
+            if (backendRequestId && localRequestId) {
+                return backendRequestId === localRequestId;
+            }
+
+            return isSameRequestRecord(localOrder, order);
+        });
+
+        if (localOrderIndex === -1) {
             return order;
         }
 
-        localOrderMap.delete(key);
+        const [localOrder] = remainingLocalOrders.splice(localOrderIndex, 1);
 
         return {
             ...order,
             ...localOrder,
+            id: String(backendRequestId || order.id || localOrder.id || ''),
+            backendRequestId: String(backendRequestId || localOrder.backendRequestId || ''),
+            localId: localOrder.localId || String(localOrder.id || ''),
+            orderId: localOrder.orderId || order.orderId || '',
+            adminReservationId: localOrder.adminReservationId || order.adminReservationId || String(backendRequestId || order.id || ''),
+            customerName: localOrder.customerName || order.customerName || order.client_name || 'Customer',
+            validIdAttachment: localOrder.validIdAttachment || order.validIdAttachment || order.valid_id_attachment || '',
+            validIdFileName: localOrder.validIdFileName || order.validIdFileName || order.valid_id_file_name || '',
+            validIdContentType: localOrder.validIdContentType || order.validIdContentType || order.valid_id_content_type || '',
+            paymentStatus: normalizePaymentStatus(localOrder.paymentStatus || order.paymentStatus || order.payment_status),
+            orderStatus: normalizeStatus(localOrder.orderStatus || order.orderStatus || order.request_status),
+            totalAmount: localOrder.totalAmount ?? order.totalAmount ?? order.total_amount ?? 0,
+            quantity: (() => {
+                const mergedQuantity = Number(localOrder.quantity ?? order.quantity);
+                return Number.isFinite(mergedQuantity) && mergedQuantity > 0 ? mergedQuantity : undefined;
+            })(),
             items: Array.isArray(localOrder.items) && localOrder.items.length ? localOrder.items : order.items,
             plantOrdered: localOrder.plantOrdered || order.plantOrdered || order.plant_name || (Array.isArray(order.items) && order.items.length ? order.items[0].name : 'N/A')
         };
     });
 
-    const remainingLocalOrders = Array.from(localOrderMap.values());
     return [...remainingLocalOrders, ...merged];
 }
 
@@ -214,7 +478,7 @@ function saveLocalReservationOrders(orders) {
 }
 
 function isBackendPersistedOrder(order) {
-    return order && order.id && !isNaN(Number(order.id));
+    return !!getBackendRequestId(order);
 }
 
 function removeOrderFromLocalCache(type, order) {
@@ -249,8 +513,13 @@ async function deleteBackendOrder(order) {
         return true;
     }
 
+    const backendRequestId = getBackendRequestId(order);
+    if (!backendRequestId) {
+        return true;
+    }
+
     try {
-        await requestsAPI.delete(Number(order.id));
+        await requestsAPI.delete(Number(backendRequestId));
         return true;
     } catch (error) {
         console.error('Failed to delete order from backend:', error);
@@ -267,8 +536,13 @@ async function updateBackendOrderStatus(order) {
         return;
     }
 
+    const backendRequestId = getBackendRequestId(order);
+    if (!backendRequestId) {
+        return;
+    }
+
     try {
-        await requestsAPI.updateStatus(Number(order.id), {
+        await requestsAPI.updateStatus(Number(backendRequestId), {
             request_status: order.orderStatus,
             payment_status: order.paymentStatus,
             last_updated: new Date().toISOString()
@@ -322,15 +596,23 @@ async function loadPurchaseOrders() {
         const backendOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'purchase').map(order => ({
             ...order,
             id: String(order.request_id || ''),
+            backendRequestId: String(order.request_id || ''),
+            localId: '',
             orderId: order.request_id ? String(order.request_id) : '',
             customerName: order.client_name || 'Customer',
+            validIdAttachment: order.valid_id_attachment || '',
+            validIdFileName: order.valid_id_file_name || '',
+            validIdContentType: order.valid_id_content_type || '',
             paymentStatus: normalizePaymentStatus(order.payment_status),
             orderStatus: normalizeStatus(order.request_status),
             totalAmount: order.total_amount || 0,
-            items: order.items || []
+            items: order.items || [],
+            requestType: 'purchase',
+            clientId: Number(order.client_id || 0) || 0
         }));
 
         purchaseOrders = mergeOrdersWithLocalOrders(backendOrders, localOrders);
+        persistResolvedBackendIds(PURCHASE_ORDERS_KEY, purchaseOrders);
     } catch (error) {
         console.error('Failed to load purchase orders:', error);
         purchaseOrders = localOrders;
@@ -349,18 +631,26 @@ async function loadReservationOrders() {
         const backendOrders = allRequests.filter(order => (order.request_type || '').toLowerCase() === 'reservation').map(order => ({
             ...order,
             id: String(order.request_id || ''),
+            backendRequestId: String(order.request_id || ''),
+            localId: '',
             adminReservationId: String(order.request_id || ''),
             orderId: order.request_id ? String(order.request_id) : '',
             customerName: order.client_name || 'Customer',
+            validIdAttachment: order.valid_id_attachment || '',
+            validIdFileName: order.valid_id_file_name || '',
+            validIdContentType: order.valid_id_content_type || '',
             plantOrdered: order.plant_name || undefined,
             quantity: order.quantity || 0,
             totalAmount: order.total_amount || 0,
             paymentStatus: normalizePaymentStatus(order.payment_status),
             orderStatus: normalizeStatus(order.request_status),
-            items: order.items || []
+            items: order.items || [],
+            requestType: 'reservation',
+            clientId: Number(order.client_id || 0) || 0
         }));
 
         reservationOrders = mergeOrdersWithLocalOrders(backendOrders, localOrders);
+        persistResolvedBackendIds(RESERVATIONS_KEY, reservationOrders);
     } catch (error) {
         console.error('Failed to load reservation orders:', error);
         reservationOrders = localOrders;
@@ -370,6 +660,16 @@ async function loadReservationOrders() {
 // Orders are loaded from the backend and not persisted to localStorage.
 
 async function populateSignedInAdminHeader() {
+    if (window.GHAdminHeader && typeof window.GHAdminHeader.apply === 'function') {
+        await window.GHAdminHeader.apply({
+            nameSelector: '.profile-name',
+            roleSelector: '.profile-role',
+            avatarSelector: '.profile-avatar img',
+            fallbackPhoto: '../Profile/cc.jpg'
+        });
+        return;
+    }
+
     let userName = 'Admin';
     let userRole = 'Administrator';
 
@@ -425,6 +725,7 @@ function getFilteredOrders(orders) {
         const matchesSearch = !query || (
             String(order.customerName || '').toLowerCase().includes(query) ||
             getPlantOrdered(order).toLowerCase().includes(query) ||
+            String(getValidIdFileName(order) || '').toLowerCase().includes(query) ||
             String(order.orderId || '').toLowerCase().includes(query)
         );
 
@@ -469,6 +770,7 @@ function renderMiniTables() {
 function renderMiniTable(containerId, orders) {
     const container = document.getElementById(containerId);
     const type = containerId === 'purchaseTable' ? 'purchase' : 'reservation';
+    const validIdHeader = '<th>Valid ID</th>';
 
     if (orders.length === 0) {
         container.innerHTML = '<p style="padding: 1rem; text-align: center; color: #666;">No orders</p>';
@@ -481,6 +783,7 @@ function renderMiniTable(containerId, orders) {
                 <tr>
                     <th>Customer</th>
                     <th>Plant</th>
+                    ${validIdHeader}
                     <th>Payment</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -493,6 +796,7 @@ function renderMiniTable(containerId, orders) {
                     <tr>
                         <td><strong>${order.customerName}</strong></td>
                         <td>${getPlantOrdered(order)}</td>
+                        <td>${getValidIdLinkMarkup(type, order)}</td>
                         <td><span class="status-badge ${normalizePaymentStatus(order.paymentStatus)}">${formatPaymentStatusLabel(order.paymentStatus)}</span></td>
                         <td><span class="status-badge ${normalizeStatus(order.orderStatus)}">${capitalizeFirst(normalizeStatus(order.orderStatus))}</span></td>
                         <td class="action-cell">
@@ -516,6 +820,8 @@ function renderMiniTable(containerId, orders) {
 function expandTable(type) {
     expandedTable = type;
     const orders = type === 'purchase' ? getFilteredPurchaseOrders() : getFilteredReservationOrders();
+    const expandedGridClass = 'expanded-header-grid expanded-header-grid-reservation';
+    const expandedRowClass = 'expanded-row expanded-row-reservation';
 
     document.getElementById('normalView').style.display = 'none';
 
@@ -524,10 +830,11 @@ function expandTable(type) {
 
     expandedView.innerHTML = `
         <div class="expanded-header">
-            <div class="expanded-header-grid">
+            <div class="${expandedGridClass}">
                 <div class="expanded-header-cell">ORDER ID</div>
                 <div class="expanded-header-cell">CUSTOMER<br>NAME</div>
                 <div class="expanded-header-cell">PLANT<br>ORDERED</div>
+                <div class="expanded-header-cell">VALID<br>ID</div>
                 <div class="expanded-header-cell">QUANTITY</div>
                 <div class="expanded-header-cell">TOTAL<br>AMOUNT</div>
                 <div class="expanded-header-cell">PAYMENT<br>STATUS</div>
@@ -537,10 +844,11 @@ function expandTable(type) {
         </div>
         <div class="expanded-body">
             ${orders.map(order => `
-                <div class="expanded-row">
+                <div class="${expandedRowClass}">
                     <div class="expanded-cell">${order.orderId || 'N/A'}</div>
                     <div class="expanded-cell bold">${order.customerName || 'N/A'}</div>
                     <div class="expanded-cell">${getPlantOrdered(order)}</div>
+                    <div class="expanded-cell">${getValidIdLinkMarkup(type, order)}</div>
                     <div class="expanded-cell bold">${getQuantity(order)}</div>
                     <div class="expanded-cell bold">${getTotalAmount(order)}</div>
                     <div class="expanded-cell">
@@ -555,6 +863,7 @@ function expandTable(type) {
                             <option value="pending" ${normalizeStatus(order.orderStatus) === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="cancel" ${normalizeStatus(order.orderStatus) === 'cancel' ? 'selected' : ''}>Cancel</option>
                             <option value="delivered" ${normalizeStatus(order.orderStatus) === 'delivered' ? 'selected' : ''}>Delivered</option>
+                            <option value="deleted" ${normalizeStatus(order.orderStatus) === 'deleted' ? 'selected' : ''}>Deleted</option>
                         </select>
                     </div>
                     <div class="expanded-cell action-cell">
@@ -712,6 +1021,8 @@ function setupEventListeners() {
     const btnActionCancel = document.getElementById('btnActionCancel');
     const btnActionConfirm = document.getElementById('btnActionConfirm');
     const actionConfirmationModal = document.getElementById('actionConfirmationModal');
+    const validIdPreviewModal = document.getElementById('validIdPreviewModal');
+    const validIdPreviewClose = document.getElementById('validIdPreviewClose');
 
     if (btnActionCancel) {
         btnActionCancel.addEventListener('click', () => closeActionConfirmation(true));
@@ -729,9 +1040,22 @@ function setupEventListeners() {
         });
     }
 
+    if (validIdPreviewClose) {
+        validIdPreviewClose.addEventListener('click', closeValidIdPreview);
+    }
+
+    if (validIdPreviewModal) {
+        validIdPreviewModal.addEventListener('click', (event) => {
+            if (event.target === validIdPreviewModal) {
+                closeValidIdPreview();
+            }
+        });
+    }
+
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeActionConfirmation(true);
+            closeValidIdPreview();
         }
     });
 

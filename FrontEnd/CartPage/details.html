@@ -40,6 +40,94 @@
                 linear-gradient(180deg, #f8fbf5 0%, #eef4eb 100%);
         }
 
+        .details-save-toast-stack {
+            position: fixed;
+            top: 96px;
+            right: 24px;
+            z-index: 1350;
+            pointer-events: none;
+        }
+
+        .details-save-toast {
+            position: relative;
+            width: min(360px, calc(100vw - 32px));
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            padding: 0.95rem 1rem 1rem;
+            border-radius: 18px;
+            border: 1px solid rgba(126, 163, 61, 0.3);
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 18px 32px rgba(26, 42, 20, 0.16);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            opacity: 0;
+            transform: translate3d(16px, -8px, 0);
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .details-save-toast.is-visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .details-save-toast-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #4b6a2b;
+            background: linear-gradient(145deg, #edf6df, #f8fbf2);
+            border: 1px solid rgba(126, 163, 61, 0.3);
+        }
+
+        .details-save-toast-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .details-save-toast-copy {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .details-save-toast-title {
+            font-family: 'Inria Serif', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #213319;
+        }
+
+        .details-save-toast-text {
+            margin-top: 0.16rem;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: #5c6d53;
+        }
+
+        .details-save-toast-progress {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7ea33d, #b8cf87);
+            transform-origin: left center;
+        }
+
+        @keyframes detailsSaveToastCountdown {
+            from {
+                transform: scaleX(1);
+            }
+
+            to {
+                transform: scaleX(0);
+            }
+        }
+
         /* Header (Landing exact style) */
         .header {
             background: rgba(104, 150, 84, 0.3);
@@ -425,6 +513,16 @@
                 padding: 0.95rem 0.72rem 1.5rem;
             }
 
+            .details-save-toast-stack {
+                top: 84px;
+                right: 12px;
+                left: 12px;
+            }
+
+            .details-save-toast {
+                width: 100%;
+            }
+
             .header-inner {
                 padding: 8px 14px;
             }
@@ -580,6 +678,8 @@
         </div>
     </div>
 
+    <div id="detailsSaveToastRegion" class="details-save-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
     <script>
         const FIELD_CONFIG = {
             fullName: { noteId: 'fullNameNote', label: 'Full name' },
@@ -587,6 +687,103 @@
             phone: { noteId: 'phoneNote', label: 'Phone number' },
             address: { noteId: 'addressNote', label: 'Address' }
         };
+
+        const SAVE_TOAST_DURATION = 1800;
+        const MAX_VALID_ID_FILE_SIZE = 2 * 1024 * 1024;
+        const detailsSaveToastRegion = document.getElementById('detailsSaveToastRegion');
+
+        let saveRedirectTimeout = null;
+        let saveToastHideTimeout = null;
+        let saveToastRemoveTimeout = null;
+        let isSaveRedirecting = false;
+
+        function getSavedDeliveryDetails() {
+            try {
+                return JSON.parse(localStorage.getItem('deliveryDetails') || '{}') || {};
+            } catch (error) {
+                console.warn('Unable to parse saved delivery details:', error);
+                return {};
+            }
+        }
+
+        function getSelectedValidIdFile() {
+            const idFileInput = document.getElementById('validIDFile');
+            return idFileInput && idFileInput.files && idFileInput.files[0] ? idFileInput.files[0] : null;
+        }
+
+        function hasPersistedValidId(details) {
+            return Boolean(details && details.validIdAttachment);
+        }
+
+        function updateValidIdFileName(name, sourceLabel) {
+            const fileName = document.getElementById('fileName');
+
+            if (!fileName) {
+                return;
+            }
+
+            if (!name) {
+                fileName.textContent = '';
+                fileName.style.display = 'none';
+                return;
+            }
+
+            fileName.textContent = sourceLabel + ': ' + name;
+            fileName.style.display = 'block';
+        }
+
+        function getValidIdContentType(file) {
+            const explicitType = String(file && file.type || '').trim();
+            if (explicitType) {
+                return explicitType;
+            }
+
+            const fileName = String(file && file.name || '').toLowerCase();
+            if (fileName.endsWith('.pdf')) {
+                return 'application/pdf';
+            }
+
+            if (fileName.endsWith('.png')) {
+                return 'image/png';
+            }
+
+            return 'image/jpeg';
+        }
+
+        function validateValidIdFile(file) {
+            if (!file) {
+                return 'Please upload a valid ID before saving.';
+            }
+
+            const fileName = String(file.name || '').toLowerCase();
+            const isSupportedType = /\.(pdf|jpg|jpeg|png)$/i.test(fileName);
+
+            if (!isSupportedType) {
+                return 'Please upload a PDF, JPG, JPEG, or PNG file.';
+            }
+
+            if (Number(file.size || 0) > MAX_VALID_ID_FILE_SIZE) {
+                return 'Please upload a valid ID file smaller than 2 MB.';
+            }
+
+            return '';
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise(function(resolve, reject) {
+                const reader = new FileReader();
+
+                reader.onload = function() {
+                    resolve(String(reader.result || ''));
+                };
+
+                reader.onerror = function() {
+                    reject(new Error('Unable to read the selected valid ID file.'));
+                };
+
+                reader.readAsDataURL(file);
+            });
+        }
 
         function getReturnPage() {
             const params = new URLSearchParams(window.location.search);
@@ -642,8 +839,8 @@
             const email = String(document.getElementById('email').value || '').trim();
             const phone = String(document.getElementById('phone').value || '').trim();
             const address = String(document.getElementById('address').value || '').trim();
-            const idFileInput = document.getElementById('validIDFile');
-            const hasValidID = Boolean(idFileInput && idFileInput.files && idFileInput.files.length > 0);
+            const savedDetails = getSavedDeliveryDetails();
+            const hasValidID = Boolean(getSelectedValidIdFile() || hasPersistedValidId(savedDetails));
 
             let isValid = true;
 
@@ -683,8 +880,7 @@
                 fullName,
                 email,
                 phone,
-                address,
-                hasValidID
+                address
             };
         }
 
@@ -693,28 +889,143 @@
             setValidIdError('');
 
             if (file) {
-                const fileName = document.getElementById('fileName');
-                fileName.textContent = 'âœ“ ' + file.name;
-                fileName.style.display = 'block';
+                const validationMessage = validateValidIdFile(file);
+                if (validationMessage) {
+                    event.target.value = '';
+                    setValidIdError(validationMessage);
+
+                    const savedDetails = getSavedDeliveryDetails();
+                    if (savedDetails.validIdFileName && hasPersistedValidId(savedDetails)) {
+                        updateValidIdFileName(savedDetails.validIdFileName, 'Saved ID');
+                    } else {
+                        updateValidIdFileName('', '');
+                    }
+                    return;
+                }
+
+                updateValidIdFileName(file.name, 'Selected ID');
             } else {
-                const fileName = document.getElementById('fileName');
-                if (fileName) {
-                    fileName.textContent = '';
-                    fileName.style.display = 'none';
+                const savedDetails = getSavedDeliveryDetails();
+                if (savedDetails.validIdFileName && hasPersistedValidId(savedDetails)) {
+                    updateValidIdFileName(savedDetails.validIdFileName, 'Saved ID');
+                } else {
+                    updateValidIdFileName('', '');
                 }
             }
         }
 
-        function handleSave(event) {
+        async function buildDeliveryDetailsPayload(deliveryDetails) {
+            const selectedFile = getSelectedValidIdFile();
+            const savedDetails = getSavedDeliveryDetails();
+            const payload = {
+                ...deliveryDetails
+            };
+
+            if (selectedFile) {
+                const validationMessage = validateValidIdFile(selectedFile);
+                if (validationMessage) {
+                    setValidIdError(validationMessage);
+                    return null;
+                }
+
+                try {
+                    payload.validIdAttachment = await readFileAsDataUrl(selectedFile);
+                } catch (error) {
+                    console.error(error);
+                    setValidIdError('Unable to save the selected valid ID. Please try again.');
+                    return null;
+                }
+
+                payload.validIdFileName = selectedFile.name;
+                payload.validIdContentType = getValidIdContentType(selectedFile);
+            } else if (hasPersistedValidId(savedDetails)) {
+                payload.validIdAttachment = savedDetails.validIdAttachment;
+                payload.validIdFileName = savedDetails.validIdFileName || '';
+                payload.validIdContentType = savedDetails.validIdContentType || '';
+            }
+
+            payload.hasValidID = Boolean(payload.validIdAttachment);
+            return payload;
+        }
+
+        function showSaveToast() {
+            if (!detailsSaveToastRegion) {
+                return;
+            }
+
+            window.clearTimeout(saveToastHideTimeout);
+            window.clearTimeout(saveToastRemoveTimeout);
+
+            detailsSaveToastRegion.innerHTML = '';
+
+            const toast = document.createElement('section');
+            toast.className = 'details-save-toast';
+            toast.setAttribute('role', 'status');
+            toast.innerHTML = `
+                <div class="details-save-toast-badge" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7 12.5L10.1 15.6L17.25 8.45" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="details-save-toast-copy">
+                    <p class="details-save-toast-title">Details saved</p>
+                    <p class="details-save-toast-text">Your delivery details were saved successfully.</p>
+                </div>
+                <div class="details-save-toast-progress"></div>
+            `;
+
+            detailsSaveToastRegion.appendChild(toast);
+
+            requestAnimationFrame(function() {
+                toast.classList.add('is-visible');
+                const progressBar = toast.querySelector('.details-save-toast-progress');
+                if (progressBar) {
+                    progressBar.style.animation = `detailsSaveToastCountdown ${SAVE_TOAST_DURATION}ms linear forwards`;
+                }
+            });
+
+            saveToastHideTimeout = window.setTimeout(function() {
+                toast.classList.remove('is-visible');
+                saveToastRemoveTimeout = window.setTimeout(function() {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 220);
+            }, SAVE_TOAST_DURATION);
+        }
+
+        async function handleSave(event) {
             event.preventDefault();
+
+            if (isSaveRedirecting) {
+                return;
+            }
 
             const deliveryDetails = validateDeliveryForm();
             if (!deliveryDetails) {
                 return;
             }
 
-            localStorage.setItem('deliveryDetails', JSON.stringify(deliveryDetails));
-            window.location.href = getReturnPage();
+            const payload = await buildDeliveryDetailsPayload(deliveryDetails);
+            if (!payload) {
+                return;
+            }
+
+            try {
+                localStorage.setItem('deliveryDetails', JSON.stringify(payload));
+            } catch (error) {
+                console.error('Unable to save delivery details:', error);
+                setValidIdError('Unable to save the valid ID. Please use a smaller file.');
+                return;
+            }
+
+            isSaveRedirecting = true;
+            showSaveToast();
+
+            window.clearTimeout(saveRedirectTimeout);
+            saveRedirectTimeout = window.setTimeout(function() {
+                window.location.href = getReturnPage();
+            }, SAVE_TOAST_DURATION);
         }
 
         function handleCancel() {
@@ -752,13 +1063,16 @@
                 });
             });
 
-            const saved = localStorage.getItem('deliveryDetails');
-            if (saved) {
-                const details = JSON.parse(saved);
+            const details = getSavedDeliveryDetails();
+            if (Object.keys(details).length) {
                 document.getElementById('fullName').value = details.fullName || '';
                 document.getElementById('email').value = details.email || '';
                 document.getElementById('phone').value = details.phone || '';
                 document.getElementById('address').value = details.address || '';
+
+                if (details.validIdFileName && hasPersistedValidId(details)) {
+                    updateValidIdFileName(details.validIdFileName, 'Saved ID');
+                }
             }
         });
     </script>
