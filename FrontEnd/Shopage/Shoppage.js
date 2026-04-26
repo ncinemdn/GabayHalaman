@@ -200,7 +200,6 @@ function buildProductDetailUrl(plant) {
         id: String(plant.id || ''),
         name: plant.name,
         category: plant.sourceCategory || plant.category,
-        image: plant.image,
         price: String(plant.price || 250)
     });
 
