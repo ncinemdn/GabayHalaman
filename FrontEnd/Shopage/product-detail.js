@@ -947,25 +947,44 @@ function animateAddToCartToCartIcon() {
 
 function showAddToCartToast() {
     if (!state.currentPlant) return;
-    const stockState = getPlantStockState(state.currentPlant);
-    if (!stockState.inStock) return;
+    const selectedSizeData = getCurrentSizeData(state.currentPlant, state.selectedSize) || state.currentSizeData;
+    const stockLimit = Math.max(0, Number(selectedSizeData?.stock || 0));
+    if (!selectedSizeData || stockLimit <= 0) return;
     
     // Save to cart in localStorage
     const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-    const existingItem = cart.find(item => item.id === state.currentPlant.id);
+    const existingItem = cart.find(item => {
+        const samePlant = String(item.id) === String(state.currentPlant.id);
+        if (!samePlant) {
+            return false;
+        }
+
+        const samePlantSizeId = Number(item.plantSizeId || 0) > 0 && Number(item.plantSizeId || 0) === Number(selectedSizeData.id || 0);
+        if (samePlantSizeId) {
+            return true;
+        }
+
+        return normalizeSizeName(item.size) === normalizeSizeName(selectedSizeData.name || state.selectedSize);
+    });
     
     if (existingItem) {
-        // If item already in cart, increase quantity
-        existingItem.quantity += state.quantity;
+        existingItem.price = Number(selectedSizeData.price || existingItem.price || 0);
+        existingItem.size = selectedSizeData.name || existingItem.size || state.selectedSize;
+        existingItem.plantId = Number(state.currentPlant.id || 0);
+        existingItem.plantSizeId = selectedSizeData.id || existingItem.plantSizeId || null;
+        existingItem.availableStock = stockLimit;
+        existingItem.quantity = Math.min(stockLimit, Number(existingItem.quantity || 0) + state.quantity);
     } else {
-        // Add new item to cart
         cart.push({
             id: state.currentPlant.id,
+            plantId: Number(state.currentPlant.id || 0),
+            plantSizeId: selectedSizeData.id || null,
             name: state.currentPlant.name,
-            price: state.currentPlant.price,
+            price: Number(selectedSizeData.price || state.currentPlant.price || 0),
             image: state.currentPlant.image,
-            quantity: state.quantity,
-            size: state.selectedSize,
+            quantity: Math.min(stockLimit, state.quantity),
+            size: selectedSizeData.name || state.selectedSize,
+            availableStock: stockLimit,
             category: state.currentPlant.category
         });
     }
@@ -977,7 +996,9 @@ function showAddToCartToast() {
         existingToast.remove();
     }
     
-    const selectedSizeLabel = state.selectedSize === 'xl' ? 'Extra Large (XL)' : 'Medium';
+    const selectedSizeLabel = selectedSizeData.name || state.selectedSize;
+    const toastQuantity = existingItem ? existingItem.quantity : Math.min(stockLimit, state.quantity);
+    const toastTotal = Number(selectedSizeData.price || 0) * toastQuantity;
     
     const toast = document.createElement('aside');
     toast.className = 'cart-toast';
@@ -985,17 +1006,27 @@ function showAddToCartToast() {
     toast.setAttribute('aria-live', 'polite');
     toast.innerHTML = `
         <button class="cart-toast-close" type="button" aria-label="Close">×</button>
-        <p class="cart-toast-title">Just added to your cart</p>
+        <p class="cart-toast-kicker">Cart Updated</p>
+        <p class="cart-toast-title">Added to cart</p>
         <div class="cart-toast-content">
-            <img src="${state.currentPlant.image}" alt="${state.currentPlant.name}" class="cart-toast-image">
+            <div class="cart-toast-media">
+                <img src="${state.currentPlant.image || DEFAULT_PLANT_IMAGE}" alt="${state.currentPlant.name}" class="cart-toast-image" onerror="this.onerror=null;this.parentElement.classList.add('is-fallback');this.src='${DEFAULT_PLANT_IMAGE}';">
+            </div>
             <div class="cart-toast-details">
-                <p class="cart-toast-product">${state.currentPlant.name} (${selectedSizeLabel})</p>
-                <p class="cart-toast-meta">Qty: ${state.quantity}</p>
-                <p class="cart-toast-meta">₱${(state.currentPlant.price * state.quantity).toLocaleString()}.00</p>
+                <div class="cart-toast-topline">
+                    <p class="cart-toast-product">${state.currentPlant.name}</p>
+                    <span class="cart-toast-badge">${selectedSizeLabel}</span>
+                </div>
+                <div class="cart-toast-pills">
+                    <span class="cart-toast-pill">Qty ${toastQuantity}</span>
+                    <span class="cart-toast-pill accent">₱${toastTotal.toLocaleString()}.00</span>
+                </div>
             </div>
         </div>
-        <a href="../CartPage/cart.html" class="cart-toast-view">VIEW CART</a>
-        <button class="cart-toast-continue" type="button">Continue shopping</button>
+        <div class="cart-toast-actions">
+            <a href="../CartPage/cart.html" class="cart-toast-view">View Cart</a>
+            <button class="cart-toast-continue" type="button">Continue shopping</button>
+        </div>
     `;
     
     document.body.appendChild(toast);
@@ -1044,12 +1075,14 @@ function initBuyNowButton() {
 
         const orderNowItem = {
             id: state.currentPlant.id,
+            plantId: Number(state.currentPlant.id || 0),
             name: state.currentPlant.name,
             price: Number(selectedSizeData.price || state.currentPlant.price || 0),
             image: state.currentPlant.image,
             quantity: state.quantity,
             size: selectedSizeData.name || state.selectedSize,
             plantSizeId: selectedSizeData.id || null,
+            availableStock: Math.max(0, Number(selectedSizeData.stock || 0)),
             category: state.currentPlant.category
         };
 

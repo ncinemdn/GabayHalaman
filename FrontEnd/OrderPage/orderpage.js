@@ -527,6 +527,14 @@ async function loadDeliveryWindow(order) {
     if (!earliestDeliveryElement || !latestDeliveryElement) return;
 
     try {
+    const purchaseEstimate = getEstimatedPurchaseDeliveryWindow(order);
+
+    if (purchaseEstimate) {
+      earliestDeliveryElement.textContent = formatDeliveryWindowDate(purchaseEstimate.earliest);
+      latestDeliveryElement.textContent = formatDeliveryWindowDate(purchaseEstimate.latest);
+      return;
+    }
+
         // Get client ID from order (assuming it's stored in the order data)
         const clientId = order?.deliveryDetails?.clientId || order.clientId || order.customerId;
 
@@ -564,6 +572,55 @@ async function loadDeliveryWindow(order) {
         latestDeliveryElement.textContent = 'Error loading';
     }
 }
+
+  function getEstimatedPurchaseDeliveryWindow(order) {
+    if (!order || !Array.isArray(order.items) || !order.items.length) {
+      return null;
+    }
+
+    const explicitEarliest = order?.estimatedDeliveryWindow?.earliest;
+    const explicitLatest = order?.estimatedDeliveryWindow?.latest;
+
+    if (explicitEarliest && explicitLatest) {
+      return {
+        earliest: explicitEarliest,
+        latest: explicitLatest
+      };
+    }
+
+    const createdAt = order.createdAt || order.created_at || order.orderDate;
+    const baseDate = createdAt ? new Date(createdAt) : null;
+
+    if (!baseDate || Number.isNaN(baseDate.getTime())) {
+      return null;
+    }
+
+    return {
+      earliest: addDaysToDate(baseDate, 3).toISOString(),
+      latest: addDaysToDate(baseDate, 5).toISOString()
+    };
+  }
+
+  function addDaysToDate(value, days) {
+    const nextDate = new Date(value);
+    nextDate.setHours(12, 0, 0, 0);
+    nextDate.setDate(nextDate.getDate() + Number(days || 0));
+    return nextDate;
+  }
+
+  function formatDeliveryWindowDate(value) {
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return 'Not scheduled';
+    }
+
+    return parsedDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
 
 function updateHistoryButtons() {
   const backBtn = document.getElementById('back-btn');

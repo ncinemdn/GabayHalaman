@@ -66,6 +66,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderProfile(profile);
     await loadAdminLogs();
 
+    window.addEventListener('gh:admin-log-created', () => {
+        void loadAdminLogs();
+    });
+
     if (editProfileBtn && profileEditForm) {
         editProfileBtn.addEventListener('click', () => {
             profileEditError.textContent = '';
